@@ -153,6 +153,8 @@ const cancelDelete = () => {
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <!-- 文件夹图标 -->
         <span v-if="widget.type === 'folder'" class="text-lg">📁</span>
+        <!-- 图片图标 -->
+        <span v-else-if="widget.type === 'image'" class="text-lg">🖼️</span>
         <!-- 拖拽图标 -->
         <svg v-else class="w-4 h-4 text-pencil/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />

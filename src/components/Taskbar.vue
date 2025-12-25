@@ -23,6 +23,7 @@ const typeNames: Record<string, string> = {
   bookmark: '书签',
   folder: '文件夹',
   text: '文本',
+  image: '图片',
 }
 
 // 获取组件图标
@@ -33,6 +34,7 @@ const getWidgetIcon = (type: string) => {
     case 'bookmark': return '🔖'
     case 'folder': return '📁'
     case 'text': return '📋'
+    case 'image': return '🖼️'
     default: return '📋'
   }
 }

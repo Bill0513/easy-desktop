@@ -39,6 +39,15 @@ const addWidget = (type: string) => {
         <span class="text-2xl group-hover:scale-110 transition-transform">📋</span>
       </button>
 
+      <!-- 图片 -->
+      <button
+        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
+        title="添加图片"
+        @click="addWidget('image')"
+      >
+        <span class="text-2xl group-hover:scale-110 transition-transform">🖼️</span>
+      </button>
+
       <!-- 书签 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
