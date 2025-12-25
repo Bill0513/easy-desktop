@@ -90,8 +90,13 @@ const stopDrag = () => {
   document.removeEventListener('mouseup', stopDrag)
 
   // 获取拖拽结束时的最终位置
+  if (!draggedId) {
+    dragState.value.widgetId = null
+    return
+  }
+  
   const draggedWidget = store.getWidgetById(draggedId)
-  if (draggedId && draggedWidget) {
+  if (draggedWidget) {
     // 计算拖拽结束时鼠标的位置
     const mouseEndX = startX + (draggedWidget.x - initialX)
     const mouseEndY = dragState.value.startY + (draggedWidget.y - initialY)

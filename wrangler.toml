@@ -6,13 +6,3 @@ compatibility_date = "2024-01-01"
 [[kv_namespaces]]
 binding = "DESKTOP_DATA"
 id = "your-kv-namespace-id-here"
-
-# 如果需要 Durable Objects
-# [[durable_objects.bindings]]
-# name = "DESKTOP"
-# class_name = "Desktop"
-
-# 开启 Workers KV
-[kv_namespaces]
-binding = "DESKTOP_DATA"
-id = "your-kv-namespace-id-here"

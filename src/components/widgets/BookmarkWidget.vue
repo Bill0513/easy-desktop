@@ -47,11 +47,6 @@ const cancelAdd = () => {
   newTitle.value = ''
   newUrl.value = ''
 }
-
-// 打开链接
-const openLink = (url: string) => {
-  window.open(url, '_blank')
-}
 </script>
 
 <template>
@@ -70,7 +65,7 @@ const openLink = (url: string) => {
           :src="getFavicon(bookmark.url)"
           :alt="bookmark.title"
           class="w-5 h-5 flex-shrink-0"
-          @error="(e) => e.target?.remove()"
+          @error="(e) => (e.target as HTMLImageElement)?.remove()"
         />
         <span class="flex-1 font-handwritten text-sm truncate">{{ bookmark.title }}</span>
         <button

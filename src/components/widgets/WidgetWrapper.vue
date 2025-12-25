@@ -231,7 +231,7 @@ const cancelDelete = () => {
       class="h-[calc(100%-2.5rem)] overflow-auto p-4"
       :class="{ 'pointer-events-none': isDragOverFolder && widget.type === 'folder' }"
     >
-      <component :is="widgetComponent" :widget="widget" />
+      <component :is="widgetComponent" :widget="widget as any" />
     </div>
 
     <!-- 删除确认对话框 -->

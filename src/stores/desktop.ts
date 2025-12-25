@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, WidgetType, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 
