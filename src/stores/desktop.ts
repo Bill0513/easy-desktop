@@ -53,9 +53,9 @@ export const useDesktopStore = defineStore('desktop', {
       try {
         // 尝试从 Cloudflare KV 加载
         const cloudData = await this.loadFromCloud()
-        if (cloudData) {
+        if (cloudData && cloudData.widgets) {
           this.widgets = cloudData.widgets
-          this.maxZIndex = cloudData.maxZIndex
+          this.maxZIndex = cloudData.maxZIndex || 100
         } else {
           // 回退到本地存储
           const localData = localStorage.getItem(STORAGE_KEY)
@@ -63,6 +63,10 @@ export const useDesktopStore = defineStore('desktop', {
             const parsed = JSON.parse(localData)
             this.widgets = parsed.widgets || []
             this.maxZIndex = parsed.maxZIndex || 100
+          } else {
+            // 确保初始化为空数组
+            this.widgets = []
+            this.maxZIndex = 100
           }
         }
       } catch (error) {
@@ -72,6 +76,10 @@ export const useDesktopStore = defineStore('desktop', {
           const parsed = JSON.parse(localData)
           this.widgets = parsed.widgets || []
           this.maxZIndex = parsed.maxZIndex || 100
+        } else {
+          // 确保初始化为空数组
+          this.widgets = []
+          this.maxZIndex = 100
         }
       } finally {
         this.isLoading = false
