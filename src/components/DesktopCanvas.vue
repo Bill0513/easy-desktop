@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import WidgetWrapper from './widgets/WidgetWrapper.vue'
 import Taskbar from './Taskbar.vue'
@@ -132,6 +132,74 @@ const stopDrag = () => {
 // 可见的组件（未最小化的）
 const visibleWidgets = computed(() => {
   return store.widgets.filter(w => !w.isMinimized)
+})
+
+// 处理粘贴事件
+const handlePaste = async (e: ClipboardEvent) => {
+  const items = e.clipboardData?.items
+
+  if (!items) return
+
+  for (const item of items) {
+    // 处理图片
+    if (item.type.startsWith('image/')) {
+      e.preventDefault()
+      const file = item.getAsFile()
+      if (file) {
+        // 上传到 R2
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+          const response = await fetch('/api/image', {
+            method: 'POST',
+            body: formData,
+          })
+
+          if (response.ok) {
+            const { url, filename } = await response.json()
+            store.createWidget({
+              type: 'image',
+              src: url,
+              filename,
+              x: 100,
+              y: 100,
+            })
+          }
+        } catch (error) {
+          console.error('Upload failed:', error)
+        }
+      }
+      break
+    }
+
+    // 处理文本
+    if (item.type === 'text/plain') {
+      e.preventDefault()
+      const text = await new Promise<string>((resolve) => {
+        item.getAsString((s) => resolve(s))
+      })
+
+      if (text.trim()) {
+        store.createWidget({
+          type: 'note',
+          content: text,
+          x: 100,
+          y: 100,
+        })
+      }
+      break
+    }
+  }
+}
+
+// 挂载和卸载粘贴事件监听
+onMounted(() => {
+  document.addEventListener('paste', handlePaste)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('paste', handlePaste)
 })
 </script>
 

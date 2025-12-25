@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 
@@ -222,6 +222,21 @@ export const useDesktopStore = defineStore('desktop', {
           return text
         }
 
+        case 'image': {
+          const image: ImageWidget = {
+            ...base,
+            type: 'image',
+            title: params.title ?? `图片-${randomSuffix}`,
+            src: params.src ?? '',
+            filename: params.filename ?? '',
+            scale: params.scale ?? 1,
+            width: params.width ?? 400,
+            height: params.height ?? 300,
+          }
+          this.widgets.push(image)
+          return image
+        }
+
         default:
           throw new Error(`Unknown widget type: ${params.type}`)
       }
@@ -429,6 +444,25 @@ export const useDesktopStore = defineStore('desktop', {
     // 设置选中的组件
     selectWidget(id: string | null) {
       this.selectedWidgetId = id
+    },
+
+    // 删除图片组件及 R2 文件
+    async deleteImageWidget(id: string) {
+      const widget = this.getWidgetById(id)
+      if (widget?.type === 'image' && widget.filename) {
+        // 先删除 R2 中的文件
+        try {
+          await fetch('/api/image', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: widget.filename }),
+          })
+        } catch (error) {
+          console.error('Failed to delete image from R2:', error)
+        }
+      }
+      // 再删除组件
+      this.deleteWidget(id)
     },
   },
 })

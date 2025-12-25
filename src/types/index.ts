@@ -1,5 +1,5 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'bookmark' | 'folder' | 'text'
+export type WidgetType = 'note' | 'todo' | 'bookmark' | 'folder' | 'text' | 'image'
 
 // 待办事项项
 export interface TodoItem {
@@ -64,8 +64,16 @@ export interface TextWidget extends BaseWidget {
   content: string
 }
 
+// 图片组件
+export interface ImageWidget extends BaseWidget {
+  type: 'image'
+  src: string
+  filename: string
+  scale: number
+}
+
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | BookmarkWidget | FolderWidget | TextWidget
+export type Widget = NoteWidget | TodoWidget | BookmarkWidget | FolderWidget | TextWidget | ImageWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {
@@ -77,6 +85,9 @@ export interface CreateWidgetParams {
   height?: number
   content?: string
   color?: string
+  src?: string
+  filename?: string
+  scale?: number
 }
 
 // 拖拽状态

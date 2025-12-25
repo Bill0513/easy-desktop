@@ -7,6 +7,7 @@ import TodoWidget from './TodoWidget.vue'
 import BookmarkWidget from './BookmarkWidget.vue'
 import FolderWidget from './FolderWidget.vue'
 import TextWidget from './TextWidget.vue'
+import ImageWidget from './ImageWidget.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -88,6 +89,7 @@ const widgetComponent = computed(() => {
     case 'bookmark': return BookmarkWidget
     case 'folder': return FolderWidget
     case 'text': return TextWidget
+    case 'image': return ImageWidget
     default: return null
   }
 })
@@ -107,6 +109,8 @@ const folderChildrenCount = computed(() => {
 const handleDeleteClick = () => {
   if (props.widget.type === 'folder' && folderChildrenCount.value > 0) {
     showDeleteConfirm.value = true
+  } else if (props.widget.type === 'image') {
+    store.deleteImageWidget(props.widget.id)
   } else {
     store.deleteWidget(props.widget.id)
   }

@@ -4,7 +4,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npx wrangler:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(findstr:*)"
     ]
   }
 }
