@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hand-drawn design system base styles */
+body {
+  font-family: 'Patrick Hand', cursive;
+  background-color: #fdfbf7;
+  background-image:
+    radial-gradient(#e5e0d8 1px, transparent 1px),
+    radial-gradient(#e5e0d8 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Kalam', cursive;
+}
+
+/* Wobbly border utility */
+.wobbly {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.wobbly-sm {
+  border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px;
+}
+
+.wobbly-lg {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+/* Hand-drawn button style */
+.btn-hand-drawn {
+  @apply px-6 py-3 text-lg font-handwritten border-2 border-pencil bg-white text-pencil;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 4px 4px 0px 0px #2d2d2d;
+  transition: all 0.15s ease;
+}
+
+.btn-hand-drawn:hover {
+  @apply bg-accent text-white;
+  box-shadow: 2px 2px 0px 0px #2d2d2d;
+  transform: translate(2px, 2px);
+}
+
+.btn-hand-drawn:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.btn-hand-drawn.secondary {
+  @apply bg-muted;
+}
+
+/* Card style */
+.card-hand-drawn {
+  @apply bg-white border-2 border-pencil;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 4px 4px 0px 0px #2d2d2d;
+}
+
+/* Input style */
+.input-hand-drawn {
+  @apply w-full px-4 py-3 bg-white border-2 border-pencil;
+  border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.125rem;
+}
+
+.input-hand-drawn:focus {
+  @apply outline-none ring-2 ring-bluePen/20 border-bluePen;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdfbf7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e5e0d8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d2d2d;
+}
+
+/* Drag handle indicator */
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}

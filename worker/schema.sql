@@ -1,0 +1,29 @@
+-- Cloudflare KV 数据结构说明
+-- Key: user-desktop
+-- Value: JSON object
+--
+-- 示例数据格式:
+-- {
+--   "widgets": [
+--     {
+--       "id": "uuid",
+--       "type": "note|todo|bookmark|folder|group|text",
+--       "title": "组件标题",
+--       "x": 100,
+--       "y": 200,
+--       "width": 280,
+--       "height": 200,
+--       "zIndex": 101,
+--       "isMinimized": false,
+--       "isMaximized": false,
+--       "createdAt": 1234567890,
+--       "updatedAt": 1234567890,
+--       // 类型特定字段...
+--       "content": "便签内容",
+--       "color": "#fff9c4"
+--     }
+--   ],
+--   "maxZIndex": 101,
+--   "version": 1,
+--   "updatedAt": 1234567890
+-- }
