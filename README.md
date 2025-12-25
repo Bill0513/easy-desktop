@@ -18,7 +18,7 @@
 - Vue 3 + TypeScript
 - Pinia 状态管理
 - Tailwind CSS
-- Cloudflare Workers + KV
+- Cloudflare Pages Functions + KV
 
 ## 快速开始
 
@@ -44,32 +44,80 @@ npm run build
 
 ## Cloudflare 部署
 
-### 1. 创建 KV 命名空间
+### 前置准备
+
+1. **安装 Wrangler CLI**
+   ```bash
+   npm install -g wrangler
+   ```
+
+2. **登录 Cloudflare**
+   ```bash
+   npx wrangler login
+   ```
+
+### 部署步骤
+
+#### 1. 创建 KV 命名空间
 
 ```bash
 npx wrangler kv:namespace create "DESKTOP_DATA"
 ```
 
-### 2. 更新 wrangler.toml
+记下返回的 KV namespace ID（类似 `abc123def456...`）
 
-将上一步得到的 KV namespace ID 更新到 `wrangler.toml` 中：
-
-```toml
-[[kv_namespaces]]
-binding = "DESKTOP_DATA"
-id = "your-kv-namespace-id-here"
-```
-
-### 3. 部署 Worker
+#### 2. 构建前端
 
 ```bash
-npx wrangler deploy
+npm run build
 ```
 
-### 4. 配置 Pages 部署前端
+#### 3. 部署到 Cloudflare Pages
 
-1. 将 `dist` 目录内容部署到 Cloudflare Pages
-2. 或使用 Cloudflare Pages 的 Git 集成
+```bash
+npx wrangler pages deploy dist --project-name=cloud-desktop
+```
+
+首次部署会创建项目，后续部署会自动更新。
+
+#### 4. 绑定 KV 命名空间
+
+在 [Cloudflare Dashboard](https://dash.cloudflare.com) 中：
+
+1. 进入 **Workers & Pages** → 找到 `cloud-desktop` 项目
+2. 点击 **Settings** → **Functions** → **KV namespace bindings**
+3. 点击 **Add binding**
+   - Variable name: `DESKTOP_DATA`
+   - KV namespace: 选择第 1 步创建的 KV
+4. 保存设置
+
+#### 5. 重新部署使配置生效
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=cloud-desktop
+```
+
+完成！访问 Cloudflare 提供的 URL（如 `https://cloud-desktop.pages.dev`）
+
+### 后续更新
+
+每次修改代码后，只需运行：
+
+```bash
+npm run build && npx wrangler pages deploy dist --project-name=cloud-desktop
+```
+
+### 使用 Git 集成（可选）
+
+也可以通过 Git 自动部署：
+
+1. 将代码推送到 GitHub/GitLab
+2. 在 Cloudflare Dashboard 中连接仓库
+3. 配置构建设置：
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+4. 每次 push 代码自动部署
 
 ## 使用说明
 
