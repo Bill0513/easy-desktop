@@ -23,6 +23,7 @@ const isEditingTitle = ref(false)
 const titleInput = ref<HTMLInputElement | null>(null)
 const editedTitle = ref('')
 const showDeleteConfirm = ref(false)
+const isSavingTitle = ref(false)
 
 const isSelected = computed(() => store.selectedWidgetId === props.widget.id)
 
@@ -45,18 +46,25 @@ const startEditTitle = () => {
 
 // 保存标题
 const saveTitle = () => {
+  if (isSavingTitle.value) return
+  isSavingTitle.value = true
+
   if (editedTitle.value.trim() && editedTitle.value !== props.widget.title) {
     store.updateWidget(props.widget.id, { title: editedTitle.value.trim() })
   }
+
   isEditingTitle.value = false
+  isSavingTitle.value = false
 }
 
 // 按回车保存
 const handleTitleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Enter') {
+    e.preventDefault()
     saveTitle()
   } else if (e.key === 'Escape') {
     isEditingTitle.value = false
+    isSavingTitle.value = false
   }
 }
 
@@ -166,14 +174,16 @@ const cancelDelete = () => {
           v-if="isEditingTitle"
           ref="titleInput"
           v-model="editedTitle"
-          class="flex-1 bg-transparent border-none outline-none font-handwritten text-sm font-medium min-w-0"
+          class="flex-1 bg-white border-2 border-pencil px-2 py-1 outline-none font-handwritten text-sm font-medium min-w-0 focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen transition-all"
+          style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px 0px #2d2d2d;"
           @blur="saveTitle"
           @keydown="handleTitleKeydown"
+          @mousedown.stop
         />
         <span
           v-else
-          class="font-handwritten text-sm font-medium truncate cursor-text hover:text-pencil/80"
-          @dblclick="startEditTitle"
+          class="flex-1 font-handwritten text-sm font-medium truncate cursor-text hover:text-bluePen transition-colors"
+          @dblclick.stop="startEditTitle"
         >{{ widget.title }}</span>
         <!-- 文件夹显示子组件数量 -->
         <span v-if="widget.type === 'folder' && widget.children.length > 0" class="text-xs text-pencil/60 flex-shrink-0">

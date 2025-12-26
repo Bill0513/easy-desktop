@@ -12,11 +12,14 @@ import NewsPage from '@/components/NewsPage.vue'
 const store = useDesktopStore()
 const isUnlocked = ref(false)
 
-// Ctrl+F 快捷键打开搜索
+// Ctrl+F 快捷键打开搜索（仅在桌面Tab下生效）
 const handleKeydown = (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    e.preventDefault()
-    store.openSearch()
+    // 只在桌面Tab下触发搜索
+    if (store.activeTab === 'desktop') {
+      e.preventDefault()
+      store.openSearch()
+    }
   }
 }
 

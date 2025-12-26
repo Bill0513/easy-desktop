@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { TodoWidget } from '@/types'
 
@@ -9,6 +9,13 @@ const props = defineProps<{
 
 const store = useDesktopStore()
 const newItemText = ref('')
+const editingItemId = ref<string | null>(null)
+const editingText = ref('')
+const editInput = ref<HTMLInputElement | null>(null)
+
+// 输入法组合状态
+const isComposing = ref(false)
+const isEditComposing = ref(false)
 
 // 添加待办
 const addItem = () => {
@@ -19,12 +26,62 @@ const addItem = () => {
   }
 }
 
-// 按回车添加
+// 按回车添加（需要检查输入法状态）
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter' && !isComposing.value) {
     e.preventDefault()
     addItem()
   }
+}
+
+// 输入法开始组合
+const handleCompositionStart = () => {
+  isComposing.value = true
+}
+
+// 输入法结束组合
+const handleCompositionEnd = () => {
+  isComposing.value = false
+}
+
+// 开始编辑待办项
+const startEditItem = (itemId: string, currentText: string) => {
+  editingItemId.value = itemId
+  editingText.value = currentText
+  nextTick(() => {
+    editInput.value?.focus()
+    editInput.value?.select()
+  })
+}
+
+// 保存编辑
+const saveEdit = () => {
+  if (editingItemId.value && editingText.value.trim()) {
+    store.updateTodoItem(props.widget.id, editingItemId.value, editingText.value.trim())
+  }
+  editingItemId.value = null
+  editingText.value = ''
+}
+
+// 处理编辑输入的按键（需要检查输入法状态）
+const handleEditKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter' && !isEditComposing.value) {
+    e.preventDefault()
+    saveEdit()
+  } else if (e.key === 'Escape') {
+    editingItemId.value = null
+    editingText.value = ''
+  }
+}
+
+// 编辑输入法开始组合
+const handleEditCompositionStart = () => {
+  isEditComposing.value = true
+}
+
+// 编辑输入法结束组合
+const handleEditCompositionEnd = () => {
+  isEditComposing.value = false
 }
 </script>
 
@@ -35,7 +92,7 @@ const handleKeydown = (e: KeyboardEvent) => {
       <div
         v-for="item in widget.items"
         :key="item.id"
-        class="flex items-center gap-2 group"
+        class="flex items-center gap-2 group p-2 rounded hover:bg-muted/30 transition-colors"
       >
         <!-- 复选框 -->
         <button
@@ -49,9 +106,21 @@ const handleKeydown = (e: KeyboardEvent) => {
         </button>
 
         <!-- 文本 -->
+        <input
+          v-if="editingItemId === item.id"
+          ref="editInput"
+          v-model="editingText"
+          class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none"
+          @blur="saveEdit"
+          @keydown="handleEditKeydown"
+          @compositionstart="handleEditCompositionStart"
+          @compositionend="handleEditCompositionEnd"
+        />
         <span
-          class="flex-1 font-handwritten text-lg break-all"
+          v-else
+          class="flex-1 font-handwritten text-lg break-all cursor-text"
           :class="{ 'line-through text-pencil/40': item.completed }"
+          @dblclick="startEditItem(item.id, item.text)"
         >
           {{ item.text }}
         </span>
@@ -82,6 +151,8 @@ const handleKeydown = (e: KeyboardEvent) => {
           class="flex-1 input-hand-drawn text-base py-2"
           placeholder="添加新待办..."
           @keydown="handleKeydown"
+          @compositionstart="handleCompositionStart"
+          @compositionend="handleCompositionEnd"
         />
         <button
           class="btn-hand-drawn py-2 px-4 text-base"

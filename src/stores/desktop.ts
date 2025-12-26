@@ -397,6 +397,18 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  function updateTodoItem(widgetId: string, itemId: string, text: string) {
+    const widget = getWidgetById.value(widgetId)
+    if (widget?.type === 'todo') {
+      const item = widget.items.find(i => i.id === itemId)
+      if (item) {
+        item.text = text
+        widget.updatedAt = Date.now()
+        save()
+      }
+    }
+  }
+
   function deleteTodoItem(widgetId: string, itemId: string) {
     const widget = getWidgetById.value(widgetId)
     if (widget?.type === 'todo') {
@@ -727,6 +739,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     toggleMaximize,
     addTodoItem,
     toggleTodoItem,
+    updateTodoItem,
     deleteTodoItem,
     addBookmark,
     deleteBookmark,
