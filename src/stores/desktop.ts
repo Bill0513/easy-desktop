@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
+const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
+const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -19,6 +21,14 @@ export const useDesktopStore = defineStore('desktop', () => {
   const maximizeState = ref<Record<string, { x: number; y: number; width: number; height: number }>>({})
   const isSearchOpen = ref(false)
   const searchQuery = ref('')
+
+  // Tab state
+  const activeTab = ref<TabType>('desktop')
+
+  // News state
+  const newsSources = ref<NewsSource[]>([])
+  const isLoadingNews = ref(false)
+  const enabledSources = ref<Set<string>>(new Set(['github', 'baidu', 'zhihu', 'weibo']))
 
   // Getters
   const getWidgetById = computed(() => {
@@ -489,6 +499,195 @@ export const useDesktopStore = defineStore('desktop', () => {
     closeSearch()
   }
 
+  // Tab actions
+  function setActiveTab(tab: TabType) {
+    activeTab.value = tab
+    localStorage.setItem(TAB_STORAGE_KEY, tab)
+  }
+
+  function loadActiveTab() {
+    const saved = localStorage.getItem(TAB_STORAGE_KEY)
+    if (saved === 'desktop' || saved === 'news') {
+      activeTab.value = saved
+    }
+  }
+
+  // News actions
+  function loadNewsCache() {
+    try {
+      const cached = localStorage.getItem(NEWS_CACHE_KEY)
+      if (cached) {
+        const data: NewsCache = JSON.parse(cached)
+        newsSources.value = data.sources
+        return true
+      }
+    } catch (error) {
+      console.error('Failed to load news cache:', error)
+    }
+    return false
+  }
+
+  function saveNewsCache() {
+    try {
+      const cache: NewsCache = {
+        sources: newsSources.value,
+        version: 1,
+        updatedAt: Date.now()
+      }
+      localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(cache))
+    } catch (error) {
+      console.error('Failed to save news cache:', error)
+    }
+  }
+
+  async function fetchNews() {
+    isLoadingNews.value = true
+    try {
+      // Mock data - 后期替换为真实 API
+      const mockSources: NewsSource[] = [
+        {
+          id: 'github',
+          name: 'GitHub Trending',
+          icon: '🐙',
+          lastUpdated: Date.now(),
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `github-${i}`,
+            title: `Awesome Project ${i + 1} - A revolutionary new framework`,
+            url: `https://github.com/trending/${i}`,
+            time: `${i + 1}小时前`
+          }))
+        },
+        {
+          id: 'baidu',
+          name: '百度热搜',
+          icon: '🔥',
+          lastUpdated: Date.now(),
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `baidu-${i}`,
+            title: `热点新闻 ${i + 1} - 今日重大事件报道`,
+            url: `https://www.baidu.com/s?wd=news${i}`,
+            time: `${i * 2}分钟前`
+          }))
+        },
+        {
+          id: 'zhihu',
+          name: '知乎热榜',
+          icon: '💡',
+          lastUpdated: Date.now(),
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `zhihu-${i}`,
+            title: `如何看待 ${i + 1} 这个问题？`,
+            url: `https://www.zhihu.com/question/${i}`,
+            time: `${i * 3}分钟前`
+          }))
+        },
+        {
+          id: 'weibo',
+          name: '微博热搜',
+          icon: '📱',
+          lastUpdated: Date.now(),
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `weibo-${i}`,
+            title: `#热门话题${i + 1}# 网友热议中`,
+            url: `https://weibo.com/hot/${i}`,
+            time: `${i * 5}分钟前`
+          }))
+        }
+      ]
+
+      newsSources.value = mockSources
+      saveNewsCache()
+    } catch (error) {
+      console.error('Failed to fetch news:', error)
+    } finally {
+      isLoadingNews.value = false
+    }
+  }
+
+  async function fetchNewsBySource(sourceId: string) {
+    try {
+      // Mock data - 后期替换为真实 API
+      const sourceIndex = newsSources.value.findIndex(s => s.id === sourceId)
+      if (sourceIndex === -1) return
+
+      const mockData = {
+        github: {
+          name: 'GitHub Trending',
+          icon: '🐙',
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `github-${Date.now()}-${i}`,
+            title: `Awesome Project ${i + 1} - A revolutionary new framework`,
+            url: `https://github.com/trending/${i}`,
+            time: `${i + 1}小时前`
+          }))
+        },
+        baidu: {
+          name: '百度热搜',
+          icon: '🔥',
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `baidu-${Date.now()}-${i}`,
+            title: `热点新闻 ${i + 1} - 今日重大事件报道`,
+            url: `https://www.baidu.com/s?wd=news${i}`,
+            time: `${i * 2}分钟前`
+          }))
+        },
+        zhihu: {
+          name: '知乎热榜',
+          icon: '💡',
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `zhihu-${Date.now()}-${i}`,
+            title: `如何看待 ${i + 1} 这个问题？`,
+            url: `https://www.zhihu.com/question/${i}`,
+            time: `${i * 3}分钟前`
+          }))
+        },
+        weibo: {
+          name: '微博热搜',
+          icon: '📱',
+          items: Array.from({ length: 15 }, (_, i) => ({
+            id: `weibo-${Date.now()}-${i}`,
+            title: `#热门话题${i + 1}# 网友热议中`,
+            url: `https://weibo.com/hot/${i}`,
+            time: `${i * 5}分钟前`
+          }))
+        }
+      }
+
+      const data = mockData[sourceId as keyof typeof mockData]
+      if (data) {
+        newsSources.value[sourceIndex] = {
+          id: sourceId,
+          name: data.name,
+          icon: data.icon,
+          lastUpdated: Date.now(),
+          items: data.items
+        }
+        saveNewsCache()
+      }
+    } catch (error) {
+      console.error('Failed to fetch news by source:', error)
+    }
+  }
+
+  function toggleNewsSource(sourceId: string) {
+    if (enabledSources.value.has(sourceId)) {
+      enabledSources.value.delete(sourceId)
+    } else {
+      enabledSources.value.add(sourceId)
+    }
+  }
+
+  const filteredNewsSources = computed(() => {
+    return newsSources.value.filter(source => enabledSources.value.has(source.id))
+  })
+
+  async function initNews() {
+    const hasCached = loadNewsCache()
+    if (!hasCached) {
+      await fetchNews()
+    }
+  }
+
   return {
     // State
     widgets,
@@ -500,6 +699,11 @@ export const useDesktopStore = defineStore('desktop', () => {
     maximizeState,
     isSearchOpen,
     searchQuery,
+    activeTab,
+    newsSources,
+    isLoadingNews,
+    enabledSources,
+    filteredNewsSources,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -534,5 +738,11 @@ export const useDesktopStore = defineStore('desktop', () => {
     closeSearch,
     setSearchQuery,
     focusWidget,
+    setActiveTab,
+    loadActiveTab,
+    fetchNews,
+    fetchNewsBySource,
+    toggleNewsSource,
+    initNews,
   }
 })
