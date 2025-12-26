@@ -113,3 +113,31 @@ export interface DesktopData {
   version: number
   updatedAt: number
 }
+
+// Tab 类型
+export type TabType = 'desktop' | 'news'
+
+// 新闻项
+export interface NewsItem {
+  id: string
+  title: string
+  url: string
+  time: string
+  description?: string
+}
+
+// 新闻源
+export interface NewsSource {
+  id: string
+  name: string
+  icon: string
+  items: NewsItem[]
+  lastUpdated: number
+}
+
+// 新闻数据缓存
+export interface NewsCache {
+  sources: NewsSource[]
+  version: number
+  updatedAt: number
+}

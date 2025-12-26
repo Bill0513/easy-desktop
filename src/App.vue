@@ -6,6 +6,8 @@ import Toolbar from '@/components/Toolbar.vue'
 import ContextMenu from '@/components/ContextMenu.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import TabBar from '@/components/TabBar.vue'
+import NewsPage from '@/components/NewsPage.vue'
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
@@ -20,6 +22,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   store.init()
+  store.loadActiveTab()
   window.addEventListener('keydown', handleKeydown)
 })
 
@@ -39,17 +42,28 @@ const handleUnlock = () => {
 
     <!-- 主界面 -->
     <template v-else>
-      <!-- 工具栏 -->
-      <Toolbar />
+      <!-- Tab 栏 -->
+      <TabBar />
 
-      <!-- 桌面画布 -->
-      <DesktopCanvas />
+      <!-- 桌面 Tab -->
+      <div v-show="store.activeTab === 'desktop'" class="w-full h-full">
+        <!-- 工具栏 -->
+        <Toolbar />
 
-      <!-- 右键菜单 -->
-      <ContextMenu />
+        <!-- 桌面画布 -->
+        <DesktopCanvas />
 
-      <!-- 全局搜索 -->
-      <GlobalSearch />
+        <!-- 右键菜单 -->
+        <ContextMenu />
+
+        <!-- 全局搜索 -->
+        <GlobalSearch />
+      </div>
+
+      <!-- 新闻 Tab -->
+      <div v-show="store.activeTab === 'news'" class="w-full h-full">
+        <NewsPage />
+      </div>
     </template>
   </div>
 </template>
