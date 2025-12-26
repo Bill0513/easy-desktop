@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, NavigationData } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
+const NAVIGATION_STORAGE_KEY = 'cloud-desktop-navigation-data'
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -29,6 +30,11 @@ export const useDesktopStore = defineStore('desktop', () => {
   const newsSources = ref<NewsSource[]>([])
   const isLoadingNews = ref(false)
   const enabledSources = ref<Set<string>>(new Set(['github', 'baidu', 'zhihu', 'weibo']))
+
+  // Navigation state
+  const navigationSites = ref<NavigationSite[]>([])
+  const isLoadingNavigation = ref(false)
+  const draggedSiteId = ref<string | null>(null)
 
   // Getters
   const getWidgetById = computed(() => {
@@ -60,6 +66,17 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (!searchQuery.value.trim()) return []
     const query = searchQuery.value.toLowerCase()
 
+    // 根据当前 tab 返回不同的搜索结果
+    if (activeTab.value === 'navigation') {
+      // 搜索导航站网站
+      return navigationSites.value.filter(site =>
+        site.name.toLowerCase().includes(query) ||
+        site.url.toLowerCase().includes(query) ||
+        site.description.toLowerCase().includes(query)
+      )
+    }
+
+    // 搜索桌面组件
     return widgets.value.filter(widget => {
       if (widget.title.toLowerCase().includes(query)) return true
 
@@ -79,6 +96,11 @@ export const useDesktopStore = defineStore('desktop', () => {
           return false
       }
     })
+  })
+
+  // 排序后的导航站网站
+  const sortedNavigationSites = computed(() => {
+    return [...navigationSites.value].sort((a, b) => a.order - b.order)
   })
 
   // Actions
@@ -700,6 +722,125 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // Navigation Actions
+  function loadNavigationData() {
+    try {
+      const data = localStorage.getItem(NAVIGATION_STORAGE_KEY)
+      if (data) {
+        const parsed: NavigationData = JSON.parse(data)
+        navigationSites.value = parsed.sites || []
+        return true
+      }
+    } catch (error) {
+      console.error('Failed to load navigation data:', error)
+    }
+    return false
+  }
+
+  function saveNavigationData() {
+    try {
+      const data: NavigationData = {
+        sites: navigationSites.value,
+        version: 1,
+        updatedAt: Date.now()
+      }
+      localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(data))
+    } catch (error) {
+      console.error('Failed to save navigation data:', error)
+    }
+  }
+
+  async function fetchSiteIcon(url: string): Promise<string | undefined> {
+    try {
+      // 尝试获取网站的 favicon
+      const urlObj = new URL(url)
+      const faviconUrl = `${urlObj.protocol}//${urlObj.host}/favicon.ico`
+
+      // 简单检查 favicon 是否存在
+      const response = await fetch(faviconUrl, { method: 'HEAD' })
+      if (response.ok) {
+        return faviconUrl
+      }
+    } catch (error) {
+      console.error('Failed to fetch site icon:', error)
+    }
+    return undefined
+  }
+
+  async function addNavigationSite(params: {
+    name: string
+    url: string
+    description: string
+    color: string
+    category?: string
+  }) {
+    const id = uuidv4()
+    const now = Date.now()
+
+    // 尝试获取网站图标
+    const icon = await fetchSiteIcon(params.url)
+
+    const site: NavigationSite = {
+      id,
+      name: params.name,
+      url: params.url,
+      icon,
+      description: params.description,
+      color: params.color,
+      category: params.category,
+      order: navigationSites.value.length,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    navigationSites.value.push(site)
+    saveNavigationData()
+    return site
+  }
+
+  async function updateNavigationSite(id: string, updates: Partial<NavigationSite>) {
+    const site = navigationSites.value.find(s => s.id === id)
+    if (site) {
+      // 如果 URL 改变了，重新获取图标
+      if (updates.url && updates.url !== site.url) {
+        updates.icon = await fetchSiteIcon(updates.url)
+      }
+
+      Object.assign(site, updates, { updatedAt: Date.now() })
+      saveNavigationData()
+    }
+  }
+
+  function deleteNavigationSite(id: string) {
+    const index = navigationSites.value.findIndex(s => s.id === id)
+    if (index !== -1) {
+      navigationSites.value.splice(index, 1)
+      // 重新排序
+      navigationSites.value.forEach((site, idx) => {
+        site.order = idx
+      })
+      saveNavigationData()
+    }
+  }
+
+  function reorderNavigationSites(fromIndex: number, toIndex: number) {
+    const sites = [...navigationSites.value]
+    const [removed] = sites.splice(fromIndex, 1)
+    sites.splice(toIndex, 0, removed)
+
+    // 更新 order
+    sites.forEach((site, idx) => {
+      site.order = idx
+    })
+
+    navigationSites.value = sites
+    saveNavigationData()
+  }
+
+  function initNavigation() {
+    loadNavigationData()
+  }
+
   return {
     // State
     widgets,
@@ -716,12 +857,16 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoadingNews,
     enabledSources,
     filteredNewsSources,
+    navigationSites,
+    isLoadingNavigation,
+    draggedSiteId,
     // Getters
     getWidgetById,
     sortedWidgets,
     topWidget,
     minimizedWidgets,
     searchResults,
+    sortedNavigationSites,
     // Actions
     init,
     loadFromCloud,
@@ -757,5 +902,10 @@ export const useDesktopStore = defineStore('desktop', () => {
     fetchNewsBySource,
     toggleNewsSource,
     initNews,
+    addNavigationSite,
+    updateNavigationSite,
+    deleteNavigationSite,
+    reorderNavigationSites,
+    initNavigation,
   }
 })

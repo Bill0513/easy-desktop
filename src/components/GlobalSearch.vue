@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { Widget } from '@/types'
+import type { Widget, NavigationSite } from '@/types'
 
 const store = useDesktopStore()
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -17,6 +17,51 @@ const typeNames: Record<string, string> = {
   folder: '文件夹',
   text: '文本',
   image: '图片',
+  markdown: 'Markdown',
+}
+
+// 类型守卫
+const isWidget = (item: Widget | NavigationSite): item is Widget => {
+  return 'type' in item && 'title' in item
+}
+
+const isNavigationSite = (item: Widget | NavigationSite): item is NavigationSite => {
+  return 'name' in item && 'url' in item
+}
+
+// 获取显示标题
+const getItemTitle = (item: Widget | NavigationSite): string => {
+  if (isWidget(item)) return item.title
+  if (isNavigationSite(item)) return item.name
+  return ''
+}
+
+// 获取显示类型
+const getItemType = (item: Widget | NavigationSite): string => {
+  if (isWidget(item)) return typeNames[item.type] || item.type
+  if (isNavigationSite(item)) return '网站'
+  return ''
+}
+
+// 获取显示状态
+const getItemStatus = (item: Widget | NavigationSite): string => {
+  if (isWidget(item)) return item.isMinimized ? '已最小化' : '在桌面'
+  if (isNavigationSite(item)) return item.url
+  return ''
+}
+
+// 获取显示颜色
+const getItemColor = (item: Widget | NavigationSite): string => {
+  if (isWidget(item) && 'color' in item) return (item as any).color
+  if (isNavigationSite(item)) return item.color
+  return '#bbdefb'
+}
+
+// 获取类型首字母
+const getItemTypeInitial = (item: Widget | NavigationSite): string => {
+  if (isWidget(item)) return typeNames[item.type]?.charAt(0) || item.type.charAt(0).toUpperCase()
+  if (isNavigationSite(item)) return item.name.charAt(0).toUpperCase()
+  return '?'
 }
 
 // 监听搜索框显示，自动聚焦
@@ -88,8 +133,14 @@ const handleKeydown = (e: KeyboardEvent) => {
 }
 
 // 点击结果
-const handleResultClick = (widget: Widget) => {
-  store.focusWidget(widget.id)
+const handleResultClick = (item: Widget | NavigationSite) => {
+  if (isWidget(item)) {
+    store.focusWidget(item.id)
+  } else if (isNavigationSite(item)) {
+    // 打开网站
+    window.open(item.url, '_blank')
+    store.closeSearch()
+  }
 }
 
 // 外部点击关闭
@@ -156,30 +207,30 @@ onUnmounted(() => {
           class="max-h-80 overflow-y-auto"
         >
           <div
-            v-for="(widget, index) in store.searchResults"
-            :key="widget.id"
+            v-for="(item, index) in store.searchResults"
+            :key="item.id"
             :ref="(el) => setItemRef(el as HTMLDivElement, index)"
             class="flex items-center px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-yellow-50 transition-colors"
             :class="{ 'bg-yellow-100': index === selectedIndex }"
-            @click="handleResultClick(widget)"
+            @click="handleResultClick(item)"
             @mouseenter="selectedIndex = index"
           >
             <!-- 类型图标 -->
             <span
               class="w-8 h-8 flex items-center justify-center rounded-lg mr-3 text-sm font-bold text-white"
-              :style="{ backgroundColor: ('color' in widget && (widget as any).color) || '#bbdefb' }"
+              :style="{ backgroundColor: getItemColor(item) }"
             >
-              {{ typeNames[widget.type]?.charAt(0) || widget.type.charAt(0).toUpperCase() }}
+              {{ getItemTypeInitial(item) }}
             </span>
 
             <!-- 内容 -->
             <div class="flex-1 min-w-0">
               <div
                 class="font-medium text-gray-800 truncate"
-                v-html="highlightText(widget.title, store.searchQuery)"
+                v-html="highlightText(getItemTitle(item), store.searchQuery)"
               />
               <div class="text-sm text-gray-500 truncate">
-                {{ typeNames[widget.type] }} · {{ widget.isMinimized ? '已最小化' : '在桌面' }}
+                {{ getItemType(item) }} · {{ getItemStatus(item) }}
               </div>
             </div>
 

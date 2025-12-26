@@ -8,6 +8,7 @@ const isExpanded = ref(false)
 
 const tabs = [
   { id: 'desktop' as TabType, name: '记录', icon: '📝', description: '便签、待办、文本' },
+  { id: 'navigation' as TabType, name: '导航', icon: '🌐', description: '网页导航站' },
   { id: 'news' as TabType, name: '热点', icon: '🔥', description: '新闻热搜' }
 ]
 

@@ -115,7 +115,7 @@ export interface DesktopData {
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'news'
+export type TabType = 'desktop' | 'navigation' | 'news'
 
 // 新闻项
 export interface NewsItem {
@@ -138,6 +138,27 @@ export interface NewsSource {
 // 新闻数据缓存
 export interface NewsCache {
   sources: NewsSource[]
+  version: number
+  updatedAt: number
+}
+
+// 导航站网站
+export interface NavigationSite {
+  id: string
+  name: string
+  url: string
+  icon?: string  // 自动获取的图标URL
+  description: string
+  color: string  // 预制颜色（图标获取失败时使用）
+  category?: string  // 预留分类字段
+  order: number  // 排序
+  createdAt: number
+  updatedAt: number
+}
+
+// 导航站数据存储
+export interface NavigationData {
+  sites: NavigationSite[]
   version: number
   updatedAt: number
 }
