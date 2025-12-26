@@ -111,7 +111,7 @@ onMounted(() => {
           v-for="(_, index) in 6"
           :key="index"
           :ref="(el) => { passwordInputs[index] = el as HTMLInputElement }"
-          type="text"
+          type="password"
           inputmode="numeric"
           maxlength="1"
           :value="passwordValues[index]"

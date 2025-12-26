@@ -9,6 +9,11 @@ const position = ref({ x: 0, y: 0 })
 const targetWidgetId = ref<string | null>(null)
 
 const show = (e: MouseEvent) => {
+  // 只在桌面 tab 下显示菜单
+  if (store.activeTab !== 'desktop') {
+    return
+  }
+
   e.preventDefault()
 
   // 检查是否点击在组件上

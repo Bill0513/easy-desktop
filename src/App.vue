@@ -7,22 +7,27 @@ import ContextMenu from '@/components/ContextMenu.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import TabBar from '@/components/TabBar.vue'
+import NavigationPage from '@/components/NavigationPage.vue'
 import NewsPage from '@/components/NewsPage.vue'
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
 
-// Ctrl+F 快捷键打开搜索
+// Ctrl+F 快捷键打开搜索（仅在桌面Tab和导航Tab下生效）
 const handleKeydown = (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    e.preventDefault()
-    store.openSearch()
+    // 只在桌面Tab和导航Tab下触发搜索
+    if (store.activeTab === 'desktop' || store.activeTab === 'navigation') {
+      e.preventDefault()
+      store.openSearch()
+    }
   }
 }
 
 onMounted(() => {
   store.init()
   store.loadActiveTab()
+  store.initNavigation()
   window.addEventListener('keydown', handleKeydown)
 })
 
@@ -56,6 +61,13 @@ const handleUnlock = () => {
         <!-- 右键菜单 -->
         <ContextMenu />
 
+        <!-- 全局搜索 -->
+        <GlobalSearch />
+      </div>
+
+      <!-- 导航 Tab -->
+      <div v-show="store.activeTab === 'navigation'" class="w-full h-full">
+        <NavigationPage />
         <!-- 全局搜索 -->
         <GlobalSearch />
       </div>
