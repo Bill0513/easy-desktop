@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 
@@ -56,6 +56,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       switch (widget.type) {
         case 'note':
         case 'text':
+        case 'markdown':
           return widget.content.toLowerCase().includes(query)
         case 'todo':
           return widget.items.some(item => item.text.toLowerCase().includes(query))
@@ -247,6 +248,19 @@ export const useDesktopStore = defineStore('desktop', () => {
         }
         widgets.value.push(image)
         return image
+      }
+
+      case 'markdown': {
+        const markdown: MarkdownWidget = {
+          ...base,
+          type: 'markdown',
+          title: params.title ?? `Markdown-${randomSuffix}`,
+          content: params.content ?? '',
+          width: params.width ?? 840,
+          height: params.height ?? 600,
+        }
+        widgets.value.push(markdown)
+        return markdown
       }
 
       default:

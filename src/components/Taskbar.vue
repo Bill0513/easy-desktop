@@ -24,6 +24,7 @@ const typeNames: Record<string, string> = {
   folder: '文件夹',
   text: '文本',
   image: '图片',
+  markdown: 'Markdown',
 }
 
 // 获取组件图标
@@ -35,6 +36,7 @@ const getWidgetIcon = (type: string) => {
     case 'folder': return '📁'
     case 'text': return '📋'
     case 'image': return '🖼️'
+    case 'markdown': return '📝'
     default: return '📋'
   }
 }
