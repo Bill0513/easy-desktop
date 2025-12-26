@@ -8,6 +8,7 @@ import BookmarkWidget from './BookmarkWidget.vue'
 import FolderWidget from './FolderWidget.vue'
 import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
+import MarkdownWidget from './MarkdownWidget.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -90,6 +91,7 @@ const widgetComponent = computed(() => {
     case 'folder': return FolderWidget
     case 'text': return TextWidget
     case 'image': return ImageWidget
+    case 'markdown': return MarkdownWidget
     default: return null
   }
 })

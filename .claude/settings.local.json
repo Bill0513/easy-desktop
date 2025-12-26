@@ -7,7 +7,9 @@
       "Bash(npm run build)",
       "Bash(findstr:*)",
       "Bash(npx vite build)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install:*)",
+      "Bash(npm run dev)"
     ]
   }
 }
