@@ -167,7 +167,7 @@ onUnmounted(() => {
             <!-- 类型图标 -->
             <span
               class="w-8 h-8 flex items-center justify-center rounded-lg mr-3 text-sm font-bold text-white"
-              :style="{ backgroundColor: widget.color || '#bbdefb' }"
+              :style="{ backgroundColor: ('color' in widget && (widget as any).color) || '#bbdefb' }"
             >
               {{ typeNames[widget.type]?.charAt(0) || widget.type.charAt(0).toUpperCase() }}
             </span>

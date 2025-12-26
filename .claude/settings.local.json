@@ -6,7 +6,8 @@
       "Bash(npx wrangler:*)",
       "Bash(npm run build)",
       "Bash(findstr:*)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
