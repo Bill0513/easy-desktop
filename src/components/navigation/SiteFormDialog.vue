@@ -26,6 +26,16 @@ const PRESET_COLORS = [
   '#ffa64d',  // 橙色
   '#ff4dff',  // 紫色
   '#4dffff',  // 青色
+  '#ffeb3b',  // 黄色
+  '#e91e63',  // 粉红
+  '#9c27b0',  // 深紫
+  '#00bcd4',  // 天蓝
+  '#8bc34a',  // 浅绿
+  '#ff9800',  // 深橙
+  '#795548',  // 棕色
+  '#607d8b',  // 蓝灰
+  '#f44336',  // 深红
+  '#3f51b5',  // 靛蓝
 ]
 
 // 表单数据
@@ -145,7 +155,7 @@ const handleClose = () => {
             <!-- 预制颜色 -->
             <div>
               <label class="block font-handwritten text-sm mb-2">预制颜色（图标获取失败时使用）</label>
-              <div class="flex gap-2">
+              <div class="flex flex-wrap gap-2">
                 <button
                   v-for="color in PRESET_COLORS"
                   :key="color"

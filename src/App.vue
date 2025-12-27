@@ -9,9 +9,11 @@ import GlobalSearch from '@/components/GlobalSearch.vue'
 import TabBar from '@/components/TabBar.vue'
 import NavigationPage from '@/components/NavigationPage.vue'
 import NewsPage from '@/components/NewsPage.vue'
+import SyncStatus from '@/components/SyncStatus.vue'
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
+let syncInterval: number | null = null
 
 // Ctrl+F 快捷键打开搜索（仅在桌面Tab和导航Tab下生效）
 const handleKeydown = (e: KeyboardEvent) => {
@@ -24,15 +26,39 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// 页面关闭前同步
+const handleBeforeUnload = () => {
+  // 使用sendBeacon同步到云端，确保数据能够发送
+  store.syncBeforeUnload()
+}
+
 onMounted(() => {
   store.init()
   store.loadActiveTab()
   store.initNavigation()
   window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('beforeunload', handleBeforeUnload)
+
+  // 启动自动同步定时器（5分钟）
+  syncInterval = window.setInterval(() => {
+    store.syncToCloud()
+  }, 5 * 60 * 1000)
+
+  // 初始同步一次
+  store.syncToCloud()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+
+  // 清除定时器
+  if (syncInterval !== null) {
+    clearInterval(syncInterval)
+  }
+
+  // 组件卸载时同步一次
+  store.syncToCloud()
 })
 
 const handleUnlock = () => {
@@ -47,6 +73,9 @@ const handleUnlock = () => {
 
     <!-- 主界面 -->
     <template v-else>
+      <!-- 同步状态 -->
+      <SyncStatus />
+
       <!-- Tab 栏 -->
       <TabBar />
 

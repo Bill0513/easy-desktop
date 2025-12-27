@@ -36,6 +36,11 @@ export const useDesktopStore = defineStore('desktop', () => {
   const isLoadingNavigation = ref(false)
   const draggedSiteId = ref<string | null>(null)
 
+  // Sync state
+  const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
+  const lastSyncTime = ref<number | null>(null)
+  const syncErrorMessage = ref<string>('')
+
   // Getters
   const getWidgetById = computed(() => {
     return (id: string): Widget | undefined => {
@@ -165,6 +170,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       })
     } catch (error) {
       console.error('Failed to save to cloud:', error)
+      throw error
     }
   }
 
@@ -178,9 +184,56 @@ export const useDesktopStore = defineStore('desktop', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }
 
-  async function save() {
+  // 只保存到本地，不同步到云端
+  function save() {
     saveToLocal()
-    await saveToCloud()
+  }
+
+  // 手动同步到云端
+  async function syncToCloud() {
+    if (syncStatus.value === 'syncing') {
+      return // 防止重复同步
+    }
+
+    syncStatus.value = 'syncing'
+    syncErrorMessage.value = ''
+
+    try {
+      await saveToCloud()
+      syncStatus.value = 'success'
+      lastSyncTime.value = Date.now()
+
+      // 3秒后重置状态
+      setTimeout(() => {
+        if (syncStatus.value === 'success') {
+          syncStatus.value = 'idle'
+        }
+      }, 3000)
+    } catch (error) {
+      syncStatus.value = 'error'
+      syncErrorMessage.value = error instanceof Error ? error.message : '同步失败'
+
+      // 5秒后重置错误状态
+      setTimeout(() => {
+        if (syncStatus.value === 'error') {
+          syncStatus.value = 'idle'
+        }
+      }, 5000)
+    }
+  }
+
+  // 页面关闭前同步（使用sendBeacon确保数据发送）
+  function syncBeforeUnload() {
+    const data: DesktopData = {
+      widgets: widgets.value,
+      maxZIndex: maxZIndex.value,
+      version: 1,
+      updatedAt: Date.now()
+    }
+
+    // 使用sendBeacon发送数据，即使页面关闭也能完成
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+    navigator.sendBeacon('/api/desktop', blob)
   }
 
   function createWidget(params: CreateWidgetParams): Widget {
@@ -860,6 +913,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     navigationSites,
     isLoadingNavigation,
     draggedSiteId,
+    syncStatus,
+    lastSyncTime,
+    syncErrorMessage,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -873,6 +929,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveToCloud,
     saveToLocal,
     save,
+    syncToCloud,
+    syncBeforeUnload,
     createWidget,
     deleteWidget,
     deleteFolderWithChildren,
