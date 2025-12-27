@@ -78,9 +78,15 @@ const handleSubmit = () => {
     return
   }
 
+  // 规范化 URL，确保包含协议
+  let url = formData.value.url.trim()
+  if (!url.match(/^https?:\/\//i)) {
+    url = 'https://' + url
+  }
+
   emit('submit', {
     name: formData.value.name.trim(),
-    url: formData.value.url.trim(),
+    url: url,
     description: formData.value.description.trim(),
     color: formData.value.color,
     category: formData.value.category.trim() || undefined
