@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useDesktopStore } from '@/stores/desktop'
 import type { NavigationSite } from '@/types'
 
 const props = defineProps<{
@@ -18,6 +19,7 @@ const emit = defineEmits<{
   }]
 }>()
 
+const store = useDesktopStore()
 // 预制颜色
 const PRESET_COLORS = [
   '#ff4d4d',  // 红色
@@ -44,7 +46,7 @@ const formData = ref({
   url: '',
   description: '',
   color: PRESET_COLORS[0],
-  category: ''
+  category: '其他'
 })
 
 // 监听 props 变化，初始化表单
@@ -57,7 +59,7 @@ watch(() => props.show, (show) => {
         url: props.site.url,
         description: props.site.description,
         color: props.site.color,
-        category: props.site.category || ''
+        category: props.site.category || '其他'
       }
     } else {
       // 新增模式
@@ -66,7 +68,7 @@ watch(() => props.show, (show) => {
         url: '',
         description: '',
         color: PRESET_COLORS[0],
-        category: ''
+        category: '其他'
       }
     }
   }
@@ -89,7 +91,7 @@ const handleSubmit = () => {
     url: url,
     description: formData.value.description.trim(),
     color: formData.value.color,
-    category: formData.value.category.trim() || undefined
+    category: formData.value.category || '其他'
   })
 }
 
@@ -173,16 +175,17 @@ const handleClose = () => {
               </div>
             </div>
 
-            <!-- 分类（预留） -->
+            <!-- 分类 -->
             <div>
-              <label class="block font-handwritten text-sm mb-1">分类（可选）</label>
-              <input
+              <label class="block font-handwritten text-sm mb-1">分类</label>
+              <select
                 v-model="formData.category"
-                type="text"
                 class="input-hand-drawn w-full"
-                placeholder="例如：工作、学习、娱乐"
-                maxlength="20"
-              />
+              >
+                <option v-for="category in store.navigationCategories" :key="category" :value="category">
+                  {{ category }}
+                </option>
+              </select>
             </div>
           </div>
 
