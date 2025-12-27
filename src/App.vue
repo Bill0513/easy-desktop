@@ -32,8 +32,9 @@ const handleBeforeUnload = () => {
   store.syncBeforeUnload()
 }
 
-onMounted(() => {
-  store.init()
+onMounted(async () => {
+  // 等待数据加载完成后再进行其他操作
+  await store.init()
   store.loadActiveTab()
   store.initNavigation()
   window.addEventListener('keydown', handleKeydown)
@@ -44,7 +45,7 @@ onMounted(() => {
     store.syncToCloud()
   }, 5 * 60 * 1000)
 
-  // 初始同步一次
+  // 数据加载完成后才进行首次同步
   store.syncToCloud()
 })
 

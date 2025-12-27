@@ -106,10 +106,12 @@ export interface DragState {
   offsetY: number
 }
 
-// 存储数据格式
+// 存储数据格式（包含桌面组件和导航站数据）
 export interface DesktopData {
   widgets: Widget[]
   maxZIndex: number
+  navigationSites?: NavigationSite[]  // 导航站数据
+  categories?: string[]  // 导航站分类
   version: number
   updatedAt: number
 }

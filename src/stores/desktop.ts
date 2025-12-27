@@ -1,13 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, NavigationData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
-const NAVIGATION_STORAGE_KEY = 'cloud-desktop-navigation-data'
-const CATEGORIES_STORAGE_KEY = 'cloud-desktop-categories'
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -129,15 +127,35 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoading.value = true
     try {
       const cloudData = await loadFromCloud()
-      if (cloudData && cloudData.widgets) {
+      // 如果云端有数据（即使 widgets 为空数组），优先使用云端数据
+      if (cloudData && cloudData.widgets !== undefined) {
         widgets.value = cloudData.widgets
         maxZIndex.value = cloudData.maxZIndex || 100
+        // 加载导航站数据
+        if (cloudData.navigationSites !== undefined) {
+          navigationSites.value = cloudData.navigationSites
+        }
+        // 加载分类数据
+        if (cloudData.categories !== undefined) {
+          navigationCategories.value = cloudData.categories
+        }
+        // 同步云端数据到本地存储
+        saveToLocal()
       } else {
+        // 云端无数据，尝试从本地加载
         const localData = localStorage.getItem(STORAGE_KEY)
         if (localData) {
           const parsed = JSON.parse(localData)
           widgets.value = parsed.widgets || []
           maxZIndex.value = parsed.maxZIndex || 100
+          // 加载导航站数据
+          if (parsed.navigationSites !== undefined) {
+            navigationSites.value = parsed.navigationSites
+          }
+          // 加载分类数据
+          if (parsed.categories !== undefined) {
+            navigationCategories.value = parsed.categories
+          }
         } else {
           widgets.value = []
           maxZIndex.value = 100
@@ -150,6 +168,14 @@ export const useDesktopStore = defineStore('desktop', () => {
         const parsed = JSON.parse(localData)
         widgets.value = parsed.widgets || []
         maxZIndex.value = parsed.maxZIndex || 100
+        // 加载导航站数据
+        if (parsed.navigationSites !== undefined) {
+          navigationSites.value = parsed.navigationSites
+        }
+        // 加载分类数据
+        if (parsed.categories !== undefined) {
+          navigationCategories.value = parsed.categories
+        }
       } else {
         widgets.value = []
         maxZIndex.value = 100
@@ -176,6 +202,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       const data: DesktopData = {
         widgets: widgets.value,
         maxZIndex: maxZIndex.value,
+        navigationSites: navigationSites.value,
+        categories: navigationCategories.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -194,6 +222,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     const data: DesktopData = {
       widgets: widgets.value,
       maxZIndex: maxZIndex.value,
+      navigationSites: navigationSites.value,
+      categories: navigationCategories.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -243,6 +273,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     const data: DesktopData = {
       widgets: widgets.value,
       maxZIndex: maxZIndex.value,
+      navigationSites: navigationSites.value,
+      categories: navigationCategories.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -792,31 +824,9 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   // Navigation Actions
-  function loadNavigationData() {
-    try {
-      const data = localStorage.getItem(NAVIGATION_STORAGE_KEY)
-      if (data) {
-        const parsed: NavigationData = JSON.parse(data)
-        navigationSites.value = parsed.sites || []
-        return true
-      }
-    } catch (error) {
-      console.error('Failed to load navigation data:', error)
-    }
-    return false
-  }
-
   function saveNavigationData() {
-    try {
-      const data: NavigationData = {
-        sites: navigationSites.value,
-        version: 1,
-        updatedAt: Date.now()
-      }
-      localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(data))
-    } catch (error) {
-      console.error('Failed to save navigation data:', error)
-    }
+    // 导航站数据通过统一的 save() 保存
+    save()
   }
 
   async function fetchSiteIcon(url: string): Promise<string | undefined> {
@@ -907,31 +917,13 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   function initNavigation() {
-    loadNavigationData()
-    loadCategories()
+    // 导航站数据现在从 init() 中统一加载，无需单独初始化
   }
 
   // 分类管理方法
-  function loadCategories() {
-    try {
-      const stored = localStorage.getItem(CATEGORIES_STORAGE_KEY)
-      if (stored) {
-        const categories = JSON.parse(stored)
-        if (Array.isArray(categories) && categories.length > 0) {
-          navigationCategories.value = categories
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load categories:', error)
-    }
-  }
-
   function saveCategories() {
-    try {
-      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(navigationCategories.value))
-    } catch (error) {
-      console.error('Failed to save categories:', error)
-    }
+    // 分类数据通过统一的 save() 保存
+    save()
   }
 
   function selectCategory(category: string) {
