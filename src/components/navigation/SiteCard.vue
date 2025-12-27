@@ -18,7 +18,12 @@ const firstLetter = computed(() => {
 
 // 打开网站
 const openSite = () => {
-  window.open(props.site.url, '_blank')
+  let url = props.site.url
+  // 如果 URL 不包含协议，自动添加 https://
+  if (!url.match(/^https?:\/\//i)) {
+    url = 'https://' + url
+  }
+  window.open(url, '_blank')
 }
 
 // 处理右键菜单
