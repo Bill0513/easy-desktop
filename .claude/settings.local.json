@@ -9,7 +9,8 @@
       "Bash(npx vite build)",
       "mcp__ide__getDiagnostics",
       "Bash(npm install:*)",
-      "Bash(npm run dev)"
+      "Bash(npm run dev)",
+      "Bash(git push)"
     ]
   }
 }

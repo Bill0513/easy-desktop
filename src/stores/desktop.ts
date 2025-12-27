@@ -7,6 +7,7 @@ const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
 const NAVIGATION_STORAGE_KEY = 'cloud-desktop-navigation-data'
+const CATEGORIES_STORAGE_KEY = 'cloud-desktop-categories'
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -35,6 +36,8 @@ export const useDesktopStore = defineStore('desktop', () => {
   const navigationSites = ref<NavigationSite[]>([])
   const isLoadingNavigation = ref(false)
   const draggedSiteId = ref<string | null>(null)
+  const navigationCategories = ref<string[]>(['工作', '学习', '其他'])
+  const selectedCategory = ref<string>('全部')
 
   // Sync state
   const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
@@ -106,6 +109,19 @@ export const useDesktopStore = defineStore('desktop', () => {
   // 排序后的导航站网站
   const sortedNavigationSites = computed(() => {
     return [...navigationSites.value].sort((a, b) => a.order - b.order)
+  })
+
+  // 所有分类（包括"全部"）
+  const allCategories = computed(() => {
+    return ['全部', ...navigationCategories.value]
+  })
+
+  // 根据选中分类过滤网站
+  const filteredNavigationSites = computed(() => {
+    if (selectedCategory.value === '全部') {
+      return sortedNavigationSites.value
+    }
+    return sortedNavigationSites.value.filter(site => site.category === selectedCategory.value)
   })
 
   // Actions
@@ -840,7 +856,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       icon,
       description: params.description,
       color: params.color,
-      category: params.category,
+      category: params.category || '其他',  // 默认为"其他"
       order: navigationSites.value.length,
       createdAt: now,
       updatedAt: now
@@ -892,6 +908,81 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   function initNavigation() {
     loadNavigationData()
+    loadCategories()
+  }
+
+  // 分类管理方法
+  function loadCategories() {
+    try {
+      const stored = localStorage.getItem(CATEGORIES_STORAGE_KEY)
+      if (stored) {
+        const categories = JSON.parse(stored)
+        if (Array.isArray(categories) && categories.length > 0) {
+          navigationCategories.value = categories
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error)
+    }
+  }
+
+  function saveCategories() {
+    try {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(navigationCategories.value))
+    } catch (error) {
+      console.error('Failed to save categories:', error)
+    }
+  }
+
+  function selectCategory(category: string) {
+    selectedCategory.value = category
+  }
+
+  function addCategory(name: string): { success: boolean; error?: string } {
+    const trimmedName = name.trim()
+
+    if (!trimmedName) {
+      return { success: false, error: '分类名称不能为空' }
+    }
+
+    if (trimmedName === '全部') {
+      return { success: false, error: '"全部"是保留名称，不能使用' }
+    }
+
+    if (navigationCategories.value.includes(trimmedName)) {
+      return { success: false, error: '该分类已存在' }
+    }
+
+    navigationCategories.value.push(trimmedName)
+    saveCategories()
+    return { success: true }
+  }
+
+  function deleteCategory(name: string): { success: boolean; error?: string } {
+    // 检查是否是默认分类
+    const defaultCategories = ['工作', '学习', '其他']
+    if (defaultCategories.includes(name)) {
+      return { success: false, error: '默认分类不能删除' }
+    }
+
+    // 检查是否有网站使用该分类
+    const sitesUsingCategory = navigationSites.value.filter(site => site.category === name)
+    if (sitesUsingCategory.length > 0) {
+      return { success: false, error: `该分类下还有 ${sitesUsingCategory.length} 个网站，无法删除` }
+    }
+
+    const index = navigationCategories.value.indexOf(name)
+    if (index !== -1) {
+      navigationCategories.value.splice(index, 1)
+      saveCategories()
+
+      // 如果当前选中的分类被删除，切换到"全部"
+      if (selectedCategory.value === name) {
+        selectedCategory.value = '全部'
+      }
+    }
+
+    return { success: true }
   }
 
   return {
@@ -913,6 +1004,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     navigationSites,
     isLoadingNavigation,
     draggedSiteId,
+    navigationCategories,
+    selectedCategory,
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
@@ -923,6 +1016,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     minimizedWidgets,
     searchResults,
     sortedNavigationSites,
+    allCategories,
+    filteredNavigationSites,
     // Actions
     init,
     loadFromCloud,
@@ -965,5 +1060,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     deleteNavigationSite,
     reorderNavigationSites,
     initNavigation,
+    selectCategory,
+    addCategory,
+    deleteCategory,
   }
 })
