@@ -129,10 +129,14 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoading.value = true
     try {
       const cloudData = await loadFromCloud()
-      if (cloudData && cloudData.widgets) {
+      // 如果云端有数据（即使 widgets 为空数组），优先使用云端数据
+      if (cloudData && cloudData.widgets !== undefined) {
         widgets.value = cloudData.widgets
         maxZIndex.value = cloudData.maxZIndex || 100
+        // 同步云端数据到本地存储
+        saveToLocal()
       } else {
+        // 云端无数据，尝试从本地加载
         const localData = localStorage.getItem(STORAGE_KEY)
         if (localData) {
           const parsed = JSON.parse(localData)

@@ -27,7 +27,8 @@ export const onRequest = async (context) => {
                     },
                 })
             }
-            return new Response('{}', {
+            // 返回 null 表示没有数据，而不是空对象
+            return new Response('null', {
                 headers: {
                     ...corsHeaders,
                     'Content-Type': 'application/json',
