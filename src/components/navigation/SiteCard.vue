@@ -24,12 +24,16 @@ const openSite = () => {
 // 处理右键菜单
 const handleContextMenu = (e: MouseEvent) => {
   e.preventDefault()
+  e.stopPropagation()
   emit('contextmenu', e)
 }
 
-// 处理拖拽开始
-const handleDragStart = (e: MouseEvent) => {
-  emit('dragstart', e)
+// 处理拖拽开始（只响应左键）
+const handleMouseDown = (e: MouseEvent) => {
+  // 只有左键才触发拖拽
+  if (e.button === 0) {
+    emit('dragstart', e)
+  }
 }
 </script>
 
@@ -38,7 +42,7 @@ const handleDragStart = (e: MouseEvent) => {
     class="site-card group cursor-pointer select-none"
     @click="openSite"
     @contextmenu="handleContextMenu"
-    @mousedown="handleDragStart"
+    @mousedown="handleMouseDown"
   >
     <!-- 图标区域 -->
     <div class="site-icon-wrapper">
@@ -102,7 +106,7 @@ const handleDragStart = (e: MouseEvent) => {
 
 .site-name {
   font-family: 'Patrick Hand', cursive;
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   max-width: 70px;
   overflow: hidden;
