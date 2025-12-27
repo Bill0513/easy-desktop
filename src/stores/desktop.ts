@@ -1,13 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, NavigationData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
-const NAVIGATION_STORAGE_KEY = 'cloud-desktop-navigation-data'
-const CATEGORIES_STORAGE_KEY = 'cloud-desktop-categories'
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -826,28 +824,8 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   // Navigation Actions
-  function loadNavigationData() {
-    // 导航站数据现在从 init() 中统一加载，这个函数保留用于兼容性
-    // 如果有旧的独立存储数据，迁移到新格式
-    try {
-      const oldData = localStorage.getItem(NAVIGATION_STORAGE_KEY)
-      if (oldData) {
-        const parsed: NavigationData = JSON.parse(oldData)
-        if (parsed.sites && navigationSites.value.length === 0) {
-          navigationSites.value = parsed.sites
-          save() // 保存到新格式
-          localStorage.removeItem(NAVIGATION_STORAGE_KEY) // 删除旧数据
-        }
-      }
-    } catch (error) {
-      console.error('Failed to migrate navigation data:', error)
-    }
-    return navigationSites.value.length > 0
-  }
-
   function saveNavigationData() {
-    // 导航站数据现在通过统一的 save() 保存
-    // 这个函数保留用于兼容性，直接调用 save()
+    // 导航站数据通过统一的 save() 保存
     save()
   }
 
@@ -939,33 +917,12 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   function initNavigation() {
-    loadNavigationData()
-    loadCategories()
+    // 导航站数据现在从 init() 中统一加载，无需单独初始化
   }
 
   // 分类管理方法
-  function loadCategories() {
-    // 分类数据现在从 init() 中统一加载，这个函数保留用于兼容性
-    // 如果有旧的独立存储数据，迁移到新格式
-    try {
-      const oldData = localStorage.getItem(CATEGORIES_STORAGE_KEY)
-      if (oldData) {
-        const categories = JSON.parse(oldData)
-        if (Array.isArray(categories) && categories.length > 0 && navigationCategories.value.length === 3) {
-          // 只有当前是默认分类时才迁移
-          navigationCategories.value = categories
-          save() // 保存到新格式
-          localStorage.removeItem(CATEGORIES_STORAGE_KEY) // 删除旧数据
-        }
-      }
-    } catch (error) {
-      console.error('Failed to migrate categories:', error)
-    }
-  }
-
   function saveCategories() {
-    // 分类数据现在通过统一的 save() 保存
-    // 这个函数保留用于兼容性，直接调用 save()
+    // 分类数据通过统一的 save() 保存
     save()
   }
 
