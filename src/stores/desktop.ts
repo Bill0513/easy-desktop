@@ -133,6 +133,14 @@ export const useDesktopStore = defineStore('desktop', () => {
       if (cloudData && cloudData.widgets !== undefined) {
         widgets.value = cloudData.widgets
         maxZIndex.value = cloudData.maxZIndex || 100
+        // 加载导航站数据
+        if (cloudData.navigationSites !== undefined) {
+          navigationSites.value = cloudData.navigationSites
+        }
+        // 加载分类数据
+        if (cloudData.categories !== undefined) {
+          navigationCategories.value = cloudData.categories
+        }
         // 同步云端数据到本地存储
         saveToLocal()
       } else {
@@ -142,6 +150,14 @@ export const useDesktopStore = defineStore('desktop', () => {
           const parsed = JSON.parse(localData)
           widgets.value = parsed.widgets || []
           maxZIndex.value = parsed.maxZIndex || 100
+          // 加载导航站数据
+          if (parsed.navigationSites !== undefined) {
+            navigationSites.value = parsed.navigationSites
+          }
+          // 加载分类数据
+          if (parsed.categories !== undefined) {
+            navigationCategories.value = parsed.categories
+          }
         } else {
           widgets.value = []
           maxZIndex.value = 100
@@ -154,6 +170,14 @@ export const useDesktopStore = defineStore('desktop', () => {
         const parsed = JSON.parse(localData)
         widgets.value = parsed.widgets || []
         maxZIndex.value = parsed.maxZIndex || 100
+        // 加载导航站数据
+        if (parsed.navigationSites !== undefined) {
+          navigationSites.value = parsed.navigationSites
+        }
+        // 加载分类数据
+        if (parsed.categories !== undefined) {
+          navigationCategories.value = parsed.categories
+        }
       } else {
         widgets.value = []
         maxZIndex.value = 100
@@ -180,6 +204,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       const data: DesktopData = {
         widgets: widgets.value,
         maxZIndex: maxZIndex.value,
+        navigationSites: navigationSites.value,
+        categories: navigationCategories.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -198,6 +224,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     const data: DesktopData = {
       widgets: widgets.value,
       maxZIndex: maxZIndex.value,
+      navigationSites: navigationSites.value,
+      categories: navigationCategories.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -247,6 +275,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     const data: DesktopData = {
       widgets: widgets.value,
       maxZIndex: maxZIndex.value,
+      navigationSites: navigationSites.value,
+      categories: navigationCategories.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -797,30 +827,28 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // Navigation Actions
   function loadNavigationData() {
+    // 导航站数据现在从 init() 中统一加载，这个函数保留用于兼容性
+    // 如果有旧的独立存储数据，迁移到新格式
     try {
-      const data = localStorage.getItem(NAVIGATION_STORAGE_KEY)
-      if (data) {
-        const parsed: NavigationData = JSON.parse(data)
-        navigationSites.value = parsed.sites || []
-        return true
+      const oldData = localStorage.getItem(NAVIGATION_STORAGE_KEY)
+      if (oldData) {
+        const parsed: NavigationData = JSON.parse(oldData)
+        if (parsed.sites && navigationSites.value.length === 0) {
+          navigationSites.value = parsed.sites
+          save() // 保存到新格式
+          localStorage.removeItem(NAVIGATION_STORAGE_KEY) // 删除旧数据
+        }
       }
     } catch (error) {
-      console.error('Failed to load navigation data:', error)
+      console.error('Failed to migrate navigation data:', error)
     }
-    return false
+    return navigationSites.value.length > 0
   }
 
   function saveNavigationData() {
-    try {
-      const data: NavigationData = {
-        sites: navigationSites.value,
-        version: 1,
-        updatedAt: Date.now()
-      }
-      localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(data))
-    } catch (error) {
-      console.error('Failed to save navigation data:', error)
-    }
+    // 导航站数据现在通过统一的 save() 保存
+    // 这个函数保留用于兼容性，直接调用 save()
+    save()
   }
 
   async function fetchSiteIcon(url: string): Promise<string | undefined> {
@@ -917,25 +945,28 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // 分类管理方法
   function loadCategories() {
+    // 分类数据现在从 init() 中统一加载，这个函数保留用于兼容性
+    // 如果有旧的独立存储数据，迁移到新格式
     try {
-      const stored = localStorage.getItem(CATEGORIES_STORAGE_KEY)
-      if (stored) {
-        const categories = JSON.parse(stored)
-        if (Array.isArray(categories) && categories.length > 0) {
+      const oldData = localStorage.getItem(CATEGORIES_STORAGE_KEY)
+      if (oldData) {
+        const categories = JSON.parse(oldData)
+        if (Array.isArray(categories) && categories.length > 0 && navigationCategories.value.length === 3) {
+          // 只有当前是默认分类时才迁移
           navigationCategories.value = categories
+          save() // 保存到新格式
+          localStorage.removeItem(CATEGORIES_STORAGE_KEY) // 删除旧数据
         }
       }
     } catch (error) {
-      console.error('Failed to load categories:', error)
+      console.error('Failed to migrate categories:', error)
     }
   }
 
   function saveCategories() {
-    try {
-      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(navigationCategories.value))
-    } catch (error) {
-      console.error('Failed to save categories:', error)
-    }
+    // 分类数据现在通过统一的 save() 保存
+    // 这个函数保留用于兼容性，直接调用 save()
+    save()
   }
 
   function selectCategory(category: string) {
