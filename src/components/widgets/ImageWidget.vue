@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useDesktopStore } from "@/stores/desktop";
 import type { ImageWidget } from "@/types";
 
@@ -9,6 +9,13 @@ const props = defineProps<{
 
 const store = useDesktopStore();
 const showPreview = ref(false);
+
+// 获取图片完整URL
+const imageUrl = computed(() => {
+  if (!props.widget.src) return '';
+  const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net';
+  return `${imageDomain}/${props.widget.src}`;
+});
 
 // 缩小
 const zoomOut = () => {
@@ -47,7 +54,7 @@ const handlePreviewDrag = (e: Event) => {
     >
       <img
         v-if="widget.src"
-        :src="widget.src"
+        :src="imageUrl"
         :style="{ transform: `scale(${widget.scale})` }"
         class="max-w-full max-h-full object-contain transition-transform duration-200"
         alt="图片"
@@ -130,7 +137,7 @@ const handlePreviewDrag = (e: Event) => {
           <!-- 预览图片 -->
           <img
             v-if="widget.src"
-            :src="widget.src"
+            :src="imageUrl"
             class="max-w-[90vw] max-h-[90vh] object-contain"
             alt="预览"
             @click.stop

@@ -157,10 +157,10 @@ const handlePaste = async (e: ClipboardEvent) => {
           })
 
           if (response.ok) {
-            const { url, filename } = await response.json()
+            const { filename } = await response.json()
             store.createWidget({
               type: 'image',
-              src: url,
+              src: filename,
               filename,
               x: 100,
               y: 100,

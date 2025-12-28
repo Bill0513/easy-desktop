@@ -39,12 +39,9 @@ export const onRequest = async (context) => {
         },
       })
 
-      // 返回图片 URL (使用 R2 public URL 或通过 API 访问)
-      const imageUrl = `/api/image/${filename}`
-
+      // 只返回文件名，由前端拼接完整URL
       return new Response(JSON.stringify({
         success: true,
-        url: imageUrl,
         filename,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
