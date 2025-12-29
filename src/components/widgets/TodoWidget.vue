@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { TodoWidget } from '@/types'
+import draggable from 'vuedraggable'
+import type { TodoWidget, TodoItem } from '@/types'
 
 const props = defineProps<{
   widget: TodoWidget
@@ -16,6 +17,17 @@ const editInput = ref<HTMLInputElement | null>(null)
 // 输入法组合状态
 const isComposing = ref(false)
 const isEditComposing = ref(false)
+
+// 拖拽状态
+const isDragging = ref(false)
+
+// 使用计算属性来实现双向绑定
+const todoItems = computed({
+  get: () => props.widget.items,
+  set: (value: TodoItem[]) => {
+    store.reorderTodoItems(props.widget.id, value)
+  }
+})
 
 // 添加待办
 const addItem = () => {
@@ -89,52 +101,71 @@ const handleEditCompositionEnd = () => {
   <div class="h-full flex flex-col">
     <!-- 待办列表 -->
     <div class="flex-1 overflow-auto space-y-2">
-      <div
-        v-for="item in widget.items"
-        :key="item.id"
-        class="flex items-center gap-2 group p-2 rounded hover:bg-muted/30 transition-colors"
+      <draggable
+        v-model="todoItems"
+        item-key="id"
+        handle=".drag-handle"
+        :animation="200"
+        ghost-class="opacity-50"
+        drag-class="rotate-2"
+        @start="isDragging = true"
+        @end="isDragging = false"
       >
-        <!-- 复选框 -->
-        <button
-          class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-          :class="item.completed ? 'bg-accent border-accent' : 'border-pencil hover:bg-muted'"
-          @click="store.toggleTodoItem(widget.id, item.id)"
-        >
-          <svg v-if="item.completed" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-          </svg>
-        </button>
+        <template #item="{ element: item }">
+          <div
+            class="flex items-center gap-2 group p-2 rounded hover:bg-muted/30 transition-colors"
+            :class="{ 'cursor-move': !editingItemId }"
+          >
+            <!-- 拖拽手柄 -->
+            <div class="drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg class="w-4 h-4 text-pencil/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+              </svg>
+            </div>
 
-        <!-- 文本 -->
-        <input
-          v-if="editingItemId === item.id"
-          ref="editInput"
-          v-model="editingText"
-          class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none"
-          @blur="saveEdit"
-          @keydown="handleEditKeydown"
-          @compositionstart="handleEditCompositionStart"
-          @compositionend="handleEditCompositionEnd"
-        />
-        <span
-          v-else
-          class="flex-1 font-handwritten text-lg break-all cursor-text"
-          :class="{ 'line-through text-pencil/40': item.completed }"
-          @dblclick="startEditItem(item.id, item.text)"
-        >
-          {{ item.text }}
-        </span>
+            <!-- 复选框 -->
+            <button
+              class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0"
+              :class="item.completed ? 'bg-accent border-accent' : 'border-pencil hover:bg-muted'"
+              @click="store.toggleTodoItem(widget.id, item.id)"
+            >
+              <svg v-if="item.completed" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
 
-        <!-- 删除按钮 -->
-        <button
-          class="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-accent hover:bg-accent/20 rounded transition-all"
-          @click="store.deleteTodoItem(widget.id, item.id)"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+            <!-- 文本 -->
+            <input
+              v-if="editingItemId === item.id"
+              ref="editInput"
+              v-model="editingText"
+              class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none"
+              @blur="saveEdit"
+              @keydown="handleEditKeydown"
+              @compositionstart="handleEditCompositionStart"
+              @compositionend="handleEditCompositionEnd"
+            />
+            <span
+              v-else
+              class="flex-1 font-handwritten text-lg break-all cursor-text"
+              :class="{ 'line-through text-pencil/40': item.completed }"
+              @dblclick="startEditItem(item.id, item.text)"
+            >
+              {{ item.text }}
+            </span>
+
+            <!-- 删除按钮 -->
+            <button
+              class="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-accent hover:bg-accent/20 rounded transition-all flex-shrink-0"
+              @click="store.deleteTodoItem(widget.id, item.id)"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </template>
+      </draggable>
 
       <!-- 空状态 -->
       <div v-if="widget.items.length === 0" class="text-center text-pencil/40 py-4">

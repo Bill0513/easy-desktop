@@ -488,6 +488,15 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  function reorderTodoItems(widgetId: string, newItems: TodoItem[]) {
+    const widget = getWidgetById.value(widgetId)
+    if (widget?.type === 'todo') {
+      widget.items = newItems
+      widget.updatedAt = Date.now()
+      save()
+    }
+  }
+
   function selectWidget(id: string | null) {
     selectedWidgetId.value = id
   }
@@ -927,6 +936,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     toggleTodoItem,
     updateTodoItem,
     deleteTodoItem,
+    reorderTodoItems,
     selectWidget,
     deleteImageWidget,
     openSearch,
