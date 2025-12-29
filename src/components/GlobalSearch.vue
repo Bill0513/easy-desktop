@@ -126,8 +126,9 @@ const handleKeydown = (e: KeyboardEvent) => {
     selectedIndex.value = (selectedIndex.value - 1 + results.length) % results.length
   } else if (e.key === 'Enter') {
     e.preventDefault()
-    if (results[selectedIndex.value]) {
-      store.focusWidget(results[selectedIndex.value].id)
+    const selectedItem = results[selectedIndex.value]
+    if (selectedItem) {
+      handleResultClick(selectedItem)
     }
   }
 }
@@ -138,7 +139,12 @@ const handleResultClick = (item: Widget | NavigationSite) => {
     store.focusWidget(item.id)
   } else if (isNavigationSite(item)) {
     // 打开网站
-    window.open(item.url, '_blank')
+    let url = item.url
+    // 如果 URL 不包含协议，自动添加 https://
+    if (!url.match(/^https?:\/\//i)) {
+      url = 'https://' + url
+    }
+    window.open(url, '_blank')
     store.closeSearch()
   }
 }
