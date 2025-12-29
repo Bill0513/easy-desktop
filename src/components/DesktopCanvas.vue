@@ -18,6 +18,8 @@ const dragState = ref({
   startY: 0,
   initialX: 0,
   initialY: 0,
+  currentX: 0,
+  currentY: 0,
 })
 
 // 桌面点击 - 取消选中
@@ -48,18 +50,38 @@ const startDrag = (e: MouseEvent, widget: Widget) => {
     startY: e.clientY,
     initialX: widget.x,
     initialY: widget.y,
+    currentX: e.clientX,
+    currentY: e.clientY,
   }
 
   document.addEventListener('mousemove', handleDrag)
   document.addEventListener('mouseup', stopDrag)
+
+  // 启动 requestAnimationFrame 循环
+  if (rafId === null) {
+    rafId = requestAnimationFrame(updateDragPosition)
+  }
 }
 
 // 拖拽中
 const handleDrag = (e: MouseEvent) => {
   if (!dragState.value.isDragging || !dragState.value.widgetId) return
 
-  const dx = e.clientX - dragState.value.startX
-  const dy = e.clientY - dragState.value.startY
+  // 更新当前鼠标位置
+  dragState.value.currentX = e.clientX
+  dragState.value.currentY = e.clientY
+}
+
+// 使用 requestAnimationFrame 优化拖拽渲染
+let rafId: number | null = null
+const updateDragPosition = () => {
+  if (!dragState.value.isDragging || !dragState.value.widgetId) {
+    rafId = null
+    return
+  }
+
+  const dx = dragState.value.currentX - dragState.value.startX
+  const dy = dragState.value.currentY - dragState.value.startY
 
   let newX = dragState.value.initialX + dx
   let newY = dragState.value.initialY + dy
@@ -75,8 +97,8 @@ const handleDrag = (e: MouseEvent) => {
   // 使用不保存的方法更新位置，避免拖动时频繁保存导致的卡顿
   store.updatePositionNoSave(dragState.value.widgetId, newX, newY)
 
-  // 只在拖拽开始时检测是否在文件夹上方的逻辑，不在拖拽中频繁更新
-  // 这样避免误判
+  // 继续下一帧
+  rafId = requestAnimationFrame(updateDragPosition)
 }
 
 // 停止拖拽
@@ -86,6 +108,12 @@ const stopDrag = () => {
   const initialX = dragState.value.initialX
   const initialY = dragState.value.initialY
 
+  // 取消 requestAnimationFrame
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+
   document.removeEventListener('mousemove', handleDrag)
   document.removeEventListener('mouseup', stopDrag)
 
@@ -94,7 +122,7 @@ const stopDrag = () => {
     dragState.value.widgetId = null
     return
   }
-  
+
   const draggedWidget = store.getWidgetById(draggedId)
   if (draggedWidget) {
     // 计算拖拽结束时鼠标的位置
@@ -126,6 +154,8 @@ const stopDrag = () => {
     startY: 0,
     initialX: 0,
     initialY: 0,
+    currentX: 0,
+    currentY: 0,
   }
 }
 
