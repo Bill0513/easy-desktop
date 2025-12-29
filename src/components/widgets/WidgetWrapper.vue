@@ -146,9 +146,9 @@ const cancelDelete = () => {
   showDeleteConfirm.value = false
 }
 
-// 是否显示尺寸调整手柄（仅 note、text、markdown 组件）
+// 是否显示尺寸调整手柄（仅 note、text、markdown、todo 组件）
 const showResizeHandle = computed(() => {
-  return ['note', 'text', 'markdown'].includes(props.widget.type) && !props.widget.isMaximized
+  return ['note', 'text', 'markdown', 'todo'].includes(props.widget.type) && !props.widget.isMaximized
 })
 
 // 开始调整尺寸
