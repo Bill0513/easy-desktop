@@ -53,6 +53,8 @@ const formData = ref({
 
 // 是否正在获取图标
 const isFetchingIcon = ref(false)
+// 获取图标的结果提示
+const iconFetchResult = ref<'success' | 'error' | null>(null)
 
 // 监听 props 变化，初始化表单
 watch(() => props.show, (show) => {
@@ -88,6 +90,8 @@ const fetchIcon = async () => {
   }
 
   isFetchingIcon.value = true
+  iconFetchResult.value = null
+
   try {
     // 规范化 URL
     let url = formData.value.url.trim()
@@ -102,14 +106,19 @@ const fetchIcon = async () => {
     const response = await fetch(faviconUrl, { method: 'HEAD' })
     if (response.ok) {
       formData.value.icon = faviconUrl
+      iconFetchResult.value = 'success'
     } else {
-      alert('未找到网站图标')
+      iconFetchResult.value = 'error'
     }
   } catch (error) {
     console.error('Failed to fetch icon:', error)
-    alert('获取图标失败，请检查网址是否正确')
+    iconFetchResult.value = 'error'
   } finally {
     isFetchingIcon.value = false
+    // 3秒后清除提示
+    setTimeout(() => {
+      iconFetchResult.value = null
+    }, 3000)
   }
 }
 
@@ -213,22 +222,31 @@ const handleClose = () => {
                   </div>
                 </div>
                 <!-- 获取图标按钮 -->
-                <button
-                  type="button"
-                  class="btn-hand-drawn px-4 py-2 text-sm flex items-center gap-2"
-                  :disabled="!formData.url.trim() || isFetchingIcon"
-                  @click="fetchIcon"
-                >
-                  <svg v-if="!isFetchingIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  <span v-if="isFetchingIcon">获取中...</span>
-                  <span v-else>获取图标</span>
-                </button>
+                <div class="flex-1">
+                  <button
+                    type="button"
+                    class="btn-hand-drawn px-4 py-2 text-sm flex items-center gap-2"
+                    :disabled="!formData.url.trim() || isFetchingIcon"
+                    @click="fetchIcon"
+                  >
+                    <svg v-if="!isFetchingIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span v-if="isFetchingIcon">获取中...</span>
+                    <span v-else>获取图标</span>
+                  </button>
+                  <!-- 状态提示 -->
+                  <p v-if="iconFetchResult === 'success'" class="text-xs text-green-600 mt-2 font-handwritten">
+                    ✓ 获取成功
+                  </p>
+                  <p v-else-if="iconFetchResult === 'error'" class="text-xs text-accent mt-2 font-handwritten">
+                    ✗ 获取失败
+                  </p>
+                  <p v-else class="text-xs text-pencil/60 mt-2 font-handwritten">
+                    {{ formData.icon ? '已获取图标' : '未获取图标，将使用预制颜色' }}
+                  </p>
+                </div>
               </div>
-              <p class="text-xs text-pencil/60 mt-1 font-handwritten">
-                {{ formData.icon ? '已获取图标' : '未获取图标，将使用预制颜色' }}
-              </p>
             </div>
 
             <!-- 网站描述 -->
