@@ -23,6 +23,7 @@ const titleInput = ref<HTMLInputElement | null>(null)
 const editedTitle = ref('')
 const showDeleteConfirm = ref(false)
 const isSavingTitle = ref(false)
+const widgetContentRef = ref<any>(null)
 
 // 尺寸调整状态
 const isResizing = ref(false)
@@ -144,6 +145,13 @@ const cancelDelete = () => {
   showDeleteConfirm.value = false
 }
 
+// 打开图片预览
+const handlePreview = () => {
+  if (props.widget.type === 'image' && widgetContentRef.value?.openPreview) {
+    widgetContentRef.value.openPreview()
+  }
+}
+
 // 是否显示尺寸调整手柄（仅 note、text、markdown、todo 组件）
 const showResizeHandle = computed(() => {
   return ['note', 'text', 'markdown', 'todo'].includes(props.widget.type) && !props.widget.isMaximized
@@ -246,6 +254,19 @@ const stopResize = () => {
 
       <!-- 操作按钮 -->
       <div class="flex items-center gap-1" @mousedown.stop>
+        <!-- 预览按钮（仅图片组件） -->
+        <button
+          v-if="widget.type === 'image'"
+          class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
+          @click="handlePreview"
+          title="预览"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </button>
+
         <!-- 最小化 -->
         <button
           class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
@@ -302,7 +323,7 @@ const stopResize = () => {
       class="h-[calc(100%-2.5rem)] overflow-auto p-4"
       :class="{ 'pointer-events-none': isDragOverFolder && widget.type === 'folder' }"
     >
-      <component :is="widgetComponent" :widget="widget as any" />
+      <component :is="widgetComponent" :widget="widget as any" ref="widgetContentRef" />
     </div>
 
     <!-- 尺寸调整手柄 -->

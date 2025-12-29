@@ -30,7 +30,7 @@ const cursorStyle = computed(() => {
   if (props.widget.scale > 1) {
     return isDragging.value ? 'grabbing' : 'grab';
   }
-  return 'pointer';
+  return 'default';
 });
 
 // 鼠标滚轮缩放
@@ -105,14 +105,7 @@ const handleMouseUp = () => {
   document.removeEventListener('mouseup', handleMouseUp);
 };
 
-// 点击预览（只有在没有拖动时才触发）
-const handleClick = () => {
-  // 如果刚刚拖动过，不触发预览
-  if (isDragging.value) return;
-  openPreview();
-};
-
-// 点击预览
+// 打开预览
 const openPreview = () => {
   showPreview.value = true;
 };
@@ -126,6 +119,11 @@ const closePreview = () => {
 const handlePreviewDrag = (e: Event) => {
   e.stopPropagation();
 };
+
+// 暴露方法给父组件
+defineExpose({
+  openPreview
+});
 </script>
 
 <template>
@@ -134,7 +132,6 @@ const handlePreviewDrag = (e: Event) => {
     <div
       class="w-full h-full flex items-center justify-center transition-opacity"
       :style="{ cursor: cursorStyle }"
-      @click="handleClick"
       @wheel="handleWheel"
       @mousedown="handleMouseDown"
     >
