@@ -16,6 +16,7 @@ const emit = defineEmits<{
     description: string
     color: string
     category?: string
+    icon?: string
   }]
 }>()
 
@@ -46,8 +47,12 @@ const formData = ref({
   url: '',
   description: '',
   color: PRESET_COLORS[0],
-  category: '其他'
+  category: '其他',
+  icon: undefined as string | undefined
 })
+
+// 是否正在获取图标
+const isFetchingIcon = ref(false)
 
 // 监听 props 变化，初始化表单
 watch(() => props.show, (show) => {
@@ -59,7 +64,8 @@ watch(() => props.show, (show) => {
         url: props.site.url,
         description: props.site.description,
         color: props.site.color,
-        category: props.site.category || '其他'
+        category: props.site.category || '其他',
+        icon: props.site.icon
       }
     } else {
       // 新增模式
@@ -68,11 +74,44 @@ watch(() => props.show, (show) => {
         url: '',
         description: '',
         color: PRESET_COLORS[0],
-        category: '其他'
+        category: '其他',
+        icon: undefined
       }
     }
   }
 })
+
+// 获取网站图标
+const fetchIcon = async () => {
+  if (!formData.value.url.trim()) {
+    return
+  }
+
+  isFetchingIcon.value = true
+  try {
+    // 规范化 URL
+    let url = formData.value.url.trim()
+    if (!url.match(/^https?:\/\//i)) {
+      url = 'https://' + url
+    }
+
+    const urlObj = new URL(url)
+    const faviconUrl = `${urlObj.protocol}//${urlObj.host}/favicon.ico`
+
+    // 检查 favicon 是否存在
+    const response = await fetch(faviconUrl, { method: 'HEAD' })
+    if (response.ok) {
+      formData.value.icon = faviconUrl
+    } else {
+      alert('未找到网站图标')
+    }
+  } catch (error) {
+    console.error('Failed to fetch icon:', error)
+    alert('获取图标失败，请检查网址是否正确')
+  } finally {
+    isFetchingIcon.value = false
+  }
+}
 
 // 提交表单
 const handleSubmit = () => {
@@ -91,7 +130,8 @@ const handleSubmit = () => {
     url: url,
     description: formData.value.description.trim(),
     color: formData.value.color,
-    category: formData.value.category || '其他'
+    category: formData.value.category || '其他',
+    icon: formData.value.icon
   })
 }
 
@@ -146,6 +186,49 @@ const handleClose = () => {
                 class="input-hand-drawn w-full"
                 placeholder="https://github.com"
               />
+            </div>
+
+            <!-- 网站图标 -->
+            <div>
+              <label class="block font-handwritten text-sm mb-2">网站图标</label>
+              <div class="flex items-center gap-3">
+                <!-- 图标预览 -->
+                <div
+                  class="w-16 h-16 border-2 border-pencil rounded-lg flex items-center justify-center overflow-hidden"
+                  style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px #2d2d2d;"
+                >
+                  <img
+                    v-if="formData.icon"
+                    :src="formData.icon"
+                    alt="图标"
+                    class="w-full h-full object-cover"
+                    @error="formData.icon = undefined"
+                  />
+                  <div
+                    v-else
+                    class="w-full h-full flex items-center justify-center text-white font-handwritten text-xl font-bold"
+                    :style="{ backgroundColor: formData.color }"
+                  >
+                    {{ formData.name.charAt(0).toUpperCase() || '?' }}
+                  </div>
+                </div>
+                <!-- 获取图标按钮 -->
+                <button
+                  type="button"
+                  class="btn-hand-drawn px-4 py-2 text-sm flex items-center gap-2"
+                  :disabled="!formData.url.trim() || isFetchingIcon"
+                  @click="fetchIcon"
+                >
+                  <svg v-if="!isFetchingIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span v-if="isFetchingIcon">获取中...</span>
+                  <span v-else>获取图标</span>
+                </button>
+              </div>
+              <p class="text-xs text-pencil/60 mt-1 font-handwritten">
+                {{ formData.icon ? '已获取图标' : '未获取图标，将使用预制颜色' }}
+              </p>
             </div>
 
             <!-- 网站描述 -->

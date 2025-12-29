@@ -111,12 +111,16 @@ const handleMouseDown = (e: MouseEvent) => {
 
 .site-name {
   font-family: 'Patrick Hand', cursive;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
   max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
   color: #2d2d2d;
+  min-height: 34px;
 }
 </style>

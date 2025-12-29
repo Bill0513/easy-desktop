@@ -815,12 +815,13 @@ export const useDesktopStore = defineStore('desktop', () => {
     description: string
     color: string
     category?: string
+    icon?: string
   }) {
     const id = uuidv4()
     const now = Date.now()
 
-    // 尝试获取网站图标
-    const icon = await fetchSiteIcon(params.url)
+    // 如果没有传入图标，尝试获取网站图标
+    const icon = params.icon || await fetchSiteIcon(params.url)
 
     const site: NavigationSite = {
       id,
