@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -17,7 +17,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   const isLoading = ref(false)
   const selectedWidgetId = ref<string | null>(null)
   const draggedWidgetId = ref<string | null>(null)
-  const hoveredFolderId = ref<string | null>(null)
   const maximizeState = ref<Record<string, { x: number; y: number; width: number; height: number }>>({})
   const isSearchOpen = ref(false)
   const searchQuery = ref('')
@@ -59,13 +58,7 @@ export const useDesktopStore = defineStore('desktop', () => {
   })
 
   const minimizedWidgets = computed(() => {
-    const folderChildrenIds = new Set<string>()
-    widgets.value.forEach(w => {
-      if (w.type === 'folder') {
-        w.children.forEach(childId => folderChildrenIds.add(childId))
-      }
-    })
-    return widgets.value.filter(w => w.isMinimized && !folderChildrenIds.has(w.id))
+    return widgets.value.filter(w => w.isMinimized)
   })
 
   const searchResults = computed(() => {
@@ -325,20 +318,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         return todo
       }
 
-      case 'folder': {
-        const folder: FolderWidget = {
-          ...base,
-          type: 'folder',
-          title: params.title ?? `文件夹-${randomSuffix}`,
-          children: [],
-          isOpen: false,
-          width: params.width ?? 560,
-          height: params.height ?? 400,
-        }
-        widgets.value.push(folder)
-        return folder
-      }
-
       case 'text': {
         const text: TextWidget = {
           ...base,
@@ -391,23 +370,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     const index = widgets.value.findIndex(w => w.id === id)
     if (index !== -1) {
       widgets.value.splice(index, 1)
-      save()
-    }
-  }
-
-  function deleteFolderWithChildren(folderId: string) {
-    const folder = getWidgetById.value(folderId)
-    if (folder?.type === 'folder') {
-      folder.children.forEach(childId => {
-        const childIndex = widgets.value.findIndex(w => w.id === childId)
-        if (childIndex !== -1) {
-          widgets.value.splice(childIndex, 1)
-        }
-      })
-      const folderIndex = widgets.value.findIndex(w => w.id === folderId)
-      if (folderIndex !== -1) {
-        widgets.value.splice(folderIndex, 1)
-      }
       save()
     }
   }
@@ -523,32 +485,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (widget?.type === 'todo') {
       widget.items = widget.items.filter(i => i.id !== itemId)
       widget.updatedAt = Date.now()
-      save()
-    }
-  }
-
-  function addToFolder(folderId: string, widgetId: string) {
-    const folder = getWidgetById.value(folderId)
-    if (folder?.type === 'folder' && !folder.children.includes(widgetId)) {
-      folder.children.push(widgetId)
-      const widget = getWidgetById.value(widgetId)
-      if (widget) {
-        widget.isMinimized = true
-      }
-      folder.updatedAt = Date.now()
-      save()
-    }
-  }
-
-  function removeFromFolder(folderId: string, widgetId: string) {
-    const folder = getWidgetById.value(folderId)
-    if (folder?.type === 'folder') {
-      folder.children = folder.children.filter(id => id !== widgetId)
-      const widget = getWidgetById.value(widgetId)
-      if (widget) {
-        widget.isMinimized = false
-      }
-      folder.updatedAt = Date.now()
       save()
     }
   }
@@ -948,7 +884,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoading,
     selectedWidgetId,
     draggedWidgetId,
-    hoveredFolderId,
     maximizeState,
     isSearchOpen,
     searchQuery,
@@ -984,7 +919,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     syncBeforeUnload,
     createWidget,
     deleteWidget,
-    deleteFolderWithChildren,
     updateWidget,
     updatePositionNoSave,
     updatePosition,
@@ -995,8 +929,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     toggleTodoItem,
     updateTodoItem,
     deleteTodoItem,
-    addToFolder,
-    removeFromFolder,
     selectWidget,
     deleteImageWidget,
     openSearch,

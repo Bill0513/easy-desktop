@@ -1,5 +1,5 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'folder' | 'text' | 'image' | 'markdown'
+export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown'
 
 // 待办事项项
 export interface TodoItem {
@@ -37,13 +37,6 @@ export interface TodoWidget extends BaseWidget {
   items: TodoItem[]
 }
 
-// 文件夹组件（可包含其他组件）
-export interface FolderWidget extends BaseWidget {
-  type: 'folder'
-  children: string[] // 子组件 ID 列表
-  isOpen: boolean
-}
-
 // 文本组件
 export interface TextWidget extends BaseWidget {
   type: 'text'
@@ -67,7 +60,7 @@ export interface MarkdownWidget extends BaseWidget {
 }
 
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | FolderWidget | TextWidget | ImageWidget | MarkdownWidget
+export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {

@@ -58,14 +58,6 @@ const deleteWidget = () => {
   hide()
 }
 
-const createFolder = () => {
-  const widget = store.createWidget({ type: 'folder' })
-  if (targetWidgetId.value) {
-    store.addToFolder(widget.id, targetWidgetId.value)
-  }
-  hide()
-}
-
 onMounted(() => {
   document.addEventListener('contextmenu', show)
   document.addEventListener('click', hide)
@@ -112,18 +104,6 @@ onUnmounted(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
           </svg>
           最小化/还原
-        </button>
-
-        <!-- 打包到文件夹 -->
-        <button
-          v-if="targetWidgetId"
-          class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
-          @click="createFolder"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-          </svg>
-          打包到文件夹
         </button>
 
         <!-- 分隔线 -->

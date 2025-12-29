@@ -10,7 +10,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm install:*)",
       "Bash(npm run dev)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(del:*)"
     ]
   }
 }

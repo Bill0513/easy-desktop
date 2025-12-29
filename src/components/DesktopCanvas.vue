@@ -40,9 +40,6 @@ const startDrag = (e: MouseEvent, widget: Widget) => {
   store.bringToFront(widget.id)
   store.selectWidget(widget.id)
 
-  // 设置拖拽中的 widget ID（用于拖放到文件夹）
-  store.draggedWidgetId = widget.id
-
   dragState.value = {
     isDragging: true,
     widgetId: widget.id,
@@ -104,9 +101,6 @@ const updateDragPosition = () => {
 // 停止拖拽
 const stopDrag = () => {
   const draggedId = dragState.value.widgetId
-  const startX = dragState.value.startX
-  const initialX = dragState.value.initialX
-  const initialY = dragState.value.initialY
 
   // 取消 requestAnimationFrame
   if (rafId !== null) {
@@ -117,36 +111,11 @@ const stopDrag = () => {
   document.removeEventListener('mousemove', handleDrag)
   document.removeEventListener('mouseup', stopDrag)
 
-  // 获取拖拽结束时的最终位置
-  if (!draggedId) {
-    dragState.value.widgetId = null
-    return
-  }
-
-  const draggedWidget = store.getWidgetById(draggedId)
-  if (draggedWidget) {
-    // 计算拖拽结束时鼠标的位置
-    const mouseEndX = startX + (draggedWidget.x - initialX)
-    const mouseEndY = dragState.value.startY + (draggedWidget.y - initialY)
-
-    // 检测拖拽结束时鼠标位置是否在文件夹范围内
-    const folders = store.widgets.filter(w => w.type === 'folder')
-    for (const folder of folders) {
-      if (folder.id !== draggedId &&
-          mouseEndX >= folder.x && mouseEndX <= folder.x + (folder.width || 280) &&
-          mouseEndY >= folder.y && mouseEndY <= folder.y + (folder.height || 200)) {
-        // 鼠标释放时在文件夹内，将组件加入文件夹
-        store.addToFolder(folder.id, draggedId)
-        break
-      }
-    }
-  }
-
   // 拖拽结束后保存
-  store.save()
+  if (draggedId) {
+    store.save()
+  }
 
-  store.draggedWidgetId = null
-  store.hoveredFolderId = null
   dragState.value = {
     isDragging: false,
     widgetId: null,

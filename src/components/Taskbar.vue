@@ -20,7 +20,6 @@ const groupedMinimizedWidgets = computed(() => {
 const typeNames: Record<string, string> = {
   note: '便签',
   todo: '待办',
-  folder: '文件夹',
   text: '文本',
   image: '图片',
   markdown: 'Markdown',
@@ -31,7 +30,6 @@ const getWidgetIcon = (type: string) => {
   switch (type) {
     case 'note': return '📝'
     case 'todo': return '✅'
-    case 'folder': return '📁'
     case 'text': return '📋'
     case 'image': return '🖼️'
     case 'markdown': return '📝'
@@ -69,23 +67,6 @@ const restoreWidget = (id: string) => {
   store.selectWidget(id)
   hidePopup()
 }
-
-// 获取文件夹内的组件数量
-const getFolderChildrenCount = (folderId: string): number => {
-  const folder = store.getWidgetById(folderId)
-  if (folder?.type === 'folder') {
-    // 只计算实际存在的组件
-    return folder.children.filter(id => store.getWidgetById(id)).length
-  }
-  return 0
-}
-
-// 获取所有最小化文件夹内的组件总数量
-const getTotalFolderItemsCount = (folders: any[]): number => {
-  return folders.reduce((total, folder) => {
-    return total + getFolderChildrenCount(folder.id)
-  }, 0)
-}
 </script>
 
 <template>
@@ -115,9 +96,7 @@ const getTotalFolderItemsCount = (folders: any[]): number => {
         >
           <span class="text-lg">{{ getWidgetIcon(type) }}</span>
           <span class="font-handwritten text-sm">
-            {{ type === 'folder'
-              ? `${typeNames[type]} (${getTotalFolderItemsCount(widgets)}个)`
-              : `${typeNames[type]} (${widgets.length})` }}
+            {{ `${typeNames[type]} (${widgets.length})` }}
           </span>
         </button>
 
@@ -137,9 +116,7 @@ const getTotalFolderItemsCount = (folders: any[]): number => {
           >
             <div class="px-3 py-1 border-b border-pencil/20">
               <span class="font-handwritten text-sm text-pencil/60">
-                {{ type === 'folder'
-                  ? `${typeNames[type]} (${getTotalFolderItemsCount(widgets)}个)`
-                  : `${typeNames[type]} (${widgets.length})` }}
+                {{ `${typeNames[type]} (${widgets.length})` }}
               </span>
             </div>
             <button
@@ -150,9 +127,6 @@ const getTotalFolderItemsCount = (folders: any[]): number => {
             >
               <span>{{ getWidgetIcon(type) }}</span>
               <span class="flex-1 truncate">{{ widget.title }}</span>
-              <span v-if="type === 'folder'" class="text-xs text-pencil/40">
-                ({{ getFolderChildrenCount(widget.id) }}个)
-              </span>
             </button>
           </div>
         </Transition>

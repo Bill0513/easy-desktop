@@ -65,19 +65,6 @@ const addWidget = (type: string) => {
       <!-- 分隔线 -->
       <div class="w-px h-8 bg-pencil/20"></div>
 
-      <!-- 文件夹 -->
-      <button
-        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
-        title="创建文件夹"
-        @click="addWidget('folder')"
-      >
-        <span class="text-2xl group-hover:scale-110 transition-transform">📁</span>
-        <span class="text-[10px] font-handwritten text-pencil/60">文件夹</span>
-      </button>
-
-      <!-- 分隔线 -->
-      <div class="w-px h-8 bg-pencil/20"></div>
-
       <!-- 保存状态指示 -->
       <div class="text-xs font-handwritten text-pencil/40">
         已自动保存
