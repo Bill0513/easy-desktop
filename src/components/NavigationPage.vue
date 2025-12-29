@@ -155,9 +155,9 @@ const handleDragStart = (e: MouseEvent, site: NavigationSite, index: number) => 
         const y = dragState.value.currentY - rect.top
 
         // 计算目标索引（简单的网格计算）
-        const cols = Math.floor(rect.width / 80)  // 60px卡片 + 20px间距
-        const col = Math.floor(x / 80)
-        const row = Math.floor(y / 80)
+        const cols = Math.floor(rect.width / 106)  // 80px卡片 + 24px间距 + 2px边距
+        const col = Math.floor(x / 106)
+        const row = Math.floor(y / 106)
         const targetIndex = Math.min(row * cols + col, store.sortedNavigationSites.length - 1)
 
         if (targetIndex >= 0 && targetIndex !== dragState.value.draggedIndex) {
@@ -236,7 +236,7 @@ const dragOffset = computed(() => {
     </div>
 
     <!-- 网站网格 -->
-    <div class="navigation-grid flex flex-wrap gap-5">
+    <div class="navigation-grid flex flex-wrap gap-6 px-8">
       <div
         v-for="(site, index) in store.filteredNavigationSites"
         :key="site.id"

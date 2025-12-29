@@ -62,7 +62,7 @@ const handleMouseDown = (e: MouseEvent) => {
       <!-- 无图标时显示颜色块+首字母 -->
       <div
         v-if="!site.icon"
-        class="w-full h-full flex items-center justify-center text-white font-handwritten text-2xl font-bold"
+        class="w-full h-full flex items-center justify-center text-white font-handwritten text-3xl font-bold"
         :style="{ backgroundColor: site.color }"
       >
         {{ firstLetter }}
@@ -78,11 +78,11 @@ const handleMouseDown = (e: MouseEvent) => {
 
 <style scoped>
 .site-card {
-  width: 60px;
+  width: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   transition: transform 0.2s;
 }
 
@@ -95,8 +95,8 @@ const handleMouseDown = (e: MouseEvent) => {
 }
 
 .site-icon-wrapper {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border: 2px solid #2d2d2d;
   border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px;
   box-shadow: 2px 2px 0px 0px #2d2d2d;
@@ -111,9 +111,9 @@ const handleMouseDown = (e: MouseEvent) => {
 
 .site-name {
   font-family: 'Patrick Hand', cursive;
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
-  max-width: 70px;
+  max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -121,6 +121,6 @@ const handleMouseDown = (e: MouseEvent) => {
   -webkit-box-orient: vertical;
   line-height: 1.3;
   color: #2d2d2d;
-  min-height: 34px;
+  min-height: 36px;
 }
 </style>
