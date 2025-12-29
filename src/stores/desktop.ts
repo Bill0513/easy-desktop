@@ -360,6 +360,8 @@ export const useDesktopStore = defineStore('desktop', () => {
           src: params.src ?? '',
           filename: params.filename ?? '',
           scale: params.scale ?? 1,
+          offsetX: 0,
+          offsetY: 0,
           width: params.width ?? 400,
           height: params.height ?? 300,
         }

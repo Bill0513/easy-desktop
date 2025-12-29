@@ -56,6 +56,8 @@ export interface ImageWidget extends BaseWidget {
   src: string
   filename: string
   scale: number
+  offsetX: number
+  offsetY: number
 }
 
 // Markdown组件

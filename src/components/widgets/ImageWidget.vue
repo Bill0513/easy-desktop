@@ -11,11 +11,26 @@ const store = useDesktopStore();
 const showPreview = ref(false);
 const transformOrigin = ref('center center');
 
+// 拖动状态
+const isDragging = ref(false);
+const dragStartX = ref(0);
+const dragStartY = ref(0);
+const dragStartOffsetX = ref(0);
+const dragStartOffsetY = ref(0);
+
 // 获取图片完整URL
 const imageUrl = computed(() => {
   if (!props.widget.src) return '';
   const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net';
   return `${imageDomain}/${props.widget.src}`;
+});
+
+// 计算鼠标样式
+const cursorStyle = computed(() => {
+  if (props.widget.scale > 1) {
+    return isDragging.value ? 'grabbing' : 'grab';
+  }
+  return 'pointer';
 });
 
 // 鼠标滚轮缩放
@@ -37,7 +52,64 @@ const handleWheel = (e: WheelEvent) => {
   const delta = e.deltaY > 0 ? -0.1 : 0.1;
   const newScale = Math.max(0.25, Math.min(3, props.widget.scale + delta));
 
-  store.updateWidget(props.widget.id, { scale: newScale });
+  // 如果缩放到1或以下，重置偏移量
+  if (newScale <= 1) {
+    store.updateWidget(props.widget.id, {
+      scale: newScale,
+      offsetX: 0,
+      offsetY: 0
+    });
+  } else {
+    store.updateWidget(props.widget.id, { scale: newScale });
+  }
+};
+
+// 开始拖动
+const handleMouseDown = (e: MouseEvent) => {
+  // 只有放大时才能拖动
+  if (props.widget.scale <= 1) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  isDragging.value = true;
+  dragStartX.value = e.clientX;
+  dragStartY.value = e.clientY;
+  dragStartOffsetX.value = props.widget.offsetX;
+  dragStartOffsetY.value = props.widget.offsetY;
+
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+};
+
+// 拖动中
+const handleMouseMove = (e: MouseEvent) => {
+  if (!isDragging.value) return;
+
+  const deltaX = e.clientX - dragStartX.value;
+  const deltaY = e.clientY - dragStartY.value;
+
+  const newOffsetX = dragStartOffsetX.value + deltaX;
+  const newOffsetY = dragStartOffsetY.value + deltaY;
+
+  store.updateWidget(props.widget.id, {
+    offsetX: newOffsetX,
+    offsetY: newOffsetY
+  });
+};
+
+// 结束拖动
+const handleMouseUp = () => {
+  isDragging.value = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+};
+
+// 点击预览（只有在没有拖动时才触发）
+const handleClick = () => {
+  // 如果刚刚拖动过，不触发预览
+  if (isDragging.value) return;
+  openPreview();
 };
 
 // 点击预览
@@ -60,19 +132,22 @@ const handlePreviewDrag = (e: Event) => {
   <div class="h-full flex items-center justify-center overflow-hidden p-1">
     <!-- 图片显示区域 -->
     <div
-      class="w-full h-full flex items-center justify-center cursor-pointer hover:opacity-95 transition-opacity"
-      @click="openPreview"
+      class="w-full h-full flex items-center justify-center transition-opacity"
+      :style="{ cursor: cursorStyle }"
+      @click="handleClick"
       @wheel="handleWheel"
+      @mousedown="handleMouseDown"
     >
       <img
         v-if="widget.src"
         :src="imageUrl"
         :style="{
-          transform: `scale(${widget.scale})`,
+          transform: `translate(${widget.offsetX}px, ${widget.offsetY}px) scale(${widget.scale})`,
           transformOrigin: transformOrigin
         }"
-        class="max-w-full max-h-full object-contain transition-transform duration-200"
+        class="max-w-full max-h-full object-contain transition-transform duration-200 select-none"
         alt="图片"
+        draggable="false"
       />
       <div v-else class="text-pencil/40 font-handwritten text-center">
         <div class="text-4xl mb-2">🖼️</div>
