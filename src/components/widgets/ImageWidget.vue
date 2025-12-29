@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const store = useDesktopStore();
 const showPreview = ref(false);
+const transformOrigin = ref('center center');
 
 // 获取图片完整URL
 const imageUrl = computed(() => {
@@ -17,15 +18,25 @@ const imageUrl = computed(() => {
   return `${imageDomain}/${props.widget.src}`;
 });
 
-// 缩小
-const zoomOut = () => {
-  const newScale = Math.max(0.25, props.widget.scale - 0.25);
-  store.updateWidget(props.widget.id, { scale: newScale });
-};
+// 鼠标滚轮缩放
+const handleWheel = (e: WheelEvent) => {
+  e.preventDefault();
 
-// 放大
-const zoomIn = () => {
-  const newScale = Math.min(3, props.widget.scale + 0.25);
+  // 获取容器和鼠标位置
+  const container = e.currentTarget as HTMLElement;
+  const rect = container.getBoundingClientRect();
+
+  // 计算鼠标在容器中的相对位置（百分比）
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+  // 设置缩放中心点
+  transformOrigin.value = `${x}% ${y}%`;
+
+  // 根据滚轮方向调整缩放
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  const newScale = Math.max(0.25, Math.min(3, props.widget.scale + delta));
+
   store.updateWidget(props.widget.id, { scale: newScale });
 };
 
@@ -46,16 +57,20 @@ const handlePreviewDrag = (e: Event) => {
 </script>
 
 <template>
-  <div class="h-full flex items-center justify-center overflow-hidden">
+  <div class="h-full flex items-center justify-center overflow-hidden p-1">
     <!-- 图片显示区域 -->
     <div
       class="w-full h-full flex items-center justify-center cursor-pointer hover:opacity-95 transition-opacity"
       @click="openPreview"
+      @wheel="handleWheel"
     >
       <img
         v-if="widget.src"
         :src="imageUrl"
-        :style="{ transform: `scale(${widget.scale})` }"
+        :style="{
+          transform: `scale(${widget.scale})`,
+          transformOrigin: transformOrigin
+        }"
         class="max-w-full max-h-full object-contain transition-transform duration-200"
         alt="图片"
       />
@@ -63,44 +78,6 @@ const handlePreviewDrag = (e: Event) => {
         <div class="text-4xl mb-2">🖼️</div>
         <p>暂无图片</p>
       </div>
-    </div>
-
-    <!-- 右下角缩放控制 -->
-    <div
-      class="absolute bottom-2 right-2 flex gap-1 bg-white border-2 border-pencil shadow-hard px-2 py-1 rounded-lg"
-      @mousedown.stop
-    >
-      <button
-        class="w-6 h-6 flex items-center justify-center hover:bg-muted rounded transition-colors"
-        title="缩小"
-        @click="zoomOut"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M20 12H4"
-          />
-        </svg>
-      </button>
-      <span class="text-sm font-handwritten min-w-[3ch] text-center">
-        {{ Math.round(widget.scale * 100) }}%
-      </span>
-      <button
-        class="w-6 h-6 flex items-center justify-center hover:bg-muted rounded transition-colors"
-        title="放大"
-        @click="zoomIn"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </button>
     </div>
 
     <!-- 预览弹窗 -->
