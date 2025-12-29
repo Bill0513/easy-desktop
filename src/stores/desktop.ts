@@ -32,7 +32,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   // Navigation state
   const navigationSites = ref<NavigationSite[]>([])
   const isLoadingNavigation = ref(false)
-  const draggedSiteId = ref<string | null>(null)
   const navigationCategories = ref<string[]>(['工作', '学习', '其他'])
   const selectedCategory = ref<string>('全部')
 
@@ -894,7 +893,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     filteredNewsSources,
     navigationSites,
     isLoadingNavigation,
-    draggedSiteId,
     navigationCategories,
     selectedCategory,
     syncStatus,

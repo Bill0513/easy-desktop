@@ -8,7 +8,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   contextmenu: [e: MouseEvent]
-  dragstart: [e: MouseEvent]
 }>()
 
 // 获取首字母
@@ -32,22 +31,13 @@ const handleContextMenu = (e: MouseEvent) => {
   e.stopPropagation()
   emit('contextmenu', e)
 }
-
-// 处理拖拽开始（只响应左键）
-const handleMouseDown = (e: MouseEvent) => {
-  // 只有左键才触发拖拽
-  if (e.button === 0) {
-    emit('dragstart', e)
-  }
-}
 </script>
 
 <template>
   <div
-    class="site-card group cursor-pointer select-none"
+    class="site-card group cursor-move select-none"
     @click="openSite"
     @contextmenu="handleContextMenu"
-    @mousedown="handleMouseDown"
   >
     <!-- 图标区域 -->
     <div class="site-icon-wrapper">

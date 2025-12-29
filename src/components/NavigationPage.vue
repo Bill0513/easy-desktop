@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import draggable from 'vuedraggable'
 import SiteCard from './navigation/SiteCard.vue'
 import SiteFormDialog from './navigation/SiteFormDialog.vue'
 import CategoryManagerDialog from './navigation/CategoryManagerDialog.vue'
@@ -31,16 +32,8 @@ const categoryManagerDialog = ref({
   show: false
 })
 
-// 拖拽状态
-const dragState = ref({
-  isDragging: false,
-  draggedSiteId: null as string | null,
-  startX: 0,
-  startY: 0,
-  currentX: 0,
-  currentY: 0,
-  draggedIndex: -1
-})
+// 拖拽中的状态（用于视觉反馈）
+const isDragging = ref(false)
 
 // 处理空白处右键
 const handleBlankContextMenu = (e: MouseEvent) => {
@@ -126,66 +119,19 @@ const openCategoryManager = () => {
 }
 
 // 拖拽开始
-const handleDragStart = (e: MouseEvent, site: NavigationSite, index: number) => {
-  dragState.value = {
-    isDragging: true,
-    draggedSiteId: site.id,
-    startX: e.clientX,
-    startY: e.clientY,
-    currentX: e.clientX,
-    currentY: e.clientY,
-    draggedIndex: index
-  }
-  store.draggedSiteId = site.id
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (dragState.value.isDragging) {
-      dragState.value.currentX = e.clientX
-      dragState.value.currentY = e.clientY
-    }
-  }
-
-  const handleMouseUp = () => {
-    if (dragState.value.isDragging) {
-      // 计算拖拽到的位置
-      const container = document.querySelector('.navigation-grid')
-      if (container) {
-        const rect = container.getBoundingClientRect()
-        const x = dragState.value.currentX - rect.left
-        const y = dragState.value.currentY - rect.top
-
-        // 计算目标索引（简单的网格计算）
-        const cols = Math.floor(rect.width / 106)  // 80px卡片 + 24px间距 + 2px边距
-        const col = Math.floor(x / 106)
-        const row = Math.floor(y / 106)
-        const targetIndex = Math.min(row * cols + col, store.sortedNavigationSites.length - 1)
-
-        if (targetIndex >= 0 && targetIndex !== dragState.value.draggedIndex) {
-          store.reorderNavigationSites(dragState.value.draggedIndex, targetIndex)
-        }
-      }
-
-      dragState.value.isDragging = false
-      dragState.value.draggedSiteId = null
-      store.draggedSiteId = null
-    }
-
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
+const onDragStart = () => {
+  isDragging.value = true
 }
 
-// 拖拽偏移量
-const dragOffset = computed(() => {
-  if (!dragState.value.isDragging) return { x: 0, y: 0 }
-  return {
-    x: dragState.value.currentX - dragState.value.startX,
-    y: dragState.value.currentY - dragState.value.startY
+// 拖拽结束 - 更新排序
+const onDragEnd = (evt: any) => {
+  isDragging.value = false
+
+  // evt.oldIndex 和 evt.newIndex 是拖拽前后的索引
+  if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+    store.reorderNavigationSites(evt.oldIndex, evt.newIndex)
   }
-})
+}
 </script>
 
 <template>
@@ -236,25 +182,25 @@ const dragOffset = computed(() => {
     </div>
 
     <!-- 网站网格 -->
-    <div class="navigation-grid flex flex-wrap gap-6 px-8">
-      <div
-        v-for="(site, index) in store.filteredNavigationSites"
-        :key="site.id"
-        :style="{
-          transform: dragState.draggedSiteId === site.id
-            ? `translate(${dragOffset.x}px, ${dragOffset.y}px)`
-            : 'none',
-          opacity: dragState.draggedSiteId === site.id ? 0.5 : 1,
-          zIndex: dragState.draggedSiteId === site.id ? 1000 : 1
-        }"
-      >
-        <SiteCard
-          :site="site"
-          @contextmenu="(e) => handleSiteContextMenu(e, site)"
-          @dragstart="(e) => handleDragStart(e, site, index)"
-        />
-      </div>
-    </div>
+    <draggable
+      :list="store.filteredNavigationSites"
+      class="navigation-grid flex flex-wrap gap-6 px-8"
+      item-key="id"
+      :animation="200"
+      ghost-class="dragging-ghost"
+      drag-class="dragging-item"
+      @start="onDragStart"
+      @end="onDragEnd"
+    >
+      <template #item="{ element: site }">
+        <div>
+          <SiteCard
+            :site="site"
+            @contextmenu="(e) => handleSiteContextMenu(e, site)"
+          />
+        </div>
+      </template>
+    </draggable>
 
     <!-- 空状态 -->
     <div v-if="store.filteredNavigationSites.length === 0" class="text-center py-20">
@@ -334,3 +280,16 @@ const dragOffset = computed(() => {
     />
   </div>
 </template>
+
+<style scoped>
+/* 拖动时的占位符样式 */
+.dragging-ghost {
+  opacity: 0.3;
+}
+
+/* 正在拖动的元素样式 */
+.dragging-item {
+  transform: rotate(2deg) scale(1.05);
+  cursor: grabbing !important;
+}
+</style>
