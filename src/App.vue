@@ -3,7 +3,6 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import DesktopCanvas from '@/components/DesktopCanvas.vue'
 import Toolbar from '@/components/Toolbar.vue'
-import ContextMenu from '@/components/ContextMenu.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import TabBar from '@/components/TabBar.vue'
@@ -87,9 +86,6 @@ const handleUnlock = () => {
 
         <!-- 桌面画布 -->
         <DesktopCanvas />
-
-        <!-- 右键菜单 -->
-        <ContextMenu />
 
         <!-- 全局搜索 -->
         <GlobalSearch />
