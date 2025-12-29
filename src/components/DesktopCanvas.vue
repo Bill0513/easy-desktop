@@ -136,6 +136,21 @@ const visibleWidgets = computed(() => {
 
 // 处理粘贴事件
 const handlePaste = async (e: ClipboardEvent) => {
+  // 检查当前焦点元素，如果在可编辑元素上，不拦截粘贴事件
+  const activeElement = document.activeElement
+  if (activeElement) {
+    const tagName = activeElement.tagName.toLowerCase()
+    const isEditable =
+      tagName === 'input' ||
+      tagName === 'textarea' ||
+      (activeElement as HTMLElement).isContentEditable
+
+    // 如果焦点在可编辑元素上，让浏览器处理默认粘贴行为
+    if (isEditable) {
+      return
+    }
+  }
+
   const items = e.clipboardData?.items
 
   if (!items) return
