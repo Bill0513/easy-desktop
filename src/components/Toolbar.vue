@@ -62,16 +62,6 @@ const addWidget = (type: string) => {
         <span class="text-[10px] font-handwritten text-pencil/60">图片</span>
       </button>
 
-      <!-- 书签 -->
-      <button
-        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
-        title="添加书签"
-        @click="addWidget('bookmark')"
-      >
-        <span class="text-2xl group-hover:scale-110 transition-transform">🔖</span>
-        <span class="text-[10px] font-handwritten text-pencil/60">书签</span>
-      </button>
-
       <!-- 分隔线 -->
       <div class="w-px h-8 bg-pencil/20"></div>
 

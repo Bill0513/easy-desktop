@@ -20,7 +20,6 @@ const groupedMinimizedWidgets = computed(() => {
 const typeNames: Record<string, string> = {
   note: '便签',
   todo: '待办',
-  bookmark: '书签',
   folder: '文件夹',
   text: '文本',
   image: '图片',
@@ -32,7 +31,6 @@ const getWidgetIcon = (type: string) => {
   switch (type) {
     case 'note': return '📝'
     case 'todo': return '✅'
-    case 'bookmark': return '🔖'
     case 'folder': return '📁'
     case 'text': return '📋'
     case 'image': return '🖼️'

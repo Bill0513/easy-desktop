@@ -4,7 +4,6 @@ import { useDesktopStore } from '@/stores/desktop'
 import type { Widget } from '@/types'
 import NoteWidget from './NoteWidget.vue'
 import TodoWidget from './TodoWidget.vue'
-import BookmarkWidget from './BookmarkWidget.vue'
 import FolderWidget from './FolderWidget.vue'
 import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
@@ -104,7 +103,6 @@ const widgetComponent = computed(() => {
   switch (props.widget.type) {
     case 'note': return NoteWidget
     case 'todo': return TodoWidget
-    case 'bookmark': return BookmarkWidget
     case 'folder': return FolderWidget
     case 'text': return TextWidget
     case 'image': return ImageWidget

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, BookmarkWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, Bookmark, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, FolderWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -93,11 +93,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           return widget.content.toLowerCase().includes(query)
         case 'todo':
           return widget.items.some(item => item.text.toLowerCase().includes(query))
-        case 'bookmark':
-          return widget.bookmarks.some(b =>
-            b.title.toLowerCase().includes(query) ||
-            b.url.toLowerCase().includes(query)
-          )
         default:
           return false
       }
@@ -330,17 +325,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         return todo
       }
 
-      case 'bookmark': {
-        const bookmark: BookmarkWidget = {
-          ...base,
-          type: 'bookmark',
-          title: params.title ?? `书签-${randomSuffix}`,
-          bookmarks: [],
-        }
-        widgets.value.push(bookmark)
-        return bookmark
-      }
-
       case 'folder': {
         const folder: FolderWidget = {
           ...base,
@@ -536,29 +520,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     const widget = getWidgetById.value(widgetId)
     if (widget?.type === 'todo') {
       widget.items = widget.items.filter(i => i.id !== itemId)
-      widget.updatedAt = Date.now()
-      save()
-    }
-  }
-
-  function addBookmark(widgetId: string, title: string, url: string) {
-    const widget = getWidgetById.value(widgetId)
-    if (widget?.type === 'bookmark') {
-      const bookmark: Bookmark = {
-        id: uuidv4(),
-        title,
-        url,
-      }
-      widget.bookmarks.push(bookmark)
-      widget.updatedAt = Date.now()
-      save()
-    }
-  }
-
-  function deleteBookmark(widgetId: string, bookmarkId: string) {
-    const widget = getWidgetById.value(widgetId)
-    if (widget?.type === 'bookmark') {
-      widget.bookmarks = widget.bookmarks.filter(b => b.id !== bookmarkId)
       widget.updatedAt = Date.now()
       save()
     }
@@ -1031,8 +992,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     toggleTodoItem,
     updateTodoItem,
     deleteTodoItem,
-    addBookmark,
-    deleteBookmark,
     addToFolder,
     removeFromFolder,
     selectWidget,

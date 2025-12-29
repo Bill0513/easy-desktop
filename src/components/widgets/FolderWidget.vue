@@ -49,8 +49,9 @@ const deleteChild = (widgetId: string) => {
           <span class="text-lg">
             {{ child!.type === 'note' ? '📝' :
                child!.type === 'todo' ? '✅' :
-               child!.type === 'bookmark' ? '🔖' :
-               child!.type === 'text' ? '📋' : '📁' }}
+               child!.type === 'text' ? '📋' :
+               child!.type === 'image' ? '🖼️' :
+               child!.type === 'markdown' ? '📝' : '📁' }}
           </span>
           <span class="flex-1 font-handwritten text-sm truncate">
             {{ child!.title }}

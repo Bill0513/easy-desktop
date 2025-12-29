@@ -1,19 +1,11 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'bookmark' | 'folder' | 'text' | 'image' | 'markdown'
+export type WidgetType = 'note' | 'todo' | 'folder' | 'text' | 'image' | 'markdown'
 
 // 待办事项项
 export interface TodoItem {
   id: string
   text: string
   completed: boolean
-}
-
-// 书签
-export interface Bookmark {
-  id: string
-  title: string
-  url: string
-  favicon?: string
 }
 
 // 组件基础接口
@@ -45,12 +37,6 @@ export interface TodoWidget extends BaseWidget {
   items: TodoItem[]
 }
 
-// 书签组件
-export interface BookmarkWidget extends BaseWidget {
-  type: 'bookmark'
-  bookmarks: Bookmark[]
-}
-
 // 文件夹组件（可包含其他组件）
 export interface FolderWidget extends BaseWidget {
   type: 'folder'
@@ -79,7 +65,7 @@ export interface MarkdownWidget extends BaseWidget {
 }
 
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | BookmarkWidget | FolderWidget | TextWidget | ImageWidget | MarkdownWidget
+export type Widget = NoteWidget | TodoWidget | FolderWidget | TextWidget | ImageWidget | MarkdownWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {
