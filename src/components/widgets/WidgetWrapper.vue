@@ -25,6 +25,15 @@ const editedTitle = ref('')
 const showDeleteConfirm = ref(false)
 const isSavingTitle = ref(false)
 
+// 尺寸调整状态
+const isResizing = ref(false)
+const resizeState = ref({
+  startX: 0,
+  startY: 0,
+  startWidth: 0,
+  startHeight: 0,
+})
+
 const isSelected = computed(() => store.selectedWidgetId === props.widget.id)
 
 // 文件夹是否有组件正在被拖拽到上面
@@ -135,6 +144,52 @@ const confirmDelete = () => {
 // 取消删除
 const cancelDelete = () => {
   showDeleteConfirm.value = false
+}
+
+// 是否显示尺寸调整手柄（仅 note、text、markdown 组件）
+const showResizeHandle = computed(() => {
+  return ['note', 'text', 'markdown'].includes(props.widget.type) && !props.widget.isMaximized
+})
+
+// 开始调整尺寸
+const startResize = (e: MouseEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
+
+  isResizing.value = true
+  resizeState.value = {
+    startX: e.clientX,
+    startY: e.clientY,
+    startWidth: props.widget.width,
+    startHeight: props.widget.height,
+  }
+
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+}
+
+// 调整尺寸中
+const handleResize = (e: MouseEvent) => {
+  if (!isResizing.value) return
+
+  const dx = e.clientX - resizeState.value.startX
+  const dy = e.clientY - resizeState.value.startY
+
+  const newWidth = Math.max(200, resizeState.value.startWidth + dx)
+  const newHeight = Math.max(150, resizeState.value.startHeight + dy)
+
+  store.updateWidget(props.widget.id, {
+    width: newWidth,
+    height: newHeight,
+  })
+}
+
+// 停止调整尺寸
+const stopResize = () => {
+  isResizing.value = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+  store.save()
 }
 </script>
 
@@ -250,6 +305,20 @@ const cancelDelete = () => {
       :class="{ 'pointer-events-none': isDragOverFolder && widget.type === 'folder' }"
     >
       <component :is="widgetComponent" :widget="widget as any" />
+    </div>
+
+    <!-- 尺寸调整手柄 -->
+    <div
+      v-if="showResizeHandle"
+      class="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-20 group"
+      @mousedown="startResize"
+    >
+      <!-- 视觉指示器 -->
+      <div class="absolute bottom-1 right-1 w-4 h-4 flex items-end justify-end">
+        <svg class="w-3 h-3 text-pencil/40 group-hover:text-pencil/70 transition-colors" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M14 14V8h-2v4H8v2h6zM6 14v-2H2V8H0v6h6z"/>
+        </svg>
+      </div>
     </div>
 
     <!-- 删除确认对话框 -->
