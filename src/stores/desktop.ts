@@ -449,7 +449,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         text,
         completed: false,
       }
-      widget.items.push(item)
+      widget.items.unshift(item)
       widget.updatedAt = Date.now()
       save()
     }

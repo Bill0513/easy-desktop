@@ -19,7 +19,7 @@ const handleTabClick = (tabId: TabType) => {
 
 <template>
   <div
-    class="fixed left-0 top-1/2 -translate-y-1/2 z-50"
+    class="fixed left-0 top-1/2 -translate-y-1/2 z-[10000]"
     @mouseenter="isExpanded = true"
     @mouseleave="isExpanded = false"
   >
