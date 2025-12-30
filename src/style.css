@@ -62,6 +62,12 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 4px 4px 0px 0px #2d2d2d;
 }
 
+/* Markdown widget 需要特殊处理，允许工具箱溢出 */
+.card-hand-drawn.overflow-visible {
+  border-radius: 12px;
+  overflow: visible !important;
+}
+
 /* Input style */
 .input-hand-drawn {
   @apply w-full px-4 py-3 bg-white border-2 border-pencil;
@@ -100,4 +106,43 @@ h1, h2, h3, h4, h5, h6 {
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+/* Editor.js 工具箱溢出修复 */
+.card-hand-drawn:has(.codex-editor) {
+  overflow: visible !important;
+}
+
+/* Editor.js 工具栏和弹出框样式 */
+.ce-popover {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+.ce-popover__container {
+  z-index: 10000 !important;
+}
+
+.ce-toolbar {
+  z-index: 9999 !important;
+}
+
+.ce-toolbox {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+.ce-inline-toolbar {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+/* 确保 Editor.js 的所有父容器都允许溢出 */
+.codex-editor {
+  overflow: visible !important;
+}
+
+.codex-editor__redactor {
+  overflow: visible !important;
+  padding-bottom: 100px !important;
 }

@@ -175,7 +175,8 @@ const stopResize = () => {
     class="absolute transition-all duration-200 card-hand-drawn"
     :class="[
       isSelected ? 'ring-2 ring-bluePen/30' : '',
-      widget.isMaximized ? 'rounded-none' : ''
+      widget.isMaximized ? 'rounded-none' : '',
+      widget.type === 'markdown' ? 'overflow-visible' : ''
     ]"
     :style="wrapperStyle"
     :data-widget-id="widget.id"
@@ -265,7 +266,10 @@ const stopResize = () => {
     </div>
 
     <!-- 组件内容 -->
-    <div class="h-[calc(100%-2.5rem)] overflow-auto p-4">
+    <div
+      class="h-[calc(100%-2.5rem)] p-4"
+      :class="widget.type === 'markdown' ? 'markdown-content-wrapper' : 'overflow-auto'"
+    >
       <component :is="widgetComponent" :widget="widget as any" ref="widgetContentRef" />
     </div>
 
@@ -284,3 +288,11 @@ const stopResize = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Markdown 组件内容区域特殊处理 */
+.markdown-content-wrapper {
+  overflow: auto;
+  position: relative;
+}
+</style>
