@@ -193,11 +193,38 @@ export const useDesktopStore = defineStore('desktop', () => {
         version: 1,
         updatedAt: Date.now()
       }
-      await fetch('/api/desktop', {
+      const response = await fetch('/api/desktop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
+
+      // 处理数据冲突
+      if (response.status === 409) {
+        const conflictData = await response.json()
+        console.warn('数据冲突：服务器有更新的数据', {
+          clientTimestamp: new Date(conflictData.clientTimestamp).toLocaleString(),
+          serverTimestamp: new Date(conflictData.serverTimestamp).toLocaleString()
+        })
+
+        // 使用服务器的最新数据
+        if (conflictData.serverData) {
+          widgets.value = conflictData.serverData.widgets || []
+          maxZIndex.value = conflictData.serverData.maxZIndex || 100
+          navigationSites.value = conflictData.serverData.navigationSites || []
+          navigationCategories.value = conflictData.serverData.categories || ['工作', '学习', '其他']
+
+          // 同步到本地存储
+          saveToLocal()
+
+          // 抛出错误，让调用者知道发生了冲突
+          throw new Error('数据冲突：已自动使用服务器最新数据')
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save to cloud')
+      }
     } catch (error) {
       console.error('Failed to save to cloud:', error)
       throw error

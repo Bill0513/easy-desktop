@@ -49,6 +49,35 @@ export const onRequest = async (context) => {
     if (request.method === 'POST') {
         try {
             const body = await request.json()
+
+            // 获取云端现有数据
+            const existingDataStr = await env.DESKTOP_DATA.get('user-desktop')
+
+            if (existingDataStr) {
+                const existingData = JSON.parse(existingDataStr)
+
+                // 时间戳校验：只有当客户端数据更新时间晚于云端数据时才允许保存
+                if (existingData.updatedAt && body.updatedAt) {
+                    if (body.updatedAt < existingData.updatedAt) {
+                        // 客户端数据较旧，拒绝保存
+                        return new Response(JSON.stringify({
+                            error: 'Data conflict: server has newer data',
+                            conflict: true,
+                            serverData: existingData,
+                            clientTimestamp: body.updatedAt,
+                            serverTimestamp: existingData.updatedAt
+                        }), {
+                            status: 409, // Conflict
+                            headers: {
+                                ...corsHeaders,
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                    }
+                }
+            }
+
+            // 保存数据
             await env.DESKTOP_DATA.put('user-desktop', JSON.stringify(body))
             return new Response(JSON.stringify({ success: true }), {
                 headers: {
