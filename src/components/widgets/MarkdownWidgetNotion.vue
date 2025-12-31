@@ -9,6 +9,11 @@ import Typography from '@tiptap/extension-typography'
 import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { Markdown } from 'tiptap-markdown'
 
 const props = defineProps<{
   widget: MarkdownWidget
@@ -46,6 +51,7 @@ const slashCommands = [
   { title: '有序列表', icon: '1.', command: () => editor.value?.chain().focus().toggleOrderedList().run() },
   { title: '引用', icon: '"', command: () => editor.value?.chain().focus().toggleBlockquote().run() },
   { title: '代码块', icon: '</>', command: () => editor.value?.chain().focus().toggleCodeBlock().run() },
+  { title: '表格', icon: '⊞', command: () => editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
 ]
 
 // 初始化编辑器
@@ -68,6 +74,17 @@ const editor = useEditor({
     Underline,
     TextStyle,
     Color,
+    Table.configure({
+      resizable: true,
+    }),
+    TableRow,
+    TableHeader,
+    TableCell,
+    Markdown.configure({
+      html: true,
+      transformPastedText: true,
+      transformCopiedText: true,
+    }),
   ],
   content: typeof props.widget.content === 'string' ? props.widget.content : '',
   editorProps: {
@@ -168,8 +185,10 @@ const executeSlashCommand = (index: number) => {
 const copyContent = async () => {
   try {
     if (editor.value) {
-      const html = editor.value.getHTML()
-      await navigator.clipboard.writeText(html)
+      // 使用 Markdown 扩展获取 Markdown 格式
+      // @ts-ignore - tiptap-markdown 扩展的类型定义
+      const markdown = editor.value.storage.markdown?.getMarkdown?.() || editor.value.getText()
+      await navigator.clipboard.writeText(markdown)
       copied.value = true
       setTimeout(() => {
         copied.value = false
@@ -191,6 +210,9 @@ const toggleBlockquote = () => editor.value?.chain().focus().toggleBlockquote().
 const toggleBulletList = () => editor.value?.chain().focus().toggleBulletList().run()
 const toggleOrderedList = () => editor.value?.chain().focus().toggleOrderedList().run()
 const setHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => editor.value?.chain().focus().toggleHeading({ level }).run()
+
+// 表格操作
+const insertTable = () => editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
 
 // 检查是否激活
 const isBold = computed(() => editor.value?.isActive('bold'))
@@ -314,6 +336,20 @@ onBeforeUnmount(() => {
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </button>
+
+      <div class="w-px h-5 bg-gray-300 mx-1"></div>
+
+      <!-- 表格按钮 -->
+      <button
+        class="toolbar-btn"
+        :class="{ 'is-active': editor?.isActive('table') }"
+        @click="insertTable"
+        title="插入表格"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       </button>
 
@@ -546,5 +582,58 @@ onBeforeUnmount(() => {
   flex: 1;
   font-size: 0.875rem;
   color: #2d2d2d;
+}
+
+/* 表格样式 */
+:deep(.tiptap-editor table) {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+  border: 2px solid #2d2d2d;
+}
+
+:deep(.tiptap-editor td),
+:deep(.tiptap-editor th) {
+  min-width: 1em;
+  border: 2px solid #2d2d2d;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+:deep(.tiptap-editor th) {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f5f5f5;
+}
+
+:deep(.tiptap-editor .selectedCell:after) {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(77, 124, 255, 0.1);
+  pointer-events: none;
+}
+
+:deep(.tiptap-editor .column-resize-handle) {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #4d7cff;
+  pointer-events: none;
+}
+
+:deep(.tiptap-editor .tableWrapper) {
+  overflow-x: auto;
+  margin: 1rem 0;
 }
 </style>
