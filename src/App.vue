@@ -31,21 +31,10 @@ const handleBeforeUnload = () => {
   store.syncBeforeUnload()
 }
 
-onMounted(async () => {
-  // 等待数据加载完成后再进行其他操作
-  await store.init()
-  store.loadActiveTab()
-  store.initNavigation()
+onMounted(() => {
+  // 只注册事件监听器，不加载数据
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('beforeunload', handleBeforeUnload)
-
-  // 启动自动同步定时器（5分钟）
-  syncInterval = window.setInterval(() => {
-    store.syncToCloud()
-  }, 5 * 60 * 1000)
-
-  // 数据加载完成后才进行首次同步
-  store.syncToCloud()
 })
 
 onUnmounted(() => {
@@ -58,11 +47,26 @@ onUnmounted(() => {
   }
 
   // 组件卸载时同步一次
-  store.syncToCloud()
+  if (isUnlocked.value) {
+    store.syncToCloud()
+  }
 })
 
-const handleUnlock = () => {
+const handleUnlock = async () => {
   isUnlocked.value = true
+
+  // 密码验证成功后才加载数据
+  await store.init()
+  store.loadActiveTab()
+  store.initNavigation()
+
+  // 启动自动同步定时器（5分钟）
+  syncInterval = window.setInterval(() => {
+    store.syncToCloud()
+  }, 5 * 60 * 1000)
+
+  // 数据加载完成后才进行首次同步
+  store.syncToCloud()
 }
 </script>
 

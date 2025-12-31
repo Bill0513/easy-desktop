@@ -380,13 +380,15 @@ onBeforeUnmount(() => {
 
       <!-- 表格操作按钮（仅在表格中显示） -->
       <template v-if="isInTable">
+        <!-- 行操作 -->
         <button
           class="toolbar-btn"
           @click="addRowAfter"
           title="在下方插入行"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-6-6h12" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16" />
           </svg>
         </button>
 
@@ -397,16 +399,21 @@ onBeforeUnmount(() => {
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12l12 0" opacity="0.5" />
           </svg>
         </button>
 
+        <div class="w-px h-5 bg-gray-300 mx-1"></div>
+
+        <!-- 列操作 -->
         <button
           class="toolbar-btn"
           @click="addColumnAfter"
           title="在右侧插入列"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-6-6h12" transform="rotate(90 12 12)" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16" />
           </svg>
         </button>
 
@@ -416,7 +423,8 @@ onBeforeUnmount(() => {
           title="删除列"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12" opacity="0.5" />
           </svg>
         </button>
       </template>
