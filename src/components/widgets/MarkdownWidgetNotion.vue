@@ -18,6 +18,24 @@ const store = useDesktopStore()
 const copied = ref(false)
 const showSlashMenu = ref(false)
 const selectedSlashIndex = ref(0)
+const slashMenuPosition = ref({ top: 0, left: 0 })
+
+// 计算光标位置
+const updateSlashMenuPosition = () => {
+  if (!editor.value) return
+
+  const { state, view } = editor.value
+  const { from } = state.selection
+
+  // 获取光标的 DOM 坐标
+  const coords = view.coordsAtPos(from)
+
+  // 计算相对于视口的位置
+  slashMenuPosition.value = {
+    top: coords.bottom + 4, // 光标下方 4px
+    left: coords.left,
+  }
+}
 
 // 斜杠命令列表
 const slashCommands = [
@@ -92,6 +110,7 @@ const editor = useEditor({
           setTimeout(() => {
             showSlashMenu.value = true
             selectedSlashIndex.value = 0
+            updateSlashMenuPosition()
           }, 10)
         }
       }
@@ -321,22 +340,29 @@ onBeforeUnmount(() => {
       <EditorContent :editor="editor" />
 
       <!-- 斜杠命令菜单 -->
-      <div
-        v-if="showSlashMenu"
-        class="slash-menu"
-      >
+      <Teleport to="body">
         <div
-          v-for="(command, index) in slashCommands"
-          :key="index"
-          class="slash-menu-item"
-          :class="{ 'is-selected': index === selectedSlashIndex }"
-          @click="executeSlashCommand(index)"
-          @mouseenter="selectedSlashIndex = index"
+          v-if="showSlashMenu"
+          class="slash-menu"
+          :style="{
+            position: 'fixed',
+            top: `${slashMenuPosition.top}px`,
+            left: `${slashMenuPosition.left}px`,
+          }"
         >
-          <span class="slash-menu-icon">{{ command.icon }}</span>
-          <span class="slash-menu-title">{{ command.title }}</span>
+          <div
+            v-for="(command, index) in slashCommands"
+            :key="index"
+            class="slash-menu-item"
+            :class="{ 'is-selected': index === selectedSlashIndex }"
+            @click="executeSlashCommand(index)"
+            @mouseenter="selectedSlashIndex = index"
+          >
+            <span class="slash-menu-icon">{{ command.icon }}</span>
+            <span class="slash-menu-title">{{ command.title }}</span>
+          </div>
         </div>
-      </div>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -479,11 +505,7 @@ onBeforeUnmount(() => {
 
 /* 斜杠命令菜单样式 */
 .slash-menu {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
+  z-index: 99999;
   background: white;
   border: 2px solid #2d2d2d;
   border-radius: 8px;
