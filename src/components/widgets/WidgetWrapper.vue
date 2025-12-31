@@ -6,7 +6,7 @@ import NoteWidget from './NoteWidget.vue'
 import TodoWidget from './TodoWidget.vue'
 import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
-import MarkdownWidgetTiptap from './MarkdownWidgetTiptap.vue'
+import MarkdownWidgetNotion from './MarkdownWidgetNotion.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -97,7 +97,7 @@ const widgetComponent = computed(() => {
     case 'todo': return TodoWidget
     case 'text': return TextWidget
     case 'image': return ImageWidget
-    case 'markdown': return MarkdownWidgetTiptap
+    case 'markdown': return MarkdownWidgetNotion
     default: return null
   }
 })
