@@ -231,13 +231,10 @@ const setHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => editor.value?.chain().focus
 
 // 表格操作
 const insertTable = () => editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-const addColumnBefore = () => editor.value?.chain().focus().addColumnBefore().run()
 const addColumnAfter = () => editor.value?.chain().focus().addColumnAfter().run()
 const deleteColumn = () => editor.value?.chain().focus().deleteColumn().run()
-const addRowBefore = () => editor.value?.chain().focus().addRowBefore().run()
 const addRowAfter = () => editor.value?.chain().focus().addRowAfter().run()
 const deleteRow = () => editor.value?.chain().focus().deleteRow().run()
-const deleteTable = () => editor.value?.chain().focus().deleteTable().run()
 
 // 检查是否在表格中
 const isInTable = computed(() => editor.value?.isActive('table'))
@@ -385,16 +382,6 @@ onBeforeUnmount(() => {
       <template v-if="isInTable">
         <button
           class="toolbar-btn"
-          @click="addRowBefore"
-          title="在上方插入行"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-
-        <button
-          class="toolbar-btn"
           @click="addRowAfter"
           title="在下方插入行"
         >
@@ -415,16 +402,6 @@ onBeforeUnmount(() => {
 
         <button
           class="toolbar-btn"
-          @click="addColumnBefore"
-          title="在左侧插入列"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-
-        <button
-          class="toolbar-btn"
           @click="addColumnAfter"
           title="在右侧插入列"
         >
@@ -440,16 +417,6 @@ onBeforeUnmount(() => {
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-          </svg>
-        </button>
-
-        <button
-          class="toolbar-btn"
-          @click="deleteTable"
-          title="删除表格"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </template>
