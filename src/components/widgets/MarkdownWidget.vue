@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { MarkdownWidget, EditorJSOutputData } from '@/types'
+import type { MarkdownWidget } from '@/types'
 import EditorJS, { OutputData } from '@editorjs/editorjs'
 import Header from '@editorjs/header'
 import List from '@editorjs/list'
@@ -82,7 +82,7 @@ const initEditor = async () => {
       onChange: async () => {
         if (editor) {
           const outputData = await editor.save()
-          props.widget.content = outputData as EditorJSOutputData
+          props.widget.content = JSON.stringify(outputData)
           store.save()
         }
       },

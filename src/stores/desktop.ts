@@ -71,19 +71,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       switch (widget.type) {
         case 'note':
         case 'text':
+        case 'markdown':
           return widget.content.toLowerCase().includes(query)
-        case 'markdown': {
-          // 处理 markdown 内容可能是字符串或 EditorJS 数据
-          if (typeof widget.content === 'string') {
-            return widget.content.toLowerCase().includes(query)
-          } else {
-            // 搜索 EditorJS blocks 中的文本
-            return widget.content.blocks.some((block: any) => {
-              const text = block.data?.text || block.data?.code || ''
-              return text.toLowerCase().includes(query)
-            })
-          }
-        }
         case 'todo':
           return widget.items.some(item => item.text.toLowerCase().includes(query))
         default:
