@@ -16,6 +16,19 @@ const props = defineProps<{
 
 const store = useDesktopStore()
 const copied = ref(false)
+const showSlashMenu = ref(false)
+const selectedSlashIndex = ref(0)
+
+// 斜杠命令列表
+const slashCommands = [
+  { title: '标题 1', icon: 'H1', command: () => editor.value?.chain().focus().toggleHeading({ level: 1 }).run() },
+  { title: '标题 2', icon: 'H2', command: () => editor.value?.chain().focus().toggleHeading({ level: 2 }).run() },
+  { title: '标题 3', icon: 'H3', command: () => editor.value?.chain().focus().toggleHeading({ level: 3 }).run() },
+  { title: '无序列表', icon: '•', command: () => editor.value?.chain().focus().toggleBulletList().run() },
+  { title: '有序列表', icon: '1.', command: () => editor.value?.chain().focus().toggleOrderedList().run() },
+  { title: '引用', icon: '"', command: () => editor.value?.chain().focus().toggleBlockquote().run() },
+  { title: '代码块', icon: '</>', command: () => editor.value?.chain().focus().toggleCodeBlock().run() },
+]
 
 // 初始化编辑器
 const editor = useEditor({
@@ -43,11 +56,62 @@ const editor = useEditor({
     attributes: {
       class: 'tiptap-editor prose prose-sm max-w-none focus:outline-none',
     },
+    handleKeyDown: (view, event) => {
+      // 处理斜杠命令菜单的键盘事件
+      if (showSlashMenu.value) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault()
+          selectedSlashIndex.value = (selectedSlashIndex.value + 1) % slashCommands.length
+          return true
+        }
+        if (event.key === 'ArrowUp') {
+          event.preventDefault()
+          selectedSlashIndex.value = (selectedSlashIndex.value - 1 + slashCommands.length) % slashCommands.length
+          return true
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          executeSlashCommand(selectedSlashIndex.value)
+          return true
+        }
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          showSlashMenu.value = false
+          return true
+        }
+      }
+
+      // 检测斜杠输入
+      if (event.key === '/') {
+        const { state } = view
+        const { from } = state.selection
+        const textBefore = state.doc.textBetween(Math.max(0, from - 1), from, '\n')
+
+        // 如果是在行首或空格后输入斜杠，显示菜单
+        if (textBefore === '' || textBefore === ' ') {
+          setTimeout(() => {
+            showSlashMenu.value = true
+            selectedSlashIndex.value = 0
+          }, 10)
+        }
+      }
+
+      return false
+    },
   },
   onUpdate: ({ editor }) => {
     const html = editor.getHTML()
     props.widget.content = html
     store.save()
+
+    // 检查是否需要隐藏斜杠菜单
+    const { state } = editor
+    const { from } = state.selection
+    const textBefore = state.doc.textBetween(Math.max(0, from - 10), from, '\n')
+
+    if (!textBefore.includes('/')) {
+      showSlashMenu.value = false
+    }
   },
 })
 
@@ -60,6 +124,26 @@ watch(() => props.widget.content, (newContent) => {
     }
   }
 })
+
+// 执行斜杠命令
+const executeSlashCommand = (index: number) => {
+  if (!editor.value) return
+
+  // 删除斜杠字符
+  const { state } = editor.value
+  const { from } = state.selection
+  const textBefore = state.doc.textBetween(Math.max(0, from - 10), from, '\n')
+  const slashIndex = textBefore.lastIndexOf('/')
+
+  if (slashIndex !== -1) {
+    const deleteFrom = from - (textBefore.length - slashIndex)
+    editor.value.chain().focus().deleteRange({ from: deleteFrom, to: from }).run()
+  }
+
+  // 执行命令
+  slashCommands[index].command()
+  showSlashMenu.value = false
+}
 
 // 复制内容
 const copyContent = async () => {
@@ -233,8 +317,26 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 编辑器内容 -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto relative">
       <EditorContent :editor="editor" />
+
+      <!-- 斜杠命令菜单 -->
+      <div
+        v-if="showSlashMenu"
+        class="slash-menu"
+      >
+        <div
+          v-for="(command, index) in slashCommands"
+          :key="index"
+          class="slash-menu-item"
+          :class="{ 'is-selected': index === selectedSlashIndex }"
+          @click="executeSlashCommand(index)"
+          @mouseenter="selectedSlashIndex = index"
+        >
+          <span class="slash-menu-icon">{{ command.icon }}</span>
+          <span class="slash-menu-title">{{ command.title }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -294,8 +396,25 @@ onBeforeUnmount(() => {
   margin-bottom: 0.75rem;
 }
 
+:deep(.tiptap-editor ul) {
+  list-style-type: disc;
+}
+
+:deep(.tiptap-editor ol) {
+  list-style-type: decimal;
+}
+
 :deep(.tiptap-editor li) {
   margin-bottom: 0.25rem;
+  display: list-item;
+}
+
+:deep(.tiptap-editor ul ul) {
+  list-style-type: circle;
+}
+
+:deep(.tiptap-editor ul ul ul) {
+  list-style-type: square;
 }
 
 /* 引用样式 */
@@ -356,5 +475,54 @@ onBeforeUnmount(() => {
 :deep(.tiptap-editor .ProseMirror-selectednode) {
   outline: 2px solid #4d7cff;
   outline-offset: 2px;
+}
+
+/* 斜杠命令菜单样式 */
+.slash-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: white;
+  border: 2px solid #2d2d2d;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0px #2d2d2d;
+  padding: 0.5rem;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.slash-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-family: 'Patrick Hand', cursive;
+}
+
+.slash-menu-item:hover,
+.slash-menu-item.is-selected {
+  background-color: #f5f5f5;
+}
+
+.slash-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  color: #666;
+}
+
+.slash-menu-title {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #2d2d2d;
 }
 </style>
