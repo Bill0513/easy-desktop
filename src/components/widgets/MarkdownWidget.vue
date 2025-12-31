@@ -269,8 +269,31 @@ const blocksToMarkdown = (blocks: any[]): string => {
   }).join('\n\n')
 }
 
+// 处理点击外部关闭工具箱
+const handleClickOutside = (event: MouseEvent) => {
+  if (!editorContainer.value) return
+
+  const target = event.target as HTMLElement
+  // 检查点击是否在编辑器容器外部
+  if (!editorContainer.value.contains(target)) {
+    // 查找并关闭工具箱
+    const toolbox = editorContainer.value.querySelector('.ce-toolbox')
+    if (toolbox && toolbox.classList.contains('ce-toolbox--opened')) {
+      toolbox.classList.remove('ce-toolbox--opened')
+    }
+
+    // 查找并关闭 popover
+    const popover = editorContainer.value.querySelector('.ce-popover')
+    if (popover && popover.classList.contains('ce-popover--opened')) {
+      popover.classList.remove('ce-popover--opened')
+    }
+  }
+}
+
 onMounted(() => {
   initEditor()
+  // 添加全局点击监听器
+  document.addEventListener('mousedown', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
@@ -278,6 +301,8 @@ onBeforeUnmount(() => {
     editor.destroy()
     editor = null
   }
+  // 移除全局点击监听器
+  document.removeEventListener('mousedown', handleClickOutside)
 })
 
 // 监听 widget 内容变化（外部更新）
