@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { MarkdownWidget } from '@/types'
-import EditorJS from '@editorjs/editorjs'
+import type { MarkdownWidget, EditorJSOutputData } from '@/types'
+import EditorJS, { OutputData } from '@editorjs/editorjs'
 import Header from '@editorjs/header'
 import List from '@editorjs/list'
 import Code from '@editorjs/code'
@@ -27,28 +27,22 @@ const initEditor = async () => {
 
   try {
     // 解析现有的 markdown 内容为 Editor.js 数据格式
-    let initialData = props.widget.content
+    let initialData: OutputData
 
     // 如果内容是字符串（旧的 markdown 格式），转换为 Editor.js 格式
-    if (typeof initialData === 'string') {
+    if (typeof props.widget.content === 'string') {
       initialData = {
         time: Date.now(),
-        blocks: parseMarkdownToBlocks(initialData)
+        blocks: parseMarkdownToBlocks(props.widget.content)
       }
+    } else {
+      initialData = props.widget.content as OutputData
     }
 
     editor = new EditorJS({
       holder: editorContainer.value,
       tools: {
-        header: {
-          class: Header,
-          inlineToolbar: ['marker', 'link'],
-          config: {
-            placeholder: '输入标题',
-            levels: [1, 2, 3, 4, 5, 6],
-            defaultLevel: 2
-          }
-        },
+        header: Header as any,
         list: {
           class: List,
           inlineToolbar: true,
@@ -88,7 +82,7 @@ const initEditor = async () => {
       onChange: async () => {
         if (editor) {
           const outputData = await editor.save()
-          props.widget.content = outputData
+          props.widget.content = outputData as EditorJSOutputData
           store.save()
         }
       },

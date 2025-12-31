@@ -53,10 +53,17 @@ export interface ImageWidget extends BaseWidget {
   offsetY: number
 }
 
+// Editor.js 输出数据格式
+export interface EditorJSOutputData {
+  time: number
+  blocks: any[]
+  version?: string
+}
+
 // Markdown组件
 export interface MarkdownWidget extends BaseWidget {
   type: 'markdown'
-  content: string
+  content: string | EditorJSOutputData
 }
 
 // 联合类型

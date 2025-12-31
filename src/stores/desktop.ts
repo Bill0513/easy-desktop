@@ -64,31 +64,41 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (!searchQuery.value.trim()) return []
     const query = searchQuery.value.toLowerCase()
 
-    // 根据当前 tab 返回不同的搜索结果
-    if (activeTab.value === 'navigation') {
-      // 搜索导航站网站
-      return navigationSites.value.filter(site =>
-        site.name.toLowerCase().includes(query) ||
-        site.url.toLowerCase().includes(query) ||
-        site.description.toLowerCase().includes(query)
-      )
-    }
-
-    // 搜索桌面组件
-    return widgets.value.filter(widget => {
+    // 全局搜索：同时搜索桌面组件和导航网站
+    const widgetResults = widgets.value.filter(widget => {
       if (widget.title.toLowerCase().includes(query)) return true
 
       switch (widget.type) {
         case 'note':
         case 'text':
-        case 'markdown':
           return widget.content.toLowerCase().includes(query)
+        case 'markdown': {
+          // 处理 markdown 内容可能是字符串或 EditorJS 数据
+          if (typeof widget.content === 'string') {
+            return widget.content.toLowerCase().includes(query)
+          } else {
+            // 搜索 EditorJS blocks 中的文本
+            return widget.content.blocks.some((block: any) => {
+              const text = block.data?.text || block.data?.code || ''
+              return text.toLowerCase().includes(query)
+            })
+          }
+        }
         case 'todo':
           return widget.items.some(item => item.text.toLowerCase().includes(query))
         default:
           return false
       }
     })
+
+    const siteResults = navigationSites.value.filter(site =>
+      site.name.toLowerCase().includes(query) ||
+      site.url.toLowerCase().includes(query) ||
+      site.description.toLowerCase().includes(query)
+    )
+
+    // 合并结果：桌面组件在前，导航网站在后
+    return [...widgetResults, ...siteResults]
   })
 
   // 排序后的导航站网站
@@ -534,6 +544,10 @@ export const useDesktopStore = defineStore('desktop', () => {
   function focusWidget(id: string) {
     const widget = getWidgetById.value(id)
     if (widget) {
+      // 自动切换到桌面 tab
+      if (activeTab.value !== 'desktop') {
+        setActiveTab('desktop')
+      }
       widget.isMinimized = false
       widget.zIndex = ++maxZIndex.value
       save()
