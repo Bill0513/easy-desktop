@@ -75,6 +75,28 @@ export const onRequest = async (context) => {
                         })
                     }
                 }
+
+                // 空数据保护：如果云端有数据，客户端发送空数组，拒绝保存
+                const hasExistingWidgets = existingData.widgets && existingData.widgets.length > 0
+                const hasExistingNavigation = existingData.navigationSites && existingData.navigationSites.length > 0
+                const isClientEmpty = (!body.widgets || body.widgets.length === 0) &&
+                                     (!body.navigationSites || body.navigationSites.length === 0)
+
+                if ((hasExistingWidgets || hasExistingNavigation) && isClientEmpty) {
+                    console.warn('拒绝空数据覆盖：云端有数据，客户端发送空数组')
+                    return new Response(JSON.stringify({
+                        error: 'Cannot overwrite existing data with empty data',
+                        conflict: true,
+                        serverData: existingData,
+                        reason: 'empty_data_protection'
+                    }), {
+                        status: 409, // Conflict
+                        headers: {
+                            ...corsHeaders,
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                }
             }
 
             // 保存数据

@@ -39,6 +39,7 @@ export const useDesktopStore = defineStore('desktop', () => {
   const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
   const lastSyncTime = ref<number | null>(null)
   const syncErrorMessage = ref<string>('')
+  const isCloudInitialized = ref(false) // 标记是否已从云端成功加载过数据
 
   // Getters
   const getWidgetById = computed(() => {
@@ -125,6 +126,8 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.categories !== undefined) {
           navigationCategories.value = cloudData.categories
         }
+        // 标记已从云端成功加载
+        isCloudInitialized.value = true
         // 同步云端数据到本地存储
         saveToLocal()
       } else {
@@ -142,9 +145,15 @@ export const useDesktopStore = defineStore('desktop', () => {
           if (parsed.categories !== undefined) {
             navigationCategories.value = parsed.categories
           }
+          // 如果本地有数据，标记为已初始化（允许后续同步到云端）
+          if (parsed.widgets && parsed.widgets.length > 0) {
+            isCloudInitialized.value = true
+          }
         } else {
           widgets.value = []
           maxZIndex.value = 100
+          // 新用户，没有任何数据，标记为已初始化
+          isCloudInitialized.value = true
         }
       }
     } catch (error) {
@@ -162,9 +171,15 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (parsed.categories !== undefined) {
           navigationCategories.value = parsed.categories
         }
+        // 从本地加载成功，标记为已初始化
+        if (parsed.widgets && parsed.widgets.length > 0) {
+          isCloudInitialized.value = true
+        }
       } else {
         widgets.value = []
         maxZIndex.value = 100
+        // 加载失败且无本地数据，不标记为已初始化，防止空数据同步
+        isCloudInitialized.value = false
       }
     } finally {
       isLoading.value = false
@@ -202,9 +217,32 @@ export const useDesktopStore = defineStore('desktop', () => {
       // 处理数据冲突
       if (response.status === 409) {
         const conflictData = await response.json()
+
+        // 空数据保护：服务端拒绝空数据覆盖
+        if (conflictData.reason === 'empty_data_protection') {
+          console.warn('空数据保护：服务端拒绝空数据覆盖，使用服务端数据')
+
+          // 使用服务器的数据
+          if (conflictData.serverData) {
+            widgets.value = conflictData.serverData.widgets || []
+            maxZIndex.value = conflictData.serverData.maxZIndex || 100
+            navigationSites.value = conflictData.serverData.navigationSites || []
+            navigationCategories.value = conflictData.serverData.categories || ['工作', '学习', '其他']
+
+            // 同步到本地存储
+            saveToLocal()
+
+            // 标记为已初始化
+            isCloudInitialized.value = true
+          }
+
+          throw new Error('空数据保护：已自动使用服务器数据')
+        }
+
+        // 时间戳冲突：服务器有更新的数据
         console.warn('数据冲突：服务器有更新的数据', {
-          clientTimestamp: new Date(conflictData.clientTimestamp).toLocaleString(),
-          serverTimestamp: new Date(conflictData.serverTimestamp).toLocaleString()
+          clientTimestamp: conflictData.clientTimestamp ? new Date(conflictData.clientTimestamp).toLocaleString() : 'unknown',
+          serverTimestamp: conflictData.serverTimestamp ? new Date(conflictData.serverTimestamp).toLocaleString() : 'unknown'
         })
 
         // 使用服务器的最新数据
@@ -254,6 +292,19 @@ export const useDesktopStore = defineStore('desktop', () => {
       return // 防止重复同步
     }
 
+    // 安全检查：如果未从云端成功初始化，不允许同步（防止空数据覆盖云端数据）
+    if (!isCloudInitialized.value) {
+      console.warn('未从云端成功加载数据，跳过同步以防止数据丢失')
+      syncStatus.value = 'error'
+      syncErrorMessage.value = '数据未初始化，无法同步'
+      setTimeout(() => {
+        if (syncStatus.value === 'error') {
+          syncStatus.value = 'idle'
+        }
+      }, 5000)
+      return
+    }
+
     syncStatus.value = 'syncing'
     syncErrorMessage.value = ''
 
@@ -283,6 +334,12 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // 页面关闭前同步（使用sendBeacon确保数据发送）
   function syncBeforeUnload() {
+    // 安全检查：如果未从云端成功初始化，不允许同步
+    if (!isCloudInitialized.value) {
+      console.warn('未从云端成功加载数据，跳过关闭前同步以防止数据丢失')
+      return
+    }
+
     const data: DesktopData = {
       widgets: widgets.value,
       maxZIndex: maxZIndex.value,

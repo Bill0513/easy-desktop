@@ -36,6 +36,8 @@ A hand-drawn style online desktop application built with Vue 3 + TypeScript. Use
     - `CategoryManagerDialog.vue` - Manage bookmark categories
   - News Tab:
     - `NewsPage.vue` - News aggregator with source filtering (mock data)
+  - Backup Management:
+    - `BackupManager.vue` - Backup/restore interface with list view, manual backup, restore with confirmation
 
 ### Tab System
 - Three tabs: `desktop` (workspace), `navigation` (website bookmarks), and `news` (news feed)
@@ -131,16 +133,23 @@ Example:
 - **Secondary**: Cloudflare R2 via `/api/image` endpoints (stores image files)
 - **Fallback**: localStorage `cloud-desktop-data` (complete data backup)
 - **News cache**: localStorage `cloud-desktop-news-cache` (mock news data)
+- **Backup**: Automated daily backups to R2 (see BACKUP.md for configuration)
 - **Sync strategy**:
   - `save()` writes to localStorage immediately
   - `syncToCloud()` syncs to Cloudflare KV (auto-runs every 5 minutes + on page unload)
   - `init()` loads from cloud first, falls back to localStorage if cloud unavailable
   - `syncBeforeUnload()` uses sendBeacon API for reliable sync on page close
+  - **Data protection**: `isCloudInitialized` flag prevents empty data from overwriting cloud data
+  - **Server-side protection**: API rejects empty data when cloud has existing data
 
 ### Cloudflare Functions API
 Located in `functions/api/`:
 - `desktop.ts` - GET/POST/DELETE for widget data in KV namespace `DESKTOP_DATA`
 - `image.ts` - POST (upload), GET (retrieve), DELETE for images in R2 bucket `IMAGE_BUCKET`
+- `restore.ts` - GET (list backups), POST (restore from backup) for data recovery
+
+Located in `functions/scheduled/`:
+- `backup.ts` - Automated backup job (triggered by Cron or manual POST request)
 
 Both require environment bindings configured in Cloudflare Pages dashboard.
 
@@ -160,6 +169,32 @@ Data structure:
 - `NavigationSite`: id, name, url, icon, description, color, category, order, timestamps
 - Stored in same KV entry as widgets under `navigationSites` and `categories` fields
 
+### Backup & Recovery System
+Automated backup system to protect against data loss:
+
+**Data Protection Mechanisms:**
+- **Client-side**: `isCloudInitialized` flag prevents syncing before successful cloud load
+- **Server-side**: API rejects empty data when cloud has existing data (returns 409 Conflict)
+- **Automatic recovery**: On 409 error, client automatically uses server data
+
+**Backup Features:**
+- **Manual backup**: Via `BackupManager.vue` UI component
+- **Automated backup**: GitHub Actions triggers `/scheduled/backup` daily at 2:00 UTC
+- **Backup storage**: R2 bucket with filename format `backup-YYYY-MM-DDTHH-MM-SS.json`
+- **Retention policy**: Automatically deletes backups older than 30 days
+- **Restore**: Select any backup from list to restore (with confirmation dialog)
+
+**GitHub Actions Setup:**
+1. Configure `BACKUP_DOMAIN` secret in repository settings (Settings → Secrets → Actions)
+2. Secret value should be domain only (e.g., `your-app.pages.dev`, no `https://`)
+3. Workflow runs daily at 2:00 UTC or can be manually triggered
+4. Logs available in Actions tab for debugging
+
+**API Endpoints:**
+- `GET /api/restore` - List all available backups
+- `POST /api/restore` - Restore from specific backup file
+- `POST /scheduled/backup` - Create new backup (manual or automated)
+
 ## Key Files
 
 | File | Purpose |
@@ -168,12 +203,16 @@ Data structure:
 | `src/components/DesktopCanvas.vue` | Canvas, drag logic, widget z-ordering, paste event handling |
 | `src/components/widgets/WidgetWrapper.vue` | Widget container with title bar, controls, resize handle |
 | `src/components/NavigationPage.vue` | Website bookmark manager with drag-to-reorder and categories |
+| `src/components/BackupManager.vue` | Backup/restore UI with list, manual backup, restore confirmation |
 | `src/components/TabBar.vue` | Left-side tab switcher with hover expansion |
 | `src/components/PasswordInput.vue` | 6-digit password entry with auto-focus navigation |
 | `src/components/SyncStatus.vue` | Visual sync status indicator (idle/syncing/success/error) |
 | `src/types/index.ts` | TypeScript interfaces for all widget types, tabs, navigation, news |
-| `functions/api/desktop.ts` | Cloudflare KV persistence API |
+| `functions/api/desktop.ts` | Cloudflare KV persistence API with empty data protection |
 | `functions/api/image.ts` | Cloudflare R2 image storage API |
+| `functions/api/restore.ts` | Backup restore API - list and restore from R2 backups |
+| `functions/scheduled/backup.ts` | Backup job - saves KV data to R2, cleans old backups (30 days) |
+| `.github/workflows/backup.yml` | GitHub Actions daily backup trigger (uses BACKUP_DOMAIN secret) |
 
 ## Design System
 
