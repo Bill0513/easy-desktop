@@ -34,7 +34,7 @@
       </div>
 
       <!-- 新闻网格 -->
-      <div v-else-if="store.filteredNewsSources.length > 0" class="grid gap-4 auto-rows-[400px]" :class="gridColsClass">
+      <div v-else-if="store.filteredNewsSources.length > 0" class="grid gap-4 auto-rows-[520px]" :class="gridColsClass">
         <NewsCard
           v-for="source in store.filteredNewsSources"
           :key="source.id"

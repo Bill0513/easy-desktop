@@ -780,6 +780,39 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // 带时间检查的新闻刷新（只刷新超过指定时间的源）
+  async function refreshNewsWithCheck(maxAge: number) {
+    const now = Date.now()
+    const sourcesToRefresh: string[] = []
+
+    // 检查每个启用的源是否需要刷新
+    for (const sourceId of enabledSources.value) {
+      const source = newsSources.value.find(s => s.id === sourceId)
+      // 如果源不存在，或者上次更新时间超过 maxAge，则需要刷新
+      if (!source || !source.lastUpdated || (now - source.lastUpdated) > maxAge) {
+        sourcesToRefresh.push(sourceId)
+      }
+    }
+
+    if (sourcesToRefresh.length === 0) {
+      console.log('All news sources are up to date')
+      return
+    }
+
+    console.log(`Refreshing ${sourcesToRefresh.length} news sources:`, sourcesToRefresh)
+    isLoadingNews.value = true
+
+    try {
+      const promises = sourcesToRefresh.map(id => fetchNewsBySource(id))
+      await Promise.all(promises)
+      saveNewsCache()
+    } catch (error) {
+      console.error('Failed to refresh news:', error)
+    } finally {
+      isLoadingNews.value = false
+    }
+  }
+
   const filteredNewsSources = computed(() => {
     // 所有新闻源的信息
     const sourceInfo: Record<string, { name: string; icon: string }> = {
@@ -1164,6 +1197,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     fetchNews,
     fetchNewsBySource,
     toggleNewsSource,
+    refreshNewsWithCheck,
     initNews,
     addNavigationSite,
     updateNavigationSite,

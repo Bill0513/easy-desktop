@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 
 const store = useDesktopStore()
 
 // 同步间隔（5分钟）
 const SYNC_INTERVAL = 5 * 60 * 1000
+// 新闻刷新间隔（30分钟）
+const NEWS_REFRESH_INTERVAL = 30 * 60 * 1000
 
 // 当前时间（用于倒计时）
 const currentTime = ref(Date.now())
+
+// 新闻刷新状态
+const isRefreshingNews = ref(false)
 
 // 格式化具体时间
 const formatTime = (timestamp: number | null) => {
@@ -75,6 +80,23 @@ const handleSync = () => {
   store.syncToCloud()
 }
 
+// 刷新新闻（带30分钟检查）
+const handleRefreshNews = async () => {
+  isRefreshingNews.value = true
+  await store.refreshNewsWithCheck(NEWS_REFRESH_INTERVAL)
+  isRefreshingNews.value = false
+}
+
+// 监听 tab 切换，切换到新闻 tab 时自动检查刷新
+watch(() => store.activeTab, async (newTab) => {
+  if (newTab === 'news') {
+    // 自动检查并刷新过期的新闻源
+    isRefreshingNews.value = true
+    await store.refreshNewsWithCheck(NEWS_REFRESH_INTERVAL)
+    isRefreshingNews.value = false
+  }
+})
+
 // 定时器更新当前时间
 let timer: number | null = null
 
@@ -93,32 +115,69 @@ onUnmounted(() => {
 
 <template>
   <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
-    <!-- 同步状态显示 -->
-    <div
-      class="card-hand-drawn bg-paper px-3 py-2 flex flex-col gap-1 text-sm w-48"
-      :class="statusColor"
-    >
-      <div class="flex items-center gap-2">
-        <span class="text-base">{{ statusIcon }}</span>
-        <span class="font-handwritten" v-if="store.syncStatus === 'syncing'">同步中...</span>
-        <span class="font-handwritten" v-else-if="store.syncStatus === 'error'">{{ store.syncErrorMessage || '同步失败' }}</span>
-        <span class="font-handwritten" v-else>
-          下次同步: {{ nextSyncCountdown }}
+    <!-- 新闻 Tab：刷新新闻按钮 -->
+    <template v-if="store.activeTab === 'news'">
+      <div
+        class="card-hand-drawn bg-paper px-3 py-2 flex items-center gap-2 text-sm"
+        :class="isRefreshingNews ? 'text-blue-600' : 'text-gray-600'"
+      >
+        <span class="text-base">{{ isRefreshingNews ? '⏳' : '📰' }}</span>
+        <span class="font-handwritten">
+          {{ isRefreshingNews ? '刷新中...' : '新闻' }}
         </span>
       </div>
-      <div class="text-xs text-gray-500 font-handwritten" v-if="store.lastSyncTime">
-        上次同步: {{ lastSyncText }}
-      </div>
-    </div>
 
-    <!-- 手动同步按钮 -->
-    <button
-      @click="handleSync"
-      :disabled="store.syncStatus === 'syncing'"
-      class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
-      title="手动同步到云端"
-    >
-      <span class="text-base">🔄</span>
-    </button>
+      <button
+        @click="handleRefreshNews"
+        :disabled="isRefreshingNews"
+        class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
+        title="刷新新闻（超过30分钟的源会更新）"
+      >
+        <svg
+          class="w-5 h-5 transition-transform"
+          :class="{ 'animate-spin': isRefreshingNews }"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      </button>
+    </template>
+
+    <!-- 其他 Tab：同步状态显示 -->
+    <template v-else>
+      <div
+        class="card-hand-drawn bg-paper px-3 py-2 flex flex-col gap-1 text-sm w-48"
+        :class="statusColor"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-base">{{ statusIcon }}</span>
+          <span class="font-handwritten" v-if="store.syncStatus === 'syncing'">同步中...</span>
+          <span class="font-handwritten" v-else-if="store.syncStatus === 'error'">{{ store.syncErrorMessage || '同步失败' }}</span>
+          <span class="font-handwritten" v-else>
+            下次同步: {{ nextSyncCountdown }}
+          </span>
+        </div>
+        <div class="text-xs text-gray-500 font-handwritten" v-if="store.lastSyncTime">
+          上次同步: {{ lastSyncText }}
+        </div>
+      </div>
+
+      <!-- 手动同步按钮 -->
+      <button
+        @click="handleSync"
+        :disabled="store.syncStatus === 'syncing'"
+        class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
+        title="手动同步到云端"
+      >
+        <span class="text-base">🔄</span>
+      </button>
+    </template>
   </div>
 </template>
