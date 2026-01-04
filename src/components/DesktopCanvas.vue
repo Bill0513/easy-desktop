@@ -160,29 +160,63 @@ const handlePaste = async (e: ClipboardEvent) => {
       e.preventDefault()
       const file = item.getAsFile()
       if (file) {
-        // 上传到 R2
+        // 立即创建图片组件，显示上传进度
+        const widget = store.createWidget({
+          type: 'image',
+          src: '',  // 先不设置 src
+          filename: file.name,
+          x: 100,
+          y: 100,
+        })
+
+        // 使用 XMLHttpRequest 上传以跟踪进度
         const formData = new FormData()
         formData.append('file', file)
 
-        try {
-          const response = await fetch('/api/image', {
-            method: 'POST',
-            body: formData,
-          })
+        const xhr = new XMLHttpRequest()
 
-          if (response.ok) {
-            const { filename } = await response.json()
-            store.createWidget({
-              type: 'image',
-              src: filename,
-              filename,
-              x: 100,
-              y: 100,
+        // 监听上传进度
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100)
+            store.updateWidget(widget.id, { uploadProgress: progress })
+          }
+        })
+
+        // 监听上传完成
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            try {
+              const { filename } = JSON.parse(xhr.responseText)
+              store.updateWidget(widget.id, {
+                src: filename,
+                uploadProgress: undefined,
+              })
+            } catch (error) {
+              store.updateWidget(widget.id, {
+                uploadError: '解析响应失败',
+                uploadProgress: undefined,
+              })
+            }
+          } else {
+            store.updateWidget(widget.id, {
+              uploadError: `上传失败: ${xhr.status}`,
+              uploadProgress: undefined,
             })
           }
-        } catch (error) {
-          console.error('Upload failed:', error)
-        }
+        })
+
+        // 监听上传错误
+        xhr.addEventListener('error', () => {
+          store.updateWidget(widget.id, {
+            uploadError: '网络错误',
+            uploadProgress: undefined,
+          })
+        })
+
+        // 发送请求
+        xhr.open('POST', '/api/image')
+        xhr.send(formData)
       }
       break
     }

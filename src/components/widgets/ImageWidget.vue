@@ -1,22 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useDesktopStore } from "@/stores/desktop";
+import { computed } from "vue";
 import type { ImageWidget } from "@/types";
 
 const props = defineProps<{
   widget: ImageWidget;
 }>();
-
-const store = useDesktopStore();
-const showPreview = ref(false);
-const transformOrigin = ref('center center');
-
-// 拖动状态
-const isDragging = ref(false);
-const dragStartX = ref(0);
-const dragStartY = ref(0);
-const dragStartOffsetX = ref(0);
-const dragStartOffsetY = ref(0);
 
 // 获取图片完整URL
 const imageUrl = computed(() => {
@@ -25,174 +13,108 @@ const imageUrl = computed(() => {
   return `${imageDomain}/${props.widget.src}`;
 });
 
-// 计算鼠标样式
-const cursorStyle = computed(() => {
-  if (props.widget.scale > 1) {
-    return isDragging.value ? 'grabbing' : 'grab';
-  }
-  return 'default';
+// 是否正在上传
+const isUploading = computed(() => {
+  return props.widget.uploadProgress !== undefined;
 });
 
-// 鼠标滚轮缩放
-const handleWheel = (e: WheelEvent) => {
-  e.preventDefault();
-
-  // 获取容器和鼠标位置
-  const container = e.currentTarget as HTMLElement;
-  const rect = container.getBoundingClientRect();
-
-  // 计算鼠标在容器中的相对位置（百分比）
-  const x = ((e.clientX - rect.left) / rect.width) * 100;
-  const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-  // 设置缩放中心点
-  transformOrigin.value = `${x}% ${y}%`;
-
-  // 根据滚轮方向调整缩放
-  const delta = e.deltaY > 0 ? -0.1 : 0.1;
-  const newScale = Math.max(0.25, Math.min(3, props.widget.scale + delta));
-
-  // 如果缩放到1或以下，重置偏移量
-  if (newScale <= 1) {
-    store.updateWidget(props.widget.id, {
-      scale: newScale,
-      offsetX: 0,
-      offsetY: 0
-    });
-  } else {
-    store.updateWidget(props.widget.id, { scale: newScale });
-  }
-};
-
-// 开始拖动
-const handleMouseDown = (e: MouseEvent) => {
-  // 只有放大时才能拖动
-  if (props.widget.scale <= 1) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  isDragging.value = true;
-  dragStartX.value = e.clientX;
-  dragStartY.value = e.clientY;
-  dragStartOffsetX.value = props.widget.offsetX;
-  dragStartOffsetY.value = props.widget.offsetY;
-
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
-};
-
-// 拖动中
-const handleMouseMove = (e: MouseEvent) => {
-  if (!isDragging.value) return;
-
-  const deltaX = e.clientX - dragStartX.value;
-  const deltaY = e.clientY - dragStartY.value;
-
-  const newOffsetX = dragStartOffsetX.value + deltaX;
-  const newOffsetY = dragStartOffsetY.value + deltaY;
-
-  store.updateWidget(props.widget.id, {
-    offsetX: newOffsetX,
-    offsetY: newOffsetY
-  });
-};
-
-// 结束拖动
-const handleMouseUp = () => {
-  isDragging.value = false;
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', handleMouseUp);
-};
-
-// 打开预览
-const openPreview = () => {
-  showPreview.value = true;
-};
-
-// 关闭预览
-const closePreview = () => {
-  showPreview.value = false;
-};
-
-// 阻止预览区域的拖拽事件传播
-const handlePreviewDrag = (e: Event) => {
-  e.stopPropagation();
-};
-
-// 暴露方法给父组件
-defineExpose({
-  openPreview
+// 是否有错误
+const hasError = computed(() => {
+  return !!props.widget.uploadError;
 });
+
+// 下载图片
+const downloadImage = () => {
+  if (!props.widget.src) return;
+
+  const link = document.createElement('a');
+  link.href = imageUrl.value;
+  link.download = props.widget.filename || 'image';
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 </script>
 
 <template>
-  <div class="h-full flex items-center justify-center overflow-hidden p-1">
-    <!-- 图片显示区域 -->
-    <div
-      class="w-full h-full flex items-center justify-center transition-opacity"
-      :style="{ cursor: cursorStyle }"
-      @wheel="handleWheel"
-      @mousedown="handleMouseDown"
-    >
-      <img
-        v-if="widget.src"
-        :src="imageUrl"
-        :style="{
-          transform: `translate(${widget.offsetX}px, ${widget.offsetY}px) scale(${widget.scale})`,
-          transformOrigin: transformOrigin
-        }"
-        class="max-w-full max-h-full object-contain transition-transform duration-200 select-none"
-        alt="图片"
-        draggable="false"
-      />
-      <div v-else class="text-pencil/40 font-handwritten text-center">
-        <div class="text-4xl mb-2">🖼️</div>
-        <p>暂无图片</p>
+  <div class="h-full flex flex-col items-center justify-center overflow-hidden p-2">
+    <!-- 上传进度显示 -->
+    <div v-if="isUploading" class="w-full h-full flex flex-col items-center justify-center">
+      <div class="text-4xl mb-4 animate-bounce">📤</div>
+      <div class="text-lg font-handwritten text-pencil mb-2">上传中...</div>
+
+      <!-- 进度条 -->
+      <div class="w-3/4 h-6 bg-paper border-2 border-pencil rounded-lg overflow-hidden relative">
+        <div
+          class="h-full bg-blue-pen transition-all duration-300"
+          :style="{ width: `${widget.uploadProgress}%` }"
+        ></div>
+        <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-pencil">
+          {{ widget.uploadProgress }}%
+        </div>
       </div>
     </div>
 
-    <!-- 预览弹窗 -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="showPreview"
-          class="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
-          @click="closePreview"
-          @mousedown="handlePreviewDrag"
-        >
-          <!-- 关闭按钮 -->
-          <button
-            class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-            @click="closePreview"
-          >
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+    <!-- 上传错误显示 -->
+    <div v-else-if="hasError" class="w-full h-full flex flex-col items-center justify-center text-center p-4">
+      <div class="text-4xl mb-4">❌</div>
+      <div class="text-lg font-handwritten text-red-accent mb-2">上传失败</div>
+      <div class="text-sm font-handwritten text-pencil/60">{{ widget.uploadError }}</div>
+    </div>
 
-          <!-- 预览图片 -->
-          <img
-            v-if="widget.src"
-            :src="imageUrl"
-            class="max-w-[90vw] max-h-[90vh] object-contain"
-            alt="预览"
-            @click.stop
-          />
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- 图片显示区域 -->
+    <div v-else-if="widget.src" class="w-full h-full flex flex-col">
+      <!-- 图片容器 -->
+      <div class="flex-1 flex items-center justify-center overflow-hidden">
+        <img
+          v-viewer="{
+            toolbar: {
+              zoomIn: 4,
+              zoomOut: 4,
+              oneToOne: 4,
+              reset: 4,
+              prev: 0,
+              play: 0,
+              next: 0,
+              rotateLeft: 4,
+              rotateRight: 4,
+              flipHorizontal: 4,
+              flipVertical: 4,
+            },
+            title: false,
+            navbar: false,
+          }"
+          :src="imageUrl"
+          :alt="widget.filename"
+          class="max-w-full max-h-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+        />
+      </div>
+
+      <!-- 下载按钮 -->
+      <div class="flex justify-center mt-2">
+        <button
+          @click.stop="downloadImage"
+          class="btn-hand-drawn px-3 py-1 text-sm font-handwritten flex items-center gap-1 hover:scale-105 transition-transform"
+          title="下载图片"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          下载
+        </button>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else class="text-pencil/40 font-handwritten text-center">
+      <div class="text-4xl mb-2">🖼️</div>
+      <p>暂无图片</p>
+    </div>
   </div>
 </template>

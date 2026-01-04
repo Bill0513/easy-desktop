@@ -51,6 +51,8 @@ export interface ImageWidget extends BaseWidget {
   scale: number
   offsetX: number
   offsetY: number
+  uploadProgress?: number  // 上传进度 0-100
+  uploadError?: string  // 上传错误信息
 }
 
 // Markdown组件
