@@ -71,13 +71,47 @@ npx wrangler kv:namespace create "DESKTOP_DATA"
 
 记下返回的 KV namespace ID（类似 `abc123def456...`）
 
-#### 2. 构建前端
+#### 2. 创建 D1 数据库（新闻缓存）
+
+```bash
+npx wrangler d1 create news-cache-db
+```
+
+记下返回的 database_id
+
+#### 3. 配置 wrangler.toml
+
+在项目根目录创建 `wrangler.toml`:
+
+```toml
+name = "cloud-desktop"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "NEWS_CACHE_DB"
+database_name = "news_cache_db"
+database_id = "your-database-id-here"
+```
+
+#### 4. 初始化 D1 数据库表
+
+```bash
+npx wrangler d1 execute news-cache-db --command "
+CREATE TABLE IF NOT EXISTS news_cache (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  updated INTEGER NOT NULL
+)"
+```
+
+#### 5. 构建前端
 
 ```bash
 npm run build
 ```
 
-#### 3. 部署到 Cloudflare Pages
+#### 6. 部署到 Cloudflare Pages
 
 ```bash
 npx wrangler pages deploy dist --project-name=cloud-desktop
@@ -85,7 +119,7 @@ npx wrangler pages deploy dist --project-name=cloud-desktop
 
 首次部署会创建项目，后续部署会自动更新。
 
-#### 4. 绑定 KV 命名空间和 R2 存储桶
+#### 7. 绑定 KV 命名空间和 R2 存储桶
 
 在 [Cloudflare Dashboard](https://dash.cloudflare.com) 中：
 
@@ -99,9 +133,12 @@ npx wrangler pages deploy dist --project-name=cloud-desktop
    - 点击 **Add binding**
    - Variable name: `IMAGE_BUCKET`
    - R2 bucket: 选择或创建一个 R2 存储桶
-5. 保存设置
+5. **D1 database bindings**（已通过 wrangler.toml 配置）：
+   - Variable name: `NEWS_CACHE_DB`
+   - D1 database: 自动绑定
+6. 保存设置
 
-#### 5. 重新部署使配置生效
+#### 8. 重新部署使配置生效
 
 ```bash
 npm run build

@@ -6,10 +6,9 @@ import NewsCard from './NewsCard.vue'
 const store = useDesktopStore()
 
 const allSources = [
-  { id: 'github', name: 'GitHub', icon: '🐙' },
-  { id: 'baidu', name: '百度', icon: '🔥' },
-  { id: 'zhihu', name: '知乎', icon: '💡' },
-  { id: 'weibo', name: '微博', icon: '📱' }
+  { id: 'baidu', name: '百度热搜', icon: '🔥' },
+  { id: 'github', name: 'GitHub Trending', icon: '🐙' },
+  { id: 'zhihu', name: '知乎热榜', icon: '💡' }
 ]
 
 onMounted(() => {

@@ -104,11 +104,13 @@ export type TabType = 'desktop' | 'navigation' | 'news'
 
 // 新闻项
 export interface NewsItem {
-  id: string
+  id: string | number
   title: string
   url: string
-  time: string
-  description?: string
+  extra?: {
+    hover?: string  // 悬停显示的描述
+    info?: string   // 额外信息(如热度、star数等)
+  }
 }
 
 // 新闻源
@@ -118,6 +120,8 @@ export interface NewsSource {
   icon: string
   items: NewsItem[]
   lastUpdated: number
+  status?: 'loading' | 'success' | 'error'
+  error?: string
 }
 
 // 新闻数据缓存

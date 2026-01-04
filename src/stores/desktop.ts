@@ -672,59 +672,10 @@ export const useDesktopStore = defineStore('desktop', () => {
   async function fetchNews() {
     isLoadingNews.value = true
     try {
-      // Mock data - 后期替换为真实 API
-      const mockSources: NewsSource[] = [
-        {
-          id: 'github',
-          name: 'GitHub Trending',
-          icon: '🐙',
-          lastUpdated: Date.now(),
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `github-${i}`,
-            title: `Awesome Project ${i + 1} - A revolutionary new framework`,
-            url: `https://github.com/trending/${i}`,
-            time: `${i + 1}小时前`
-          }))
-        },
-        {
-          id: 'baidu',
-          name: '百度热搜',
-          icon: '🔥',
-          lastUpdated: Date.now(),
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `baidu-${i}`,
-            title: `热点新闻 ${i + 1} - 今日重大事件报道`,
-            url: `https://www.baidu.com/s?wd=news${i}`,
-            time: `${i * 2}分钟前`
-          }))
-        },
-        {
-          id: 'zhihu',
-          name: '知乎热榜',
-          icon: '💡',
-          lastUpdated: Date.now(),
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `zhihu-${i}`,
-            title: `如何看待 ${i + 1} 这个问题？`,
-            url: `https://www.zhihu.com/question/${i}`,
-            time: `${i * 3}分钟前`
-          }))
-        },
-        {
-          id: 'weibo',
-          name: '微博热搜',
-          icon: '📱',
-          lastUpdated: Date.now(),
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `weibo-${i}`,
-            title: `#热门话题${i + 1}# 网友热议中`,
-            url: `https://weibo.com/hot/${i}`,
-            time: `${i * 5}分钟前`
-          }))
-        }
-      ]
-
-      newsSources.value = mockSources
+      // 获取所有新闻源
+      const sourceIds = ['baidu', 'github', 'zhihu']
+      const promises = sourceIds.map(id => fetchNewsBySource(id))
+      await Promise.all(promises)
       saveNewsCache()
     } catch (error) {
       console.error('Failed to fetch news:', error)
@@ -735,66 +686,64 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   async function fetchNewsBySource(sourceId: string) {
     try {
-      // Mock data - 后期替换为真实 API
-      const sourceIndex = newsSources.value.findIndex(s => s.id === sourceId)
-      if (sourceIndex === -1) return
+      // 查找或创建新闻源
+      let sourceIndex = newsSources.value.findIndex(s => s.id === sourceId)
 
-      const mockData = {
-        github: {
-          name: 'GitHub Trending',
-          icon: '🐙',
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `github-${Date.now()}-${i}`,
-            title: `Awesome Project ${i + 1} - A revolutionary new framework`,
-            url: `https://github.com/trending/${i}`,
-            time: `${i + 1}小时前`
-          }))
-        },
-        baidu: {
-          name: '百度热搜',
-          icon: '🔥',
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `baidu-${Date.now()}-${i}`,
-            title: `热点新闻 ${i + 1} - 今日重大事件报道`,
-            url: `https://www.baidu.com/s?wd=news${i}`,
-            time: `${i * 2}分钟前`
-          }))
-        },
-        zhihu: {
-          name: '知乎热榜',
-          icon: '💡',
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `zhihu-${Date.now()}-${i}`,
-            title: `如何看待 ${i + 1} 这个问题？`,
-            url: `https://www.zhihu.com/question/${i}`,
-            time: `${i * 3}分钟前`
-          }))
-        },
-        weibo: {
-          name: '微博热搜',
-          icon: '📱',
-          items: Array.from({ length: 15 }, (_, i) => ({
-            id: `weibo-${Date.now()}-${i}`,
-            title: `#热门话题${i + 1}# 网友热议中`,
-            url: `https://weibo.com/hot/${i}`,
-            time: `${i * 5}分钟前`
-          }))
-        }
-      }
+      if (sourceIndex === -1) {
+        // 如果不存在,创建一个新的
+        const sourceInfo = {
+          baidu: { name: '百度热搜', icon: '🔥' },
+          github: { name: 'GitHub Trending', icon: '🐙' },
+          zhihu: { name: '知乎热榜', icon: '💡' },
+        }[sourceId]
 
-      const data = mockData[sourceId as keyof typeof mockData]
-      if (data) {
-        newsSources.value[sourceIndex] = {
+        if (!sourceInfo) return
+
+        newsSources.value.push({
           id: sourceId,
-          name: data.name,
-          icon: data.icon,
-          lastUpdated: Date.now(),
-          items: data.items
-        }
-        saveNewsCache()
+          name: sourceInfo.name,
+          icon: sourceInfo.icon,
+          items: [],
+          lastUpdated: 0,
+          status: 'loading'
+        })
+        sourceIndex = newsSources.value.length - 1
+      } else {
+        // 更新状态为加载中
+        newsSources.value[sourceIndex].status = 'loading'
       }
+
+      // 调用 API 获取新闻
+      const response = await fetch(`/api/news?id=${sourceId}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.status === 'success') {
+        newsSources.value[sourceIndex] = {
+          id: data.id,
+          name: data.name,
+          icon: newsSources.value[sourceIndex].icon,
+          lastUpdated: data.updatedTime,
+          items: data.items,
+          status: 'success'
+        }
+      } else {
+        newsSources.value[sourceIndex].status = 'error'
+        newsSources.value[sourceIndex].error = data.error || 'Unknown error'
+      }
+
+      saveNewsCache()
     } catch (error) {
-      console.error('Failed to fetch news by source:', error)
+      console.error(`Failed to fetch news from ${sourceId}:`, error)
+      const sourceIndex = newsSources.value.findIndex(s => s.id === sourceId)
+      if (sourceIndex !== -1) {
+        newsSources.value[sourceIndex].status = 'error'
+        newsSources.value[sourceIndex].error = error instanceof Error ? error.message : 'Unknown error'
+      }
     }
   }
 
