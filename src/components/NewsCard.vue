@@ -123,7 +123,7 @@ const handleRefresh = async () => {
 
             <!-- 内容 -->
             <p
-              class="font-handwritten text-xs text-pencil group-hover:text-accent transition-colors truncate"
+              class="font-handwritten text-base text-pencil group-hover:text-accent transition-colors truncate"
               :title="item.title"
             >
               {{ item.title }}
