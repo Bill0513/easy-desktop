@@ -27,7 +27,7 @@ export const useDesktopStore = defineStore('desktop', () => {
   // News state
   const newsSources = ref<NewsSource[]>([])
   const isLoadingNews = ref(false)
-  const enabledSources = ref<Set<string>>(new Set(['github', 'baidu', 'zhihu', 'weibo']))
+  const enabledSources = ref<Set<string>>(new Set(['github', 'baidu', 'zhihu']))
 
   // Navigation state
   const navigationSites = ref<NavigationSite[]>([])

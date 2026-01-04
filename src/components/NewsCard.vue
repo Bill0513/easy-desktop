@@ -113,10 +113,10 @@ const handleRefresh = async () => {
               >
                 {{ item.title }}
               </p>
-              <div v-if="item.extra?.info || item.extra?.hover" class="flex items-center gap-2 mt-1">
-                <span v-if="item.extra?.info" class="font-handwritten text-xs text-pencil/50">{{ item.extra.info }}</span>
-                <span v-if="item.extra?.info && item.extra?.hover" class="text-xs text-pencil/30">•</span>
-                <span v-if="item.extra?.hover" class="font-handwritten text-xs text-pencil/50 truncate">{{ item.extra.hover }}</span>
+              <div v-if="item.extra?.info || item.extra?.hover" class="flex items-center gap-2 mt-1 flex-wrap">
+                <span v-if="item.extra?.info" class="font-handwritten text-xs text-pencil/50 flex-shrink-0">{{ item.extra.info }}</span>
+                <span v-if="item.extra?.info && item.extra?.hover" class="text-xs text-pencil/30 flex-shrink-0">•</span>
+                <span v-if="item.extra?.hover" class="font-handwritten text-xs text-pencil/50 truncate flex-1 min-w-0">{{ item.extra.hover }}</span>
               </div>
             </div>
 
