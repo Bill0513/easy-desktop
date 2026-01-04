@@ -23,38 +23,38 @@ const handleRefresh = async () => {
 
 <template>
   <div
-    class="card-hand-drawn flex flex-col"
+    class="card-hand-drawn flex flex-col overflow-hidden"
     style="
-      box-shadow: 4px 4px 0px #2d2d2d;
+      box-shadow: 3px 3px 0px #2d2d2d;
       border: 2px solid #2d2d2d;
-      max-height: calc(100vh - 200px);
+      min-height: 180px;
+      max-height: 220px;
     "
   >
     <!-- 新闻源标题 -->
     <div
-      class="px-4 py-3 flex items-center gap-3 flex-shrink-0"
+      class="px-3 py-2 flex items-center gap-2 flex-shrink-0"
       style="
         background: linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%);
         border-bottom: 2px solid #2d2d2d;
-        border-radius: 255px 15px 0 0 / 15px 225px 0 0;
       "
     >
-      <span class="text-3xl">{{ source.icon }}</span>
-      <div class="flex-1">
-        <h3 class="font-handwritten text-lg font-bold text-pencil">{{ source.name }}</h3>
-        <p class="font-handwritten text-xs text-pencil/60">
-          更新于 {{ new Date(source.lastUpdated).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }}
+      <span class="text-xl">{{ source.icon }}</span>
+      <div class="flex-1 min-w-0">
+        <h3 class="font-handwritten text-sm font-bold text-pencil truncate">{{ source.name }}</h3>
+        <p class="font-handwritten text-[10px] text-pencil/60 truncate">
+          {{ source.lastUpdated ? `更新于 ${new Date(source.lastUpdated).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : '暂无更新' }}
         </p>
       </div>
 
       <!-- 刷新按钮 -->
       <button
-        class="p-2 hover:bg-paper/50 rounded-lg transition-all hover:scale-110"
+        class="p-1.5 hover:bg-paper/50 rounded transition-all hover:scale-110 flex-shrink-0"
         :disabled="isRefreshing"
         @click="handleRefresh"
       >
         <svg
-          class="w-5 h-5 text-pencil transition-transform"
+          class="w-4 h-4 text-pencil transition-transform"
           :class="{ 'animate-spin': isRefreshing }"
           fill="none"
           stroke="currentColor"
@@ -70,23 +70,39 @@ const handleRefresh = async () => {
       </button>
     </div>
 
+    <!-- 空状态 -->
+    <div v-if="source.items.length === 0 && !store.isLoadingNews" class="flex-1 flex items-center justify-center p-4">
+      <p class="font-handwritten text-xs text-pencil/50 text-center">暂无新闻</p>
+    </div>
+
+    <!-- 加载状态 -->
+    <div v-else-if="store.isLoadingNews && source.items.length === 0" class="flex-1 flex items-center justify-center p-4">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-pencil animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span class="font-handwritten text-xs text-pencil/60">加载中...</span>
+      </div>
+    </div>
+
     <!-- 新闻列表 -->
-    <div class="flex-1 overflow-y-auto space-y-2 p-4">
+    <div v-else class="flex-1 overflow-y-auto space-y-1.5 p-2.5">
       <button
-        v-for="(item, index) in source.items"
+        v-for="(item, index) in source.items.slice(0, 8)"
         :key="item.id"
         class="w-full text-left group relative"
         @click="openLink(item.url)"
       >
         <!-- 新闻卡片 -->
         <div
-          class="card-hand-drawn px-3 py-2.5 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+          class="px-2 py-1.5 transition-all duration-200 hover:scale-[1.02]"
           style="
             box-shadow: 2px 2px 0px #2d2d2d;
             border: 1.5px solid #2d2d2d;
+            background: #fdfbf7;
           "
           :style="{
-            background: index % 2 === 0 ? '#fdfbf7' : '#fff9f5',
             borderRadius: index % 3 === 0
               ? '225px 15px 255px 15px / 15px 255px 15px 225px'
               : index % 3 === 1
@@ -95,9 +111,9 @@ const handleRefresh = async () => {
           }"
         >
           <!-- 序号 -->
-          <div class="flex items-start gap-2">
+          <div class="flex items-center gap-1.5">
             <span
-              class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full font-handwritten text-xs font-bold"
+              class="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full font-handwritten text-[10px] font-bold"
               :class="[
                 index < 3 ? 'bg-accent text-paper' : 'bg-muted text-pencil'
               ]"
@@ -106,24 +122,12 @@ const handleRefresh = async () => {
             </span>
 
             <!-- 内容 -->
-            <div class="flex-1 min-w-0">
-              <p
-                class="font-handwritten text-sm leading-relaxed text-pencil group-hover:text-accent transition-colors line-clamp-2"
-                :title="item.title"
-              >
-                {{ item.title }}
-              </p>
-            </div>
-
-            <!-- 箭头图标 -->
-            <svg
-              class="flex-shrink-0 w-4 h-4 text-pencil/30 group-hover:text-accent group-hover:translate-x-1 transition-all"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <p
+              class="font-handwritten text-xs text-pencil group-hover:text-accent transition-colors truncate"
+              :title="item.title"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+              {{ item.title }}
+            </p>
           </div>
         </div>
       </button>
