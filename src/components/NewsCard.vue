@@ -27,8 +27,8 @@ const handleRefresh = async () => {
     style="
       box-shadow: 3px 3px 0px #2d2d2d;
       border: 2px solid #2d2d2d;
-      min-height: 180px;
-      max-height: 220px;
+      min-height: 500px;
+      max-height: 500px;
     "
   >
     <!-- 新闻源标题 -->
@@ -89,7 +89,7 @@ const handleRefresh = async () => {
     <!-- 新闻列表 -->
     <div v-else class="flex-1 overflow-y-auto space-y-1.5 p-2.5">
       <button
-        v-for="(item, index) in source.items.slice(0, 8)"
+        v-for="(item, index) in source.items.slice(0, 15)"
         :key="item.id"
         class="w-full text-left group relative"
         @click="openLink(item.url)"
