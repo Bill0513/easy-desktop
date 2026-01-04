@@ -16,24 +16,29 @@ const MAX_HISTORY = 10
 const searchQuery = ref('')
 const selectedEngine = ref('google')
 const showEngineDropdown = ref(false)
-const showHistoryDropdown = ref(false)
+const showDropdown = ref(false)
 const searchHistory = ref<string[]>([])
+const suggestions = ref<string[]>([])
 const selectedIndex = ref(-1)
 const inputRef = ref<HTMLInputElement | null>(null)
 const isComposing = ref(false)
+const isLoadingSuggestions = ref(false)
+let suggestionTimer: ReturnType<typeof setTimeout> | null = null
 
 // Computed
 const currentEngine = computed(() => {
   return searchEngines.find(e => e.id === selectedEngine.value) || searchEngines[0]
 })
 
-const filteredHistory = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return searchHistory.value
+// 合并显示列表：有输入时显示联想，无输入时显示历史
+const displayItems = computed(() => {
+  if (searchQuery.value.trim()) {
+    // 有输入时，显示联想结果
+    return suggestions.value.map(s => ({ text: s, type: 'suggestion' as const }))
+  } else {
+    // 无输入时，显示历史记录
+    return searchHistory.value.map(h => ({ text: h, type: 'history' as const }))
   }
-  return searchHistory.value.filter(item =>
-    item.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
 })
 
 // 加载历史记录和搜索引擎偏好
@@ -51,6 +56,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (suggestionTimer) clearTimeout(suggestionTimer)
 })
 
 // 点击外部关闭下拉
@@ -58,7 +64,7 @@ function handleClickOutside(e: MouseEvent) {
   const target = e.target as HTMLElement
   if (!target.closest('.search-bar-container')) {
     showEngineDropdown.value = false
-    showHistoryDropdown.value = false
+    showDropdown.value = false
     selectedIndex.value = -1
   }
 }
@@ -69,6 +75,54 @@ function selectEngine(engineId: string) {
   localStorage.setItem(ENGINE_KEY, engineId)
   showEngineDropdown.value = false
   inputRef.value?.focus()
+  // 切换引擎后重新获取联想
+  if (searchQuery.value.trim()) {
+    fetchSuggestions(searchQuery.value)
+  }
+}
+
+// 获取搜索联想（使用百度 JSONP 接口）
+function fetchSuggestions(query: string) {
+  if (!query.trim()) {
+    suggestions.value = []
+    return
+  }
+
+  isLoadingSuggestions.value = true
+
+  // 清理之前的回调
+  const callbackName = `baiduSuggestion_${Date.now()}`
+
+  // 创建 JSONP 回调
+  ;(window as any)[callbackName] = (data: { s: string[] }) => {
+    suggestions.value = data.s || []
+    isLoadingSuggestions.value = false
+    // 清理
+    delete (window as any)[callbackName]
+    const script = document.getElementById(callbackName)
+    if (script) script.remove()
+  }
+
+  // 创建 script 标签
+  const script = document.createElement('script')
+  script.id = callbackName
+  script.src = `https://suggestion.baidu.com/su?wd=${encodeURIComponent(query)}&cb=${callbackName}`
+  script.onerror = () => {
+    isLoadingSuggestions.value = false
+    delete (window as any)[callbackName]
+    script.remove()
+  }
+  document.head.appendChild(script)
+
+  // 超时处理
+  setTimeout(() => {
+    if ((window as any)[callbackName]) {
+      isLoadingSuggestions.value = false
+      delete (window as any)[callbackName]
+      const s = document.getElementById(callbackName)
+      if (s) s.remove()
+    }
+  }, 3000)
 }
 
 // 执行搜索
@@ -87,12 +141,13 @@ function doSearch(query?: string) {
 
   // 清空输入
   searchQuery.value = ''
-  showHistoryDropdown.value = false
+  suggestions.value = []
+  showDropdown.value = false
   selectedIndex.value = -1
 }
 
-// 选择历史记录
-function selectHistory(item: string) {
+// 选择下拉项
+function selectItem(item: string) {
   searchQuery.value = item
   doSearch(item)
 }
@@ -115,13 +170,13 @@ function clearAllHistory(e: Event) {
 function handleKeydown(e: KeyboardEvent) {
   if (isComposing.value) return
 
-  const items = filteredHistory.value
+  const items = displayItems.value
 
   switch (e.key) {
     case 'ArrowDown':
       e.preventDefault()
-      if (!showHistoryDropdown.value && items.length > 0) {
-        showHistoryDropdown.value = true
+      if (!showDropdown.value && items.length > 0) {
+        showDropdown.value = true
       }
       selectedIndex.value = Math.min(selectedIndex.value + 1, items.length - 1)
       break
@@ -132,13 +187,13 @@ function handleKeydown(e: KeyboardEvent) {
     case 'Enter':
       e.preventDefault()
       if (selectedIndex.value >= 0 && selectedIndex.value < items.length) {
-        selectHistory(items[selectedIndex.value])
+        selectItem(items[selectedIndex.value].text)
       } else {
         doSearch()
       }
       break
     case 'Escape':
-      showHistoryDropdown.value = false
+      showDropdown.value = false
       showEngineDropdown.value = false
       selectedIndex.value = -1
       break
@@ -154,25 +209,42 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-// 输入时显示历史
+// 输入时获取联想
 function handleInput() {
-  if (searchHistory.value.length > 0) {
-    showHistoryDropdown.value = true
-  }
   selectedIndex.value = -1
+
+  // 防抖获取联想
+  if (suggestionTimer) clearTimeout(suggestionTimer)
+
+  if (searchQuery.value.trim()) {
+    showDropdown.value = true
+    suggestionTimer = setTimeout(() => {
+      fetchSuggestions(searchQuery.value)
+    }, 200)
+  } else {
+    suggestions.value = []
+    // 无输入时显示历史
+    if (searchHistory.value.length > 0) {
+      showDropdown.value = true
+    }
+  }
 }
 
-// 聚焦时显示历史
+// 聚焦时显示下拉
 function handleFocus() {
-  if (searchHistory.value.length > 0) {
-    showHistoryDropdown.value = true
+  if (searchQuery.value.trim()) {
+    if (suggestions.value.length > 0) {
+      showDropdown.value = true
+    }
+  } else if (searchHistory.value.length > 0) {
+    showDropdown.value = true
   }
 }
 
 // 监听选中项变化，滚动到可见区域
 watch(selectedIndex, (index) => {
   if (index >= 0) {
-    const item = document.querySelector(`.history-item-${index}`)
+    const item = document.querySelector(`.dropdown-item-${index}`)
     item?.scrollIntoView({ block: 'nearest' })
   }
 })
@@ -231,38 +303,55 @@ watch(selectedIndex, (index) => {
         @compositionend="isComposing = false"
       />
 
-      <!-- 搜索历史下拉 -->
+      <!-- 下拉列表（联想/历史） -->
       <div
-        v-if="showHistoryDropdown && filteredHistory.length > 0"
-        class="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-pencil z-50 max-h-[200px] overflow-y-auto"
+        v-if="showDropdown && displayItems.length > 0"
+        class="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-pencil z-50 max-h-[280px] overflow-y-auto"
         :style="{
           borderRadius: '15px 125px 15px 125px / 125px 15px 125px 15px',
           boxShadow: '3px 3px 0px 0px #2d2d2d'
         }"
       >
+        <!-- 标题栏 -->
         <div class="flex items-center justify-between px-3 py-1.5 border-b border-pencil/20">
-          <span class="text-xs text-pencil/60 font-handwritten">搜索历史</span>
+          <span class="text-xs text-pencil/60 font-handwritten flex items-center gap-1">
+            <template v-if="searchQuery.trim()">
+              搜索建议
+              <span v-if="isLoadingSuggestions" class="inline-block w-3 h-3 border-2 border-pencil/30 border-t-pencil rounded-full animate-spin"></span>
+            </template>
+            <template v-else>搜索历史</template>
+          </span>
           <button
+            v-if="!searchQuery.trim()"
             class="text-xs text-accent hover:underline font-handwritten"
             @click="clearAllHistory"
           >
             清空
           </button>
         </div>
+
+        <!-- 列表项 -->
         <button
-          v-for="(item, index) in filteredHistory"
-          :key="item"
+          v-for="(item, index) in displayItems"
+          :key="item.text"
           :class="[
             'w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm text-left',
-            `history-item-${index}`,
+            `dropdown-item-${index}`,
             { 'bg-muted/50': index === selectedIndex }
           ]"
-          @click="selectHistory(item)"
+          @click="selectItem(item.text)"
         >
-          <span class="truncate flex-1">{{ item }}</span>
+          <span class="flex items-center gap-2 truncate flex-1">
+            <!-- 图标区分类型 -->
+            <span v-if="item.type === 'history'" class="text-pencil/40 text-xs">🕐</span>
+            <span v-else class="text-pencil/40 text-xs">🔍</span>
+            <span class="truncate">{{ item.text }}</span>
+          </span>
+          <!-- 历史记录可删除 -->
           <span
-            class="text-pencil/40 hover:text-accent ml-2 text-xs"
-            @click="deleteHistory(item, $event)"
+            v-if="item.type === 'history'"
+            class="text-pencil/40 hover:text-accent ml-2 text-xs flex-shrink-0"
+            @click="deleteHistory(item.text, $event)"
           >✕</span>
         </button>
       </div>

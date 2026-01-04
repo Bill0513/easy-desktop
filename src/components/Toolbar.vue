@@ -67,7 +67,7 @@ const addWidget = (type: string) => {
       <div class="w-px h-8 bg-pencil/20"></div>
 
       <!-- 搜索栏 -->
-      <SearchBar class="w-[280px]" />
+      <SearchBar class="w-[380px]" />
     </div>
   </div>
 </template>
