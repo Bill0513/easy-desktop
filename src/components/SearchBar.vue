@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useDesktopStore } from '@/stores/desktop'
+
+const store = useDesktopStore()
 
 // 搜索引擎配置
 const searchEngines = [
@@ -8,16 +11,12 @@ const searchEngines = [
   { id: 'bing', name: '必应', icon: '🔎', url: 'https://www.bing.com/search?q=' },
 ]
 
-const HISTORY_KEY = 'cloud-desktop-search-history'
-const ENGINE_KEY = 'cloud-desktop-search-engine'
 const MAX_HISTORY = 10
 
 // State
 const searchQuery = ref('')
-const selectedEngine = ref('google')
 const showEngineDropdown = ref(false)
 const showDropdown = ref(false)
-const searchHistory = ref<string[]>([])
 const suggestions = ref<string[]>([])
 const selectedIndex = ref(-1)
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -27,7 +26,7 @@ let suggestionTimer: ReturnType<typeof setTimeout> | null = null
 
 // Computed
 const currentEngine = computed(() => {
-  return searchEngines.find(e => e.id === selectedEngine.value) || searchEngines[0]
+  return searchEngines.find(e => e.id === store.searchEngine) || searchEngines[0]
 })
 
 // 合并显示列表：有输入时显示联想，无输入时显示历史
@@ -37,20 +36,12 @@ const displayItems = computed(() => {
     return suggestions.value.map(s => ({ text: s, type: 'suggestion' as const }))
   } else {
     // 无输入时，显示历史记录
-    return searchHistory.value.map(h => ({ text: h, type: 'history' as const }))
+    return store.searchHistory.map(h => ({ text: h, type: 'history' as const }))
   }
 })
 
 // 加载历史记录和搜索引擎偏好
 onMounted(() => {
-  const savedHistory = localStorage.getItem(HISTORY_KEY)
-  if (savedHistory) {
-    searchHistory.value = JSON.parse(savedHistory)
-  }
-  const savedEngine = localStorage.getItem(ENGINE_KEY)
-  if (savedEngine && searchEngines.some(e => e.id === savedEngine)) {
-    selectedEngine.value = savedEngine
-  }
   document.addEventListener('click', handleClickOutside)
 })
 
@@ -71,8 +62,8 @@ function handleClickOutside(e: MouseEvent) {
 
 // 切换搜索引擎
 function selectEngine(engineId: string) {
-  selectedEngine.value = engineId
-  localStorage.setItem(ENGINE_KEY, engineId)
+  store.searchEngine = engineId
+  store.save()
   showEngineDropdown.value = false
   inputRef.value?.focus()
   // 切换引擎后重新获取联想
@@ -131,9 +122,9 @@ function doSearch(query?: string) {
   if (!q) return
 
   // 添加到历史记录
-  const newHistory = [q, ...searchHistory.value.filter(h => h !== q)].slice(0, MAX_HISTORY)
-  searchHistory.value = newHistory
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory))
+  const newHistory = [q, ...store.searchHistory.filter(h => h !== q)].slice(0, MAX_HISTORY)
+  store.searchHistory = newHistory
+  store.save()
 
   // 打开搜索结果
   const url = currentEngine.value.url + encodeURIComponent(q)
@@ -155,15 +146,15 @@ function selectItem(item: string) {
 // 删除历史记录
 function deleteHistory(item: string, e: Event) {
   e.stopPropagation()
-  searchHistory.value = searchHistory.value.filter(h => h !== item)
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(searchHistory.value))
+  store.searchHistory = store.searchHistory.filter(h => h !== item)
+  store.save()
 }
 
 // 清空所有历史
 function clearAllHistory(e: Event) {
   e.stopPropagation()
-  searchHistory.value = []
-  localStorage.removeItem(HISTORY_KEY)
+  store.searchHistory = []
+  store.save()
 }
 
 // 键盘导航
@@ -201,7 +192,7 @@ function handleKeydown(e: KeyboardEvent) {
       // Tab 切换搜索引擎
       if (e.shiftKey) {
         e.preventDefault()
-        const currentIndex = searchEngines.findIndex(e => e.id === selectedEngine.value)
+        const currentIndex = searchEngines.findIndex(e => e.id === store.searchEngine)
         const prevIndex = (currentIndex - 1 + searchEngines.length) % searchEngines.length
         selectEngine(searchEngines[prevIndex].id)
       }
@@ -224,7 +215,7 @@ function handleInput() {
   } else {
     suggestions.value = []
     // 无输入时显示历史
-    if (searchHistory.value.length > 0) {
+    if (store.searchHistory.length > 0) {
       showDropdown.value = true
     }
   }
@@ -236,7 +227,7 @@ function handleFocus() {
     if (suggestions.value.length > 0) {
       showDropdown.value = true
     }
-  } else if (searchHistory.value.length > 0) {
+  } else if (store.searchHistory.length > 0) {
     showDropdown.value = true
   }
 }
@@ -278,7 +269,7 @@ watch(selectedIndex, (index) => {
           v-for="engine in searchEngines"
           :key="engine.id"
           class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm"
-          :class="{ 'bg-muted/50': engine.id === selectedEngine }"
+          :class="{ 'bg-muted/50': engine.id === store.searchEngine }"
           @click="selectEngine(engine.id)"
         >
           <span>{{ engine.icon }}</span>

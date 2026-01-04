@@ -96,6 +96,8 @@ export interface DesktopData {
   navigationSites?: NavigationSite[]  // 导航站数据
   categories?: string[]  // 导航站分类
   enabledNewsSources?: string[]  // 启用的新闻源ID列表
+  searchHistory?: string[]  // 搜索历史
+  searchEngine?: string  // 搜索引擎偏好
   version: number
   updatedAt: number
 }

@@ -64,7 +64,7 @@ const addWidget = (type: string) => {
       </button>
 
       <!-- 分隔线 -->
-      <div class="w-px h-8 bg-pencil/20"></div>
+      <div class="w-px h-8 bg-pencil/20 mx-2"></div>
 
       <!-- 搜索栏 -->
       <SearchBar class="w-[380px]" />

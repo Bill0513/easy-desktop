@@ -40,6 +40,10 @@ export const useDesktopStore = defineStore('desktop', () => {
   const navigationCategories = ref<string[]>(['工作', '学习', '其他'])
   const selectedCategory = ref<string>('全部')
 
+  // Search state (搜索栏)
+  const searchHistory = ref<string[]>([])
+  const searchEngine = ref<string>('google')
+
   // Sync state
   const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
   const lastSyncTime = ref<number | null>(null)
@@ -135,6 +139,13 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.enabledNewsSources !== undefined) {
           enabledSources.value = new Set(cloudData.enabledNewsSources)
         }
+        // 加载搜索历史和搜索引擎
+        if (cloudData.searchHistory !== undefined) {
+          searchHistory.value = cloudData.searchHistory
+        }
+        if (cloudData.searchEngine !== undefined) {
+          searchEngine.value = cloudData.searchEngine
+        }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
         // 同步云端数据到本地存储
@@ -157,6 +168,13 @@ export const useDesktopStore = defineStore('desktop', () => {
           // 加载启用的新闻源
           if (parsed.enabledNewsSources !== undefined) {
             enabledSources.value = new Set(parsed.enabledNewsSources)
+          }
+          // 加载搜索历史和搜索引擎
+          if (parsed.searchHistory !== undefined) {
+            searchHistory.value = parsed.searchHistory
+          }
+          if (parsed.searchEngine !== undefined) {
+            searchEngine.value = parsed.searchEngine
           }
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           if (parsed.widgets && parsed.widgets.length > 0) {
@@ -222,6 +240,9 @@ export const useDesktopStore = defineStore('desktop', () => {
         maxZIndex: maxZIndex.value,
         navigationSites: navigationSites.value,
         categories: navigationCategories.value,
+        enabledNewsSources: Array.from(enabledSources.value),
+        searchHistory: searchHistory.value,
+        searchEngine: searchEngine.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -293,6 +314,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       navigationSites: navigationSites.value,
       categories: navigationCategories.value,
       enabledNewsSources: Array.from(enabledSources.value),
+      searchHistory: searchHistory.value,
+      searchEngine: searchEngine.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -363,6 +386,9 @@ export const useDesktopStore = defineStore('desktop', () => {
       maxZIndex: maxZIndex.value,
       navigationSites: navigationSites.value,
       categories: navigationCategories.value,
+      enabledNewsSources: Array.from(enabledSources.value),
+      searchHistory: searchHistory.value,
+      searchEngine: searchEngine.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1167,6 +1193,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoadingNavigation,
     navigationCategories,
     selectedCategory,
+    searchHistory,
+    searchEngine,
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
