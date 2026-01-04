@@ -136,79 +136,85 @@ const onDragEnd = (evt: any) => {
 
 <template>
   <div
-    class="w-full h-full bg-paper overflow-auto p-8"
+    class="w-full h-full bg-paper flex flex-col"
     @contextmenu="handleBlankContextMenu"
     @click="closeContextMenu"
   >
-    <!-- 标题 -->
-    <div class="mb-6">
-      <h1 class="font-handwritten text-3xl font-bold text-pencil">网页导航</h1>
-      <p class="font-handwritten text-sm text-pencil/60 mt-1">收藏你常用的网站</p>
-    </div>
-
-    <!-- 分类筛选 -->
-    <div class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="font-handwritten text-sm text-pencil/60">分类:</span>
-        <div class="flex gap-2 flex-wrap">
-          <button
-            v-for="category in store.allCategories"
-            :key="category"
-            class="card-hand-drawn px-4 py-2 flex items-center gap-2 transition-all hover:scale-105"
-            :style="{
-              background: store.selectedCategory === category ? '#ff4d4d' : '#e8e8e8',
-              color: store.selectedCategory === category ? '#fdfbf7' : '#2d2d2d',
-              boxShadow: '2px 2px 0px #2d2d2d'
-            }"
-            @click="store.selectCategory(category)"
-          >
-            <span class="font-handwritten text-sm font-medium">{{ category }}</span>
-            <span v-if="store.selectedCategory === category" class="text-xs">✓</span>
-          </button>
-        </div>
+    <!-- 固定头部：标题和分类 -->
+    <div class="flex-shrink-0 p-8 pb-0">
+      <!-- 标题 -->
+      <div class="mb-6">
+        <h1 class="font-handwritten text-3xl font-bold text-pencil">网页导航</h1>
+        <p class="font-handwritten text-sm text-pencil/60 mt-1">收藏你常用的网站</p>
       </div>
 
-      <!-- 管理分类按钮 -->
-      <button
-        class="btn-hand-drawn px-4 py-2 text-sm flex items-center gap-2"
-        @click="openCategoryManager"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        管理分类
-      </button>
+      <!-- 分类筛选 -->
+      <div class="mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="font-handwritten text-sm text-pencil/60">分类:</span>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              v-for="category in store.allCategories"
+              :key="category"
+              class="card-hand-drawn px-4 py-2 flex items-center gap-2 transition-all hover:scale-105"
+              :style="{
+                background: store.selectedCategory === category ? '#ff4d4d' : '#e8e8e8',
+                color: store.selectedCategory === category ? '#fdfbf7' : '#2d2d2d',
+                boxShadow: '2px 2px 0px #2d2d2d'
+              }"
+              @click="store.selectCategory(category)"
+            >
+              <span class="font-handwritten text-sm font-medium">{{ category }}</span>
+              <span v-if="store.selectedCategory === category" class="text-xs">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 管理分类按钮 -->
+        <button
+          class="btn-hand-drawn px-4 py-2 text-sm flex items-center gap-2"
+          @click="openCategoryManager"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          管理分类
+        </button>
+      </div>
     </div>
 
-    <!-- 网站网格 -->
-    <draggable
-      :list="store.filteredNavigationSites"
-      class="navigation-grid flex flex-wrap gap-6 px-8"
-      item-key="id"
-      :animation="200"
-      ghost-class="dragging-ghost"
-      drag-class="dragging-item"
-      @start="onDragStart"
-      @end="onDragEnd"
-    >
-      <template #item="{ element: site }">
-        <div>
-          <SiteCard
-            :site="site"
-            @contextmenu="(e) => handleSiteContextMenu(e, site)"
-          />
-        </div>
-      </template>
-    </draggable>
+    <!-- 可滚动的网站区域 -->
+    <div class="flex-1 overflow-auto px-8 pb-8">
+      <!-- 网站网格 -->
+      <draggable
+        :list="store.filteredNavigationSites"
+        class="navigation-grid flex flex-wrap gap-6"
+        item-key="id"
+        :animation="200"
+        ghost-class="dragging-ghost"
+        drag-class="dragging-item"
+        @start="onDragStart"
+        @end="onDragEnd"
+      >
+        <template #item="{ element: site }">
+          <div>
+            <SiteCard
+              :site="site"
+              @contextmenu="(e) => handleSiteContextMenu(e, site)"
+            />
+          </div>
+        </template>
+      </draggable>
 
-    <!-- 空状态 -->
-    <div v-if="store.filteredNavigationSites.length === 0" class="text-center py-20">
-      <div class="text-6xl mb-4">🌐</div>
-      <p class="font-handwritten text-lg text-pencil/60 mb-2">
-        {{ store.selectedCategory === '全部' ? '还没有添加网站' : '该分类下还没有网站' }}
-      </p>
-      <p class="font-handwritten text-sm text-pencil/40">右键点击空白处添加你的第一个网站</p>
+      <!-- 空状态 -->
+      <div v-if="store.filteredNavigationSites.length === 0" class="text-center py-20">
+        <div class="text-6xl mb-4">🌐</div>
+        <p class="font-handwritten text-lg text-pencil/60 mb-2">
+          {{ store.selectedCategory === '全部' ? '还没有添加网站' : '该分类下还没有网站' }}
+        </p>
+        <p class="font-handwritten text-sm text-pencil/40">右键点击空白处添加你的第一个网站</p>
+      </div>
     </div>
 
     <!-- 右键菜单 -->

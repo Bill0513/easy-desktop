@@ -920,12 +920,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   function deleteCategory(name: string): { success: boolean; error?: string } {
-    // 检查是否是默认分类
-    const defaultCategories = ['工作', '学习', '其他']
-    if (defaultCategories.includes(name)) {
-      return { success: false, error: '默认分类不能删除' }
-    }
-
     // 检查是否有网站使用该分类
     const sitesUsingCategory = navigationSites.value.filter(site => site.category === name)
     if (sitesUsingCategory.length > 0) {

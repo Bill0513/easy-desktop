@@ -16,7 +16,8 @@ const formatExample1 = `[
   {
     "name": "GitHub",
     "url": "https://github.com",
-    "description": "代码托管平台",
+    "src": "https://example.com/icon.svg",
+    "backgroundColor": "#000",
     "category": "工作"
   }
 ]`
@@ -26,7 +27,12 @@ const formatExample2 = `{
     {
       "name": "工作",
       "children": [
-        { "name": "GitHub", "url": "https://github.com" }
+        {
+          "name": "GitHub",
+          "url": "https://github.com",
+          "src": "https://example.com/icon.svg",
+          "backgroundColor": "#000"
+        }
       ]
     }
   ]
@@ -89,26 +95,28 @@ const handleClose = () => {
       @click.self="handleClose"
     >
       <div
-        class="card-hand-drawn w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 m-4"
+        class="card-hand-drawn w-full max-w-3xl max-h-[80vh] flex flex-col m-4"
         style="box-shadow: 8px 8px 0px #2d2d2d;"
       >
-      <!-- 标题栏 -->
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="font-handwritten text-2xl font-bold text-pencil">⚙️ 设置</h2>
-        <button
-          class="btn-hand-drawn px-3 py-1 text-sm"
-          @click="handleClose"
-        >
-          关闭
-        </button>
-      </div>
+        <!-- 固定标题栏 -->
+        <div class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b-2 border-pencil/20">
+          <h2 class="font-handwritten text-2xl font-bold text-pencil">⚙️ 设置</h2>
+          <button
+            class="btn-hand-drawn px-3 py-1 text-sm"
+            @click="handleClose"
+          >
+            关闭
+          </button>
+        </div>
 
-      <!-- 网站导入功能 -->
-      <div class="space-y-4">
-        <div class="border-2 border-pencil/20 rounded-lg p-4 wobbly">
-          <h3 class="font-handwritten text-xl font-semibold text-pencil mb-3">
-            📥 网站导入
-          </h3>
+        <!-- 可滚动内容区域 -->
+        <div class="flex-1 overflow-y-auto p-6 pt-4">
+          <!-- 网站导入功能 -->
+          <div class="space-y-4">
+            <div class="border-2 border-pencil/20 rounded-lg p-4 wobbly">
+              <h3 class="font-handwritten text-xl font-semibold text-pencil mb-3">
+                📥 网站导入
+              </h3>
 
           <p class="font-handwritten text-sm text-pencil/70 mb-4">
             支持两种格式导入：简单数组格式或 navConfig 格式（带分类）。
@@ -172,32 +180,33 @@ const handleClose = () => {
               @compositionstart="isComposing = true"
               @compositionend="isComposing = false"
             />
-          </div>
+            </div>
 
-          <!-- 状态消息 -->
-          <div
-            v-if="importMessage"
-            class="mb-4 p-3 rounded wobbly-sm"
-            :class="[
-              importStatus === 'success' ? 'bg-green-100 border-2 border-green-400 text-green-800' : '',
-              importStatus === 'error' ? 'bg-red-100 border-2 border-red-400 text-red-800' : ''
-            ]"
-          >
-            <p class="font-handwritten text-sm">{{ importMessage }}</p>
-          </div>
-
-          <!-- 导入按钮 -->
-          <div class="flex justify-end">
-            <button
-              class="btn-hand-drawn px-6 py-2 bg-accent text-paper hover:bg-accent/90"
-              @click="handleImport"
+            <!-- 状态消息 -->
+            <div
+              v-if="importMessage"
+              class="mb-4 p-3 rounded wobbly-sm"
+              :class="[
+                importStatus === 'success' ? 'bg-green-100 border-2 border-green-400 text-green-800' : '',
+                importStatus === 'error' ? 'bg-red-100 border-2 border-red-400 text-red-800' : ''
+              ]"
             >
-              🚀 开始导入
-            </button>
-          </div>
-        </div>
+              <p class="font-handwritten text-sm">{{ importMessage }}</p>
+            </div>
 
-        <!-- 未来可以在这里添加更多设置项 -->
+            <!-- 导入按钮 -->
+            <div class="flex justify-end">
+              <button
+                class="btn-hand-drawn px-6 py-2 bg-accent text-paper hover:bg-accent/90"
+                @click="handleImport"
+              >
+                🚀 开始导入
+              </button>
+            </div>
+          </div>
+
+          <!-- 未来可以在这里添加更多设置项 -->
+        </div>
       </div>
     </div>
   </div>
