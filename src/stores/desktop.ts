@@ -27,7 +27,12 @@ export const useDesktopStore = defineStore('desktop', () => {
   // News state
   const newsSources = ref<NewsSource[]>([])
   const isLoadingNews = ref(false)
-  const enabledSources = ref<Set<string>>(new Set(['github', 'baidu', 'zhihu']))
+  const enabledSources = ref<Set<string>>(new Set([
+    'github', 'baidu', 'zhihu', 'douyin', 'hupu', 'tieba',
+    'toutiao', 'thepaper', 'chongbuluo', 'tencent', 'wallstreetcn',
+    'zaobao', 'sputniknewscn', 'coolapk', 'ithome', 'juejin',
+    'sspai', 'solidot'
+  ]))
 
   // Navigation state
   const navigationSites = ref<NavigationSite[]>([])
@@ -673,7 +678,12 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoadingNews.value = true
     try {
       // 获取所有新闻源
-      const sourceIds = ['baidu', 'github', 'zhihu']
+      const sourceIds = [
+        'baidu', 'github', 'zhihu', 'douyin', 'hupu', 'tieba',
+        'toutiao', 'thepaper', 'chongbuluo', 'tencent', 'wallstreetcn',
+        'zaobao', 'sputniknewscn', 'coolapk', 'ithome', 'juejin',
+        'sspai', 'solidot'
+      ]
       const promises = sourceIds.map(id => fetchNewsBySource(id))
       await Promise.all(promises)
       saveNewsCache()
@@ -695,6 +705,21 @@ export const useDesktopStore = defineStore('desktop', () => {
           baidu: { name: '百度热搜', icon: '🔥' },
           github: { name: 'GitHub Trending', icon: '🐙' },
           zhihu: { name: '知乎热榜', icon: '💡' },
+          douyin: { name: '抖音热搜', icon: '🎵' },
+          hupu: { name: '虎扑', icon: '🏀' },
+          tieba: { name: '百度贴吧', icon: '💬' },
+          toutiao: { name: '今日头条', icon: '📰' },
+          thepaper: { name: '澎湃新闻', icon: '📄' },
+          chongbuluo: { name: '虫部落', icon: '🐛' },
+          tencent: { name: '腾讯新闻', icon: '🐧' },
+          wallstreetcn: { name: '华尔街见闻', icon: '💰' },
+          zaobao: { name: '联合早报', icon: '📰' },
+          sputniknewscn: { name: '卫星通讯社', icon: '🛰️' },
+          coolapk: { name: '酷安', icon: '📱' },
+          ithome: { name: 'IT之家', icon: '💻' },
+          juejin: { name: '稀土掘金', icon: '⛏️' },
+          sspai: { name: '少数派', icon: '✨' },
+          solidot: { name: 'Solidot', icon: '🔧' },
         }[sourceId]
 
         if (!sourceInfo) return
