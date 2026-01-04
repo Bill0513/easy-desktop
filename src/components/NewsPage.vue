@@ -10,8 +10,8 @@
       </p>
     </div>
 
-    <!-- 新闻内容区 -->
-    <div class="flex-1 overflow-hidden px-6 pb-4 relative">
+    <!-- 新闻内容区 - 可滚动 -->
+    <div class="flex-1 overflow-auto px-6 pb-4">
       <!-- 暂无新闻状态 -->
       <div v-if="store.enabledSources.size === 0" class="h-full flex items-center justify-center">
         <div class="text-center">
@@ -34,16 +34,18 @@
       </div>
 
       <!-- 新闻网格 -->
-      <div v-else-if="store.filteredNewsSources.length > 0" class="h-full grid gap-4" :class="gridColsClass">
+      <div v-else-if="store.filteredNewsSources.length > 0" class="grid gap-4 auto-rows-[400px]" :class="gridColsClass">
         <NewsCard
           v-for="source in store.filteredNewsSources"
           :key="source.id"
           :source="source"
         />
       </div>
+    </div>
 
-      <!-- 来源筛选 - 左下角 -->
-      <div class="absolute bottom-2 left-6 flex items-center gap-2 flex-wrap">
+    <!-- 来源筛选 - 固定底部 -->
+    <div class="flex-shrink-0 px-6 py-3 bg-paper border-t-2 border-pencil/10">
+      <div class="flex items-center gap-2 flex-wrap">
         <span class="font-handwritten text-xs text-pencil/60">来源:</span>
         <div class="flex gap-1.5 flex-wrap">
           <button

@@ -781,7 +781,46 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   const filteredNewsSources = computed(() => {
-    return newsSources.value.filter(source => enabledSources.value.has(source.id))
+    // 所有新闻源的信息
+    const sourceInfo: Record<string, { name: string; icon: string }> = {
+      baidu: { name: '百度热搜', icon: '🔥' },
+      github: { name: 'GitHub Trending', icon: '🐙' },
+      zhihu: { name: '知乎热榜', icon: '💡' },
+      douyin: { name: '抖音热搜', icon: '🎵' },
+      hupu: { name: '虎扑', icon: '🏀' },
+      tieba: { name: '百度贴吧', icon: '💬' },
+      toutiao: { name: '今日头条', icon: '📰' },
+      thepaper: { name: '澎湃新闻', icon: '📄' },
+      chongbuluo: { name: '虫部落', icon: '🐛' },
+      tencent: { name: '腾讯新闻', icon: '🐧' },
+      wallstreetcn: { name: '华尔街见闻', icon: '💰' },
+      zaobao: { name: '联合早报', icon: '📰' },
+      sputniknewscn: { name: '卫星通讯社', icon: '🛰️' },
+      coolapk: { name: '酷安', icon: '📱' },
+      ithome: { name: 'IT之家', icon: '💻' },
+      juejin: { name: '稀土掘金', icon: '⛏️' },
+      sspai: { name: '少数派', icon: '✨' },
+      solidot: { name: 'Solidot', icon: '🔧' },
+    }
+
+    // 对于所有启用的源，返回已有数据或创建空卡片
+    return Array.from(enabledSources.value).map(sourceId => {
+      const existing = newsSources.value.find(s => s.id === sourceId)
+      if (existing) return existing
+
+      // 创建空的新闻源卡片
+      const info = sourceInfo[sourceId]
+      if (!info) return null
+
+      return {
+        id: sourceId,
+        name: info.name,
+        icon: info.icon,
+        items: [],
+        lastUpdated: 0,
+        status: 'loading' as const
+      }
+    }).filter(Boolean) as typeof newsSources.value
   })
 
   async function initNews() {
