@@ -131,6 +131,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.categories !== undefined) {
           navigationCategories.value = cloudData.categories
         }
+        // 加载启用的新闻源
+        if (cloudData.enabledNewsSources !== undefined) {
+          enabledSources.value = new Set(cloudData.enabledNewsSources)
+        }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
         // 同步云端数据到本地存储
@@ -149,6 +153,10 @@ export const useDesktopStore = defineStore('desktop', () => {
           // 加载分类数据
           if (parsed.categories !== undefined) {
             navigationCategories.value = parsed.categories
+          }
+          // 加载启用的新闻源
+          if (parsed.enabledNewsSources !== undefined) {
+            enabledSources.value = new Set(parsed.enabledNewsSources)
           }
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           if (parsed.widgets && parsed.widgets.length > 0) {
@@ -175,6 +183,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         // 加载分类数据
         if (parsed.categories !== undefined) {
           navigationCategories.value = parsed.categories
+        }
+        // 加载启用的新闻源
+        if (parsed.enabledNewsSources !== undefined) {
+          enabledSources.value = new Set(parsed.enabledNewsSources)
         }
         // 从本地加载成功，标记为已初始化
         if (parsed.widgets && parsed.widgets.length > 0) {
@@ -280,6 +292,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       maxZIndex: maxZIndex.value,
       navigationSites: navigationSites.value,
       categories: navigationCategories.value,
+      enabledNewsSources: Array.from(enabledSources.value),
       version: 1,
       updatedAt: Date.now()
     }
@@ -778,6 +791,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     } else {
       enabledSources.value.add(sourceId)
     }
+    save()
   }
 
   // 带时间检查的新闻刷新（只刷新超过指定时间的源）

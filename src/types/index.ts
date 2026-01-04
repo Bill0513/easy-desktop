@@ -95,6 +95,7 @@ export interface DesktopData {
   maxZIndex: number
   navigationSites?: NavigationSite[]  // 导航站数据
   categories?: string[]  // 导航站分类
+  enabledNewsSources?: string[]  // 启用的新闻源ID列表
   version: number
   updatedAt: number
 }
