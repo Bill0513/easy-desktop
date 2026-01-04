@@ -77,7 +77,22 @@ const store = useDesktopStore()
 const allSources = [
   { id: 'baidu', name: '百度热搜', icon: '🔥' },
   { id: 'github', name: 'GitHub Trending', icon: '🐙' },
-  { id: 'zhihu', name: '知乎热榜', icon: '💡' }
+  { id: 'zhihu', name: '知乎热榜', icon: '💡' },
+  { id: 'douyin', name: '抖音热搜', icon: '🎵' },
+  { id: 'hupu', name: '虎扑', icon: '🏀' },
+  { id: 'tieba', name: '百度贴吧', icon: '💬' },
+  { id: 'toutiao', name: '今日头条', icon: '📰' },
+  { id: 'thepaper', name: '澎湃新闻', icon: '📄' },
+  { id: 'chongbuluo', name: '虫部落', icon: '🐛' },
+  { id: 'tencent', name: '腾讯新闻', icon: '🐧' },
+  { id: 'wallstreetcn', name: '华尔街见闻', icon: '💰' },
+  { id: 'zaobao', name: '联合早报', icon: '📰' },
+  { id: 'sputniknewscn', name: '卫星通讯社', icon: '🛰️' },
+  { id: 'coolapk', name: '酷安', icon: '📱' },
+  { id: 'ithome', name: 'IT之家', icon: '💻' },
+  { id: 'juejin', name: '稀土掘金', icon: '⛏️' },
+  { id: 'sspai', name: '少数派', icon: '✨' },
+  { id: 'solidot', name: 'Solidot', icon: '🔧' }
 ]
 
 // 响应式网格列数 - 根据屏幕宽度动态调整
