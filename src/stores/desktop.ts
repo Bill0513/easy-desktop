@@ -946,6 +946,61 @@ export const useDesktopStore = defineStore('desktop', () => {
     return { success: true }
   }
 
+  // 批量导入网站
+  async function importNavigationSites(sites: Array<{
+    name: string
+    url: string
+    description?: string
+    category?: string
+  }>): Promise<{ success: number; skipped: number }> {
+    let successCount = 0
+    let skippedCount = 0
+
+    // 预制颜色列表
+    const colors = ['#ffcdd2', '#f8bbd0', '#e1bee7', '#d1c4e9', '#c5cae9', '#bbdefb', '#b3e5fc', '#b2ebf2', '#b2dfdb', '#c8e6c9', '#dcedc8', '#f0f4c3', '#fff9c4', '#ffecb3', '#ffe0b2', '#ffccbc']
+
+    for (const siteData of sites) {
+      // 验证必填字段
+      if (!siteData.name || !siteData.url) {
+        skippedCount++
+        continue
+      }
+
+      // 检查 URL 是否已存在（去重）
+      const existingSite = navigationSites.value.find(s => s.url === siteData.url)
+      if (existingSite) {
+        skippedCount++
+        continue
+      }
+
+      // 验证 URL 格式
+      if (!siteData.url.startsWith('http://') && !siteData.url.startsWith('https://')) {
+        skippedCount++
+        continue
+      }
+
+      // 随机选择颜色
+      const color = colors[Math.floor(Math.random() * colors.length)]
+
+      // 添加网站
+      try {
+        await addNavigationSite({
+          name: siteData.name,
+          url: siteData.url,
+          description: siteData.description || '',
+          color,
+          category: siteData.category || '其他'
+        })
+        successCount++
+      } catch (error) {
+        console.error('Failed to import site:', siteData, error)
+        skippedCount++
+      }
+    }
+
+    return { success: successCount, skipped: skippedCount }
+  }
+
   return {
     // State
     widgets,
@@ -1017,6 +1072,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     initNavigation,
     selectCategory,
     addCategory,
+    importNavigationSites,
     deleteCategory,
   }
 })

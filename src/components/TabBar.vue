@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { TabType } from '@/types'
+import SettingsDialog from '@/components/SettingsDialog.vue'
 
 const store = useDesktopStore()
 const isExpanded = ref(false)
+const showSettings = ref(false)
 
 const tabs = [
   { id: 'desktop' as TabType, name: '记录', icon: '📝', description: '便签、待办、文本' },
@@ -14,6 +16,14 @@ const tabs = [
 
 const handleTabClick = (tabId: TabType) => {
   store.setActiveTab(tabId)
+}
+
+const handleSettingsClick = () => {
+  showSettings.value = true
+}
+
+const handleCloseSettings = () => {
+  showSettings.value = false
 }
 </script>
 
@@ -84,8 +94,38 @@ const handleTabClick = (tabId: TabType) => {
             class="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-paper rounded-full"
           />
         </button>
+
+        <!-- 分隔线 -->
+        <div class="h-px bg-pencil/20 my-1" />
+
+        <!-- 设置按钮 -->
+        <button
+          class="group relative flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200 hover:bg-muted/50 hover:scale-105"
+          @click="handleSettingsClick"
+        >
+          <!-- 图标 -->
+          <span class="text-3xl transition-transform group-hover:scale-110">
+            ⚙️
+          </span>
+
+          <!-- 名称 -->
+          <span class="font-handwritten text-sm font-medium whitespace-nowrap text-pencil">
+            设置
+          </span>
+
+          <!-- 描述（悬浮时显示） -->
+          <div
+            class="absolute left-full ml-3 px-3 py-2 card-hand-drawn whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            style="box-shadow: 4px 4px 0px #2d2d2d;"
+          >
+            <p class="font-handwritten text-xs text-pencil/80">网站导入、偏好设置</p>
+          </div>
+        </button>
       </div>
     </Transition>
+
+    <!-- 设置弹窗 -->
+    <SettingsDialog v-if="showSettings" @close="handleCloseSettings" />
   </div>
 </template>
 
