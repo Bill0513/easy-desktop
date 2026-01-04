@@ -12,20 +12,25 @@ const importStatus = ref<'idle' | 'success' | 'error'>('idle')
 const importMessage = ref('')
 const isComposing = ref(false)
 
-const formatExample = `[
+const formatExample1 = `[
   {
     "name": "GitHub",
     "url": "https://github.com",
-    "description": "全球最大的代码托管平台",
+    "description": "代码托管平台",
     "category": "工作"
-  },
-  {
-    "name": "Stack Overflow",
-    "url": "https://stackoverflow.com",
-    "description": "程序员问答社区",
-    "category": "学习"
   }
 ]`
+
+const formatExample2 = `{
+  "navConfig": [
+    {
+      "name": "工作",
+      "children": [
+        { "name": "GitHub", "url": "https://github.com" }
+      ]
+    }
+  ]
+}`
 
 const handleImport = async () => {
   if (!importText.value.trim()) {
@@ -37,22 +42,18 @@ const handleImport = async () => {
   try {
     const data = JSON.parse(importText.value)
 
-    if (!Array.isArray(data)) {
-      throw new Error('数据格式错误：必须是数组格式')
-    }
-
-    // 验证每个网站对象
-    for (const site of data) {
-      if (!site.name || !site.url) {
-        throw new Error('数据格式错误：每个网站必须包含 name 和 url 字段')
-      }
-    }
-
-    // 调用 store 的导入方法
+    // 调用 store 的导入方法（支持两种格式）
     const result = await store.importNavigationSites(data)
 
     importStatus.value = 'success'
-    importMessage.value = `成功导入 ${result.success} 个网站${result.skipped > 0 ? `，跳过 ${result.skipped} 个重复网站` : ''}`
+    let msg = `成功导入 ${result.success} 个网站`
+    if (result.categories > 0) {
+      msg += `，新增 ${result.categories} 个分类`
+    }
+    if (result.skipped > 0) {
+      msg += `，跳过 ${result.skipped} 个`
+    }
+    importMessage.value = msg
 
     // 3秒后清空输入框和状态
     setTimeout(() => {
@@ -66,8 +67,8 @@ const handleImport = async () => {
   }
 }
 
-const copyFormat = () => {
-  navigator.clipboard.writeText(formatExample)
+const copyFormat = (format: string) => {
+  navigator.clipboard.writeText(format)
   importMessage.value = '格式示例已复制到剪贴板'
   importStatus.value = 'success'
   setTimeout(() => {
@@ -82,14 +83,15 @@ const handleClose = () => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-[20000] flex items-center justify-center bg-pencil/30 backdrop-blur-sm"
-    @click.self="handleClose"
-  >
+  <Teleport to="body">
     <div
-      class="card-hand-drawn w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 m-4"
-      style="box-shadow: 8px 8px 0px #2d2d2d;"
+      class="fixed inset-0 z-[20000] flex items-center justify-center bg-pencil/30 backdrop-blur-sm"
+      @click.self="handleClose"
     >
+      <div
+        class="card-hand-drawn w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6 m-4"
+        style="box-shadow: 8px 8px 0px #2d2d2d;"
+      >
       <!-- 标题栏 -->
       <div class="flex items-center justify-between mb-6">
         <h2 class="font-handwritten text-2xl font-bold text-pencil">⚙️ 设置</h2>
@@ -109,23 +111,39 @@ const handleClose = () => {
           </h3>
 
           <p class="font-handwritten text-sm text-pencil/70 mb-4">
-            将您收集的网站数据按照以下格式整理后，粘贴到下方文本框中即可批量导入。
+            支持两种格式导入：简单数组格式或 navConfig 格式（带分类）。
           </p>
 
           <!-- 格式说明 -->
-          <div class="mb-4">
-            <div class="flex items-center justify-between mb-2">
-              <label class="font-handwritten text-sm font-medium text-pencil">
-                数据格式（JSON）：
-              </label>
-              <button
-                class="btn-hand-drawn px-2 py-1 text-xs"
-                @click="copyFormat"
-              >
-                📋 复制格式
-              </button>
+          <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="font-handwritten text-xs font-medium text-pencil">
+                  格式1：简单数组
+                </label>
+                <button
+                  class="btn-hand-drawn px-2 py-1 text-xs"
+                  @click="copyFormat(formatExample1)"
+                >
+                  📋 复制
+                </button>
+              </div>
+              <pre class="bg-muted/30 border-2 border-pencil/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample1 }}</pre>
             </div>
-            <pre class="bg-muted/30 border-2 border-pencil/20 rounded p-3 text-xs overflow-x-auto wobbly-sm font-mono">{{ formatExample }}</pre>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="font-handwritten text-xs font-medium text-pencil">
+                  格式2：navConfig（带分类）
+                </label>
+                <button
+                  class="btn-hand-drawn px-2 py-1 text-xs"
+                  @click="copyFormat(formatExample2)"
+                >
+                  📋 复制
+                </button>
+              </div>
+              <pre class="bg-muted/30 border-2 border-pencil/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample2 }}</pre>
+            </div>
           </div>
 
           <!-- 字段说明 -->
@@ -135,9 +153,10 @@ const handleClose = () => {
             </p>
             <ul class="font-handwritten text-xs text-pencil/80 space-y-1 list-disc list-inside">
               <li><code class="bg-pencil/10 px-1 rounded">name</code>（必填）：网站名称</li>
-              <li><code class="bg-pencil/10 px-1 rounded">url</code>（必填）：网站地址，必须以 http:// 或 https:// 开头</li>
-              <li><code class="bg-pencil/10 px-1 rounded">description</code>（选填）：网站描述</li>
-              <li><code class="bg-pencil/10 px-1 rounded">category</code>（选填）：分类，默认为"其他"</li>
+              <li><code class="bg-pencil/10 px-1 rounded">url</code>（必填）：网站地址</li>
+              <li><code class="bg-pencil/10 px-1 rounded">src</code>（选填）：图标URL</li>
+              <li><code class="bg-pencil/10 px-1 rounded">backgroundColor</code>（选填）：背景色</li>
+              <li>navConfig 格式会自动创建分类</li>
             </ul>
           </div>
 
@@ -182,6 +201,7 @@ const handleClose = () => {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <style scoped>

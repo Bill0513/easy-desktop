@@ -946,20 +946,73 @@ export const useDesktopStore = defineStore('desktop', () => {
     return { success: true }
   }
 
-  // 批量导入网站
-  async function importNavigationSites(sites: Array<{
-    name: string
-    url: string
-    description?: string
-    category?: string
-  }>): Promise<{ success: number; skipped: number }> {
+  // 批量导入网站（支持两种格式）
+  // 格式1: 简单数组 [{ name, url, description?, category? }]
+  // 格式2: navConfig格式 { navConfig: [{ name: '分类名', children: [...] }] }
+  async function importNavigationSites(data: unknown): Promise<{ success: number; skipped: number; categories: number }> {
     let successCount = 0
     let skippedCount = 0
+    let categoriesCount = 0
 
     // 预制颜色列表
-    const colors = ['#ffcdd2', '#f8bbd0', '#e1bee7', '#d1c4e9', '#c5cae9', '#bbdefb', '#b3e5fc', '#b2ebf2', '#b2dfdb', '#c8e6c9', '#dcedc8', '#f0f4c3', '#fff9c4', '#ffecb3', '#ffe0b2', '#ffccbc']
+    const defaultColors = ['#ffcdd2', '#f8bbd0', '#e1bee7', '#d1c4e9', '#c5cae9', '#bbdefb', '#b3e5fc', '#b2ebf2', '#b2dfdb', '#c8e6c9', '#dcedc8', '#f0f4c3', '#fff9c4', '#ffecb3', '#ffe0b2', '#ffccbc']
 
-    for (const siteData of sites) {
+    // 转换后的网站列表
+    interface ImportSite {
+      name: string
+      url: string
+      description?: string
+      category?: string
+      icon?: string
+      color?: string
+    }
+    let sitesToImport: ImportSite[] = []
+
+    // 检测数据格式并转换
+    if (data && typeof data === 'object' && 'navConfig' in data) {
+      // navConfig 格式
+      const navConfig = (data as { navConfig: Array<{ name: string; children?: unknown[] }> }).navConfig
+
+      for (const category of navConfig) {
+        const categoryName = category.name || '其他'
+
+        // 自动添加新分类（排除默认分类和"全部"）
+        if (categoryName !== '全部' && !navigationCategories.value.includes(categoryName)) {
+          navigationCategories.value.push(categoryName)
+          categoriesCount++
+        }
+
+        // 处理该分类下的网站
+        if (Array.isArray(category.children)) {
+          for (const item of category.children) {
+            const site = item as Record<string, unknown>
+
+            // 跳过组件类型（如倒计时、备忘录等）
+            if (site.type === 'component') continue
+
+            // 只处理有 url 的项目
+            if (typeof site.url === 'string' && site.url) {
+              sitesToImport.push({
+                name: (site.name as string) || '',
+                url: site.url,
+                description: '',
+                category: categoryName,
+                icon: (site.src as string) || undefined,
+                color: (site.backgroundColor as string) || undefined
+              })
+            }
+          }
+        }
+      }
+    } else if (Array.isArray(data)) {
+      // 简单数组格式
+      sitesToImport = data as ImportSite[]
+    } else {
+      throw new Error('数据格式错误：必须是数组格式或包含 navConfig 的对象')
+    }
+
+    // 导入网站
+    for (const siteData of sitesToImport) {
       // 验证必填字段
       if (!siteData.name || !siteData.url) {
         skippedCount++
@@ -979,18 +1032,26 @@ export const useDesktopStore = defineStore('desktop', () => {
         continue
       }
 
-      // 随机选择颜色
-      const color = colors[Math.floor(Math.random() * colors.length)]
+      // 使用原有颜色或随机选择
+      const color = siteData.color && siteData.color !== 'transparent'
+        ? siteData.color
+        : defaultColors[Math.floor(Math.random() * defaultColors.length)]
 
       // 添加网站
       try {
-        await addNavigationSite({
+        const newSite: NavigationSite = {
+          id: uuidv4(),
           name: siteData.name,
           url: siteData.url,
+          icon: siteData.icon || undefined,
           description: siteData.description || '',
           color,
-          category: siteData.category || '其他'
-        })
+          category: siteData.category || '其他',
+          order: navigationSites.value.length,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+        navigationSites.value.push(newSite)
         successCount++
       } catch (error) {
         console.error('Failed to import site:', siteData, error)
@@ -998,7 +1059,13 @@ export const useDesktopStore = defineStore('desktop', () => {
       }
     }
 
-    return { success: successCount, skipped: skippedCount }
+    // 保存数据
+    if (successCount > 0) {
+      save()
+      syncToCloud()
+    }
+
+    return { success: successCount, skipped: skippedCount, categories: categoriesCount }
   }
 
   return {
