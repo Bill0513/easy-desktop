@@ -116,10 +116,22 @@ const handleDeleteClick = () => {
   }
 }
 
-// 打开图片预览
-const handlePreview = () => {
-  if (props.widget.type === 'image' && widgetContentRef.value?.openPreview) {
-    widgetContentRef.value.openPreview()
+// 下载图片
+const handleDownloadImage = () => {
+  if (props.widget.type === 'image') {
+    const imageWidget = props.widget as any
+    if (!imageWidget.src) return
+
+    const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
+    const imageUrl = `${imageDomain}/${imageWidget.src}`
+
+    const link = document.createElement('a')
+    link.href = imageUrl
+    link.download = imageWidget.filename || 'image'
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 }
 
@@ -216,16 +228,20 @@ const stopResize = () => {
 
       <!-- 操作按钮 -->
       <div class="flex items-center gap-1" @mousedown.stop>
-        <!-- 预览按钮（仅图片组件） -->
+        <!-- 下载按钮（仅图片组件） -->
         <button
           v-if="widget.type === 'image'"
           class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
-          @click="handlePreview"
-          title="预览"
+          @click="handleDownloadImage"
+          title="下载图片"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
         </button>
 
