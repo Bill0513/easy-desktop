@@ -89,7 +89,7 @@ const handleRefresh = async () => {
     <!-- 新闻列表 -->
     <div v-else class="flex-1 overflow-y-auto space-y-1.5 p-2.5">
       <button
-        v-for="(item, index) in source.items.slice(0, 15)"
+        v-for="(item, index) in source.items"
         :key="item.id"
         class="w-full text-left group relative"
         @click="openLink(item.url)"
