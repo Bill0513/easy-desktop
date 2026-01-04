@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDesktopStore } from '@/stores/desktop'
+import SearchBar from './SearchBar.vue'
 
 const store = useDesktopStore()
 
@@ -65,10 +66,8 @@ const addWidget = (type: string) => {
       <!-- 分隔线 -->
       <div class="w-px h-8 bg-pencil/20"></div>
 
-      <!-- 保存状态指示 -->
-      <div class="text-xs font-handwritten text-pencil/40">
-        已自动保存
-      </div>
+      <!-- 搜索栏 -->
+      <SearchBar class="w-[280px]" />
     </div>
   </div>
 </template>
