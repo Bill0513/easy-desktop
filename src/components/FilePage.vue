@@ -16,6 +16,52 @@ const isUploading = ref(false)
 const uploadProgress = ref(0)
 const previewFile = ref<FileItem | null>(null)
 
+// 上传进度详情
+const uploadStats = ref({
+  totalFiles: 0,
+  completedFiles: 0,
+  currentFileName: '',
+  totalSize: 0,
+  uploadedSize: 0,
+  startTime: 0,
+  speed: 0 // KB/s
+})
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+// 格式化上传速度
+const formatSpeed = (bytesPerSecond: number): string => {
+  return formatFileSize(bytesPerSecond) + '/s'
+}
+
+// 计算上传进度百分比
+const uploadPercentage = computed(() => {
+  if (uploadStats.value.totalSize === 0) return 0
+  return Math.round((uploadStats.value.uploadedSize / uploadStats.value.totalSize) * 100)
+})
+
+// 计算剩余时间
+const estimatedTimeRemaining = computed(() => {
+  if (uploadStats.value.speed === 0) return '计算中...'
+  const remainingBytes = uploadStats.value.totalSize - uploadStats.value.uploadedSize
+  const remainingSeconds = remainingBytes / uploadStats.value.speed
+
+  if (remainingSeconds < 60) {
+    return `${Math.ceil(remainingSeconds)} 秒`
+  } else if (remainingSeconds < 3600) {
+    return `${Math.ceil(remainingSeconds / 60)} 分钟`
+  } else {
+    return `${Math.ceil(remainingSeconds / 3600)} 小时`
+  }
+})
+
 // 自定义对话框状态
 const dialog = ref({
   show: false,
@@ -355,14 +401,53 @@ const handleFileSelect = async (e: Event) => {
   isUploading.value = true
   uploadProgress.value = 0
 
+  // 初始化上传统计
+  const files = Array.from(input.files)
+  uploadStats.value = {
+    totalFiles: files.length,
+    completedFiles: 0,
+    currentFileName: '',
+    totalSize: files.reduce((sum, file) => sum + file.size, 0),
+    uploadedSize: 0,
+    startTime: Date.now(),
+    speed: 0
+  }
+
   try {
-    if (uploadMode.value === 'folder') {
-      const result = await store.uploadFolder(input.files)
-      await showAlert('上传完成', `成功：${result.success} 个，失败：${result.failed} 个`)
-    } else {
-      const result = await store.uploadFiles(input.files, store.currentFolderId)
-      await showAlert('上传完成', `成功：${result.success} 个，失败：${result.failed} 个`)
+    // 逐个上传文件并更新进度
+    let successCount = 0
+    let failedCount = 0
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      uploadStats.value.currentFileName = file.name
+
+      try {
+        if (uploadMode.value === 'folder') {
+          // 文件夹上传需要特殊处理
+          await store.uploadFile(file, store.currentFolderId)
+        } else {
+          await store.uploadFile(file, store.currentFolderId)
+        }
+
+        successCount++
+        uploadStats.value.completedFiles++
+        uploadStats.value.uploadedSize += file.size
+
+        // 计算上传速度
+        const elapsedTime = (Date.now() - uploadStats.value.startTime) / 1000 // 秒
+        uploadStats.value.speed = uploadStats.value.uploadedSize / elapsedTime
+
+        // 更新进度百分比
+        uploadProgress.value = Math.round((uploadStats.value.completedFiles / uploadStats.value.totalFiles) * 100)
+      } catch (error) {
+        console.error('Failed to upload file:', file.name, error)
+        failedCount++
+        uploadStats.value.completedFiles++
+      }
     }
+
+    await showAlert('上传完成', `成功：${successCount} 个，失败：${failedCount} 个`)
     showUploadDialog.value = false
   } catch (error) {
     await showAlert('上传失败', error instanceof Error ? error.message : '未知错误')
@@ -753,8 +838,67 @@ const getItemIcon = (item: FileItem | FolderItem) => {
               {{ uploadMode === 'folder' ? '上传文件夹' : '上传文件' }}
             </h2>
 
+            <!-- 上传进度显示 -->
+            <div v-if="isUploading" class="mb-4 space-y-4">
+              <!-- 当前文件名 -->
+              <div class="text-center">
+                <div class="font-handwritten text-sm text-pencil/60 mb-1">正在上传</div>
+                <div class="font-handwritten text-base text-pencil font-bold truncate" :title="uploadStats.currentFileName">
+                  {{ uploadStats.currentFileName }}
+                </div>
+              </div>
+
+              <!-- 进度条 -->
+              <div class="space-y-2">
+                <div class="w-full h-6 bg-muted border-2 border-pencil wobbly-sm overflow-hidden relative">
+                  <div
+                    class="h-full bg-accent transition-all duration-300"
+                    :style="{ width: uploadPercentage + '%' }"
+                  ></div>
+                  <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-pencil font-bold">
+                    {{ uploadPercentage }}%
+                  </div>
+                </div>
+              </div>
+
+              <!-- 统计信息 -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- 文件数量 -->
+                <div class="card-hand-drawn p-3 bg-paper/50">
+                  <div class="font-handwritten text-xs text-pencil/60 mb-1">文件进度</div>
+                  <div class="font-handwritten text-lg text-pencil font-bold">
+                    {{ uploadStats.completedFiles }} / {{ uploadStats.totalFiles }}
+                  </div>
+                </div>
+
+                <!-- 上传速度 -->
+                <div class="card-hand-drawn p-3 bg-paper/50">
+                  <div class="font-handwritten text-xs text-pencil/60 mb-1">上传速度</div>
+                  <div class="font-handwritten text-lg text-pencil font-bold">
+                    {{ formatSpeed(uploadStats.speed) }}
+                  </div>
+                </div>
+
+                <!-- 总大小 -->
+                <div class="card-hand-drawn p-3 bg-paper/50">
+                  <div class="font-handwritten text-xs text-pencil/60 mb-1">总大小</div>
+                  <div class="font-handwritten text-sm text-pencil font-bold">
+                    {{ formatFileSize(uploadStats.uploadedSize) }} / {{ formatFileSize(uploadStats.totalSize) }}
+                  </div>
+                </div>
+
+                <!-- 剩余时间 -->
+                <div class="card-hand-drawn p-3 bg-paper/50">
+                  <div class="font-handwritten text-xs text-pencil/60 mb-1">剩余时间</div>
+                  <div class="font-handwritten text-sm text-pencil font-bold">
+                    {{ estimatedTimeRemaining }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 文件选择区域 -->
-            <div class="mb-4">
+            <div v-else class="mb-4">
               <input
                 v-if="uploadMode === 'file'"
                 ref="fileInput"
@@ -775,12 +919,11 @@ const getItemIcon = (item: FileItem | FolderItem) => {
 
               <button
                 class="btn-hand-drawn w-full py-8 text-center"
-                :disabled="isUploading"
                 @click="uploadMode === 'file' ? fileInput?.click() : folderInput?.click()"
               >
                 <div class="text-4xl mb-2">{{ uploadMode === 'folder' ? '📁' : '📤' }}</div>
                 <div class="font-handwritten text-lg">
-                  {{ isUploading ? '上传中...' : (uploadMode === 'folder' ? '选择文件夹' : '选择文件') }}
+                  {{ uploadMode === 'folder' ? '选择文件夹' : '选择文件' }}
                 </div>
                 <div class="font-handwritten text-sm text-pencil/60 mt-2">
                   {{ uploadMode === 'folder' ? '支持整个文件夹上传' : '支持多文件选择' }}
@@ -797,7 +940,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
               :disabled="isUploading"
               @click="showUploadDialog = false"
             >
-              关闭
+              {{ isUploading ? '上传中...' : '关闭' }}
             </button>
           </div>
         </div>
