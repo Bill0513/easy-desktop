@@ -230,6 +230,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.searchEngine !== undefined) {
           searchEngine.value = cloudData.searchEngine
         }
+        // 加载思维导图历史记录
+        if (cloudData.mindMapHistory !== undefined) {
+          mindMapHistory.value = cloudData.mindMapHistory
+        }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
         // 同步云端数据到本地存储
@@ -260,6 +264,10 @@ export const useDesktopStore = defineStore('desktop', () => {
           if (parsed.searchEngine !== undefined) {
             searchEngine.value = parsed.searchEngine
           }
+          // 加载思维导图历史记录
+          if (parsed.mindMapHistory !== undefined) {
+            mindMapHistory.value = parsed.mindMapHistory
+          }
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           if (parsed.widgets && parsed.widgets.length > 0) {
             isCloudInitialized.value = true
@@ -289,6 +297,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         // 加载启用的新闻源
         if (parsed.enabledNewsSources !== undefined) {
           enabledSources.value = new Set(parsed.enabledNewsSources)
+        }
+        // 加载思维导图历史记录
+        if (parsed.mindMapHistory !== undefined) {
+          mindMapHistory.value = parsed.mindMapHistory
         }
         // 从本地加载成功，标记为已初始化
         if (parsed.widgets && parsed.widgets.length > 0) {
@@ -327,6 +339,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         enabledNewsSources: Array.from(enabledSources.value),
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
+        mindMapHistory: mindMapHistory.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -400,6 +413,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       enabledNewsSources: Array.from(enabledSources.value),
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
+      mindMapHistory: mindMapHistory.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -473,6 +487,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       enabledNewsSources: Array.from(enabledSources.value),
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
+      mindMapHistory: mindMapHistory.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1820,28 +1835,13 @@ export const useDesktopStore = defineStore('desktop', () => {
   // Mind Map Actions
 
   function loadMindMapHistory() {
-    try {
-      const cached = localStorage.getItem('cloud-desktop-mindmap-history')
-      if (cached) {
-        const data = JSON.parse(cached)
-        mindMapHistory.value = data.recentFiles || []
-      }
-    } catch (error) {
-      console.error('Failed to load mind map history:', error)
-    }
+    // 思维导图历史记录现在从 init() 中统一加载，无需单独初始化
+    // 保留此方法以保持向后兼容，但不执行任何操作
   }
 
   function saveMindMapHistory() {
-    try {
-      const data = {
-        recentFiles: mindMapHistory.value.slice(0, 10),
-        version: 1,
-        updatedAt: Date.now()
-      }
-      localStorage.setItem('cloud-desktop-mindmap-history', JSON.stringify(data))
-    } catch (error) {
-      console.error('Failed to save mind map history:', error)
-    }
+    // 使用统一的 save() 方法保存到 localStorage 和 KV
+    save()
   }
 
   function updateMindMapHistory(mindMapFile: MindMapFile) {

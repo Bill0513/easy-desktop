@@ -98,6 +98,7 @@ export interface DesktopData {
   enabledNewsSources?: string[]  // 启用的新闻源ID列表
   searchHistory?: string[]  // 搜索历史
   searchEngine?: string  // 搜索引擎偏好
+  mindMapHistory?: MindMapFile[]  // 思维导图历史记录
   version: number
   updatedAt: number
 }
