@@ -65,14 +65,9 @@ const fileType = computed(() => {
 const fileUrl = computed(() => {
   if (!props.file) return ''
 
-  // 图片文件需要使用完整域名（存储在 R2）
-  if (fileType.value === 'image') {
-    const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
-    return `${imageDomain}/${props.file.url}`
-  }
-
-  // 其他文件使用 API 端点
-  return `/api/file/${props.file.url}`
+  // 所有文件都存储在 R2，使用完整域名访问
+  const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
+  return `${imageDomain}/${props.file.url}`
 })
 
 // 加载文件内容（用于文本预览）
