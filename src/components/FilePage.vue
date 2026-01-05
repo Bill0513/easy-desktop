@@ -5,6 +5,7 @@ import type { FileItem, FolderItem } from '@/types'
 import FilePreviewDialog from './FilePreviewDialog.vue'
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
+import { getFileIcon } from '@/utils/fileIcons'
 
 const store = useDesktopStore()
 
@@ -401,6 +402,14 @@ const handleItemClick = (e: MouseEvent, item: FileItem | FolderItem) => {
 const closePreview = () => {
   previewFile.value = null
 }
+
+// 获取文件/文件夹图标
+const getItemIcon = (item: FileItem | FolderItem) => {
+  if (item.type === 'folder') {
+    return getFileIcon('', 'folder')
+  }
+  return getFileIcon(item.name, item.mimeType)
+}
 </script>
 
 <template>
@@ -538,8 +547,23 @@ const closePreview = () => {
             @contextmenu="(e) => handleItemContextMenu(e, item)"
           >
             <!-- 图标 -->
-            <div class="text-5xl text-center mb-2">
-              {{ item.type === 'folder' ? '📁' : '📄' }}
+            <div class="flex items-center justify-center mb-2">
+              <svg
+                class="w-16 h-16"
+                :style="{ color: getItemIcon(item).color }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  v-for="(path, index) in getItemIcon(item).paths"
+                  :key="index"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  :d="path"
+                />
+              </svg>
             </div>
             <!-- 名称 -->
             <div class="font-handwritten text-sm text-center text-pencil truncate" :title="item.name">
@@ -583,8 +607,23 @@ const closePreview = () => {
             @contextmenu="(e) => handleItemContextMenu(e, item)"
           >
             <!-- 图标 -->
-            <div class="text-2xl">
-              {{ item.type === 'folder' ? '📁' : '📄' }}
+            <div class="flex-shrink-0">
+              <svg
+                class="w-8 h-8"
+                :style="{ color: getItemIcon(item).color }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  v-for="(path, index) in getItemIcon(item).paths"
+                  :key="index"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  :d="path"
+                />
+              </svg>
             </div>
             <!-- 名称 -->
             <div class="flex-1 font-handwritten text-sm text-pencil truncate" :title="item.name">
