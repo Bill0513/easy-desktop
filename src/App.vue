@@ -31,6 +31,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 const handleBeforeUnload = () => {
   // 使用sendBeacon同步到云端，确保数据能够发送
   store.syncBeforeUnload()
+  store.syncFilesBeforeUnload()
 }
 
 onMounted(() => {
@@ -51,6 +52,7 @@ onUnmounted(() => {
   // 组件卸载时同步一次
   if (isUnlocked.value) {
     store.syncToCloud()
+    store.syncFilesToCloud()
   }
 })
 
@@ -59,16 +61,19 @@ const handleUnlock = async () => {
 
   // 密码验证成功后才加载数据
   await store.init()
+  await store.initFiles()
   store.loadActiveTab()
   store.initNavigation()
 
   // 启动自动同步定时器（5分钟）
   syncInterval = window.setInterval(() => {
     store.syncToCloud()
+    store.syncFilesToCloud()
   }, 5 * 60 * 1000)
 
   // 数据加载完成后才进行首次同步
   store.syncToCloud()
+  store.syncFilesToCloud()
 }
 </script>
 

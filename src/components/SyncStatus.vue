@@ -40,18 +40,39 @@ const formatCountdown = (ms: number) => {
 // 上次同步时间
 const lastSyncText = computed(() => formatTime(store.lastSyncTime))
 
+// 文件上次同步时间
+const lastFileSyncText = computed(() => formatTime(store.lastFileSyncTime))
+
+// 根据当前tab选择显示的同步状态
+const currentSyncStatus = computed(() => {
+  return store.activeTab === 'file' ? store.fileSyncStatus : store.syncStatus
+})
+
+const currentLastSyncTime = computed(() => {
+  return store.activeTab === 'file' ? store.lastFileSyncTime : store.lastSyncTime
+})
+
+const currentSyncErrorMessage = computed(() => {
+  return store.activeTab === 'file' ? store.fileSyncErrorMessage : store.syncErrorMessage
+})
+
+const currentLastSyncText = computed(() => {
+  return store.activeTab === 'file' ? lastFileSyncText.value : lastSyncText.value
+})
+
 // 下次同步倒计时
 const nextSyncCountdown = computed(() => {
-  if (!store.lastSyncTime) return '等待首次同步'
+  const lastTime = currentLastSyncTime.value
+  if (!lastTime) return '等待首次同步'
 
-  const nextSyncTime = store.lastSyncTime + SYNC_INTERVAL
+  const nextSyncTime = lastTime + SYNC_INTERVAL
   const remaining = nextSyncTime - currentTime.value
 
   return formatCountdown(remaining)
 })
 
 const statusIcon = computed(() => {
-  switch (store.syncStatus) {
+  switch (currentSyncStatus.value) {
     case 'syncing':
       return '⏳'
     case 'success':
@@ -64,7 +85,7 @@ const statusIcon = computed(() => {
 })
 
 const statusColor = computed(() => {
-  switch (store.syncStatus) {
+  switch (currentSyncStatus.value) {
     case 'syncing':
       return 'text-blue-600'
     case 'success':
@@ -78,6 +99,10 @@ const statusColor = computed(() => {
 
 const handleSync = () => {
   store.syncToCloud()
+  // 如果在文件tab，也同步文件
+  if (store.activeTab === 'file') {
+    store.syncFilesToCloud()
+  }
 }
 
 // 刷新新闻（带30分钟检查）
@@ -158,23 +183,23 @@ onUnmounted(() => {
       >
         <div class="flex items-center gap-2">
           <span class="text-base">{{ statusIcon }}</span>
-          <span class="font-handwritten" v-if="store.syncStatus === 'syncing'">同步中...</span>
-          <span class="font-handwritten" v-else-if="store.syncStatus === 'error'">{{ store.syncErrorMessage || '同步失败' }}</span>
+          <span class="font-handwritten" v-if="currentSyncStatus === 'syncing'">同步中...</span>
+          <span class="font-handwritten" v-else-if="currentSyncStatus === 'error'">{{ currentSyncErrorMessage || '同步失败' }}</span>
           <span class="font-handwritten" v-else>
             下次同步: {{ nextSyncCountdown }}
           </span>
         </div>
-        <div class="text-xs text-gray-500 font-handwritten" v-if="store.lastSyncTime">
-          上次同步: {{ lastSyncText }}
+        <div class="text-xs text-gray-500 font-handwritten" v-if="currentLastSyncTime">
+          上次同步: {{ currentLastSyncText }}
         </div>
       </div>
 
       <!-- 手动同步按钮 -->
       <button
         @click="handleSync"
-        :disabled="store.syncStatus === 'syncing'"
+        :disabled="currentSyncStatus === 'syncing'"
         class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
-        title="手动同步到云端"
+        :title="store.activeTab === 'file' ? '手动同步文件到云端' : '手动同步到云端'"
       >
         <span class="text-base">🔄</span>
       </button>

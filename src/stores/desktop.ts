@@ -63,6 +63,12 @@ export const useDesktopStore = defineStore('desktop', () => {
   const syncErrorMessage = ref<string>('')
   const isCloudInitialized = ref(false) // 标记是否已从云端成功加载过数据
 
+  // File sync state
+  const fileSyncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
+  const lastFileSyncTime = ref<number | null>(null)
+  const fileSyncErrorMessage = ref<string>('')
+  const isFileCloudInitialized = ref(false) // 标记文件是否已从云端成功加载过数据
+
   // Getters
   const getWidgetById = computed(() => {
     return (id: string): Widget | undefined => {
@@ -1574,6 +1580,72 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // 手动同步文件到云端（带状态管理）
+  async function syncFilesToCloud() {
+    if (fileSyncStatus.value === 'syncing') {
+      return // 防止重复同步
+    }
+
+    // 安全检查：如果未从云端成功初始化，不允许同步（防止空数据覆盖云端数据）
+    if (!isFileCloudInitialized.value) {
+      console.warn('文件数据未从云端成功加载，跳过同步以防止数据丢失')
+      fileSyncStatus.value = 'error'
+      fileSyncErrorMessage.value = '文件数据未初始化，无法同步'
+      setTimeout(() => {
+        if (fileSyncStatus.value === 'error') {
+          fileSyncStatus.value = 'idle'
+        }
+      }, 5000)
+      return
+    }
+
+    fileSyncStatus.value = 'syncing'
+    fileSyncErrorMessage.value = ''
+
+    try {
+      await saveFilesToCloud()
+      fileSyncStatus.value = 'success'
+      lastFileSyncTime.value = Date.now()
+
+      // 3秒后重置状态
+      setTimeout(() => {
+        if (fileSyncStatus.value === 'success') {
+          fileSyncStatus.value = 'idle'
+        }
+      }, 3000)
+    } catch (error) {
+      fileSyncStatus.value = 'error'
+      fileSyncErrorMessage.value = error instanceof Error ? error.message : '文件同步失败'
+
+      // 5秒后重置错误状态
+      setTimeout(() => {
+        if (fileSyncStatus.value === 'error') {
+          fileSyncStatus.value = 'idle'
+        }
+      }, 5000)
+    }
+  }
+
+  // 页面关闭前同步文件（使用sendBeacon确保数据发送）
+  function syncFilesBeforeUnload() {
+    // 安全检查：如果未从云端成功初始化，不允许同步
+    if (!isFileCloudInitialized.value) {
+      console.warn('文件数据未从云端成功加载，跳过关闭前同步以防止数据丢失')
+      return
+    }
+
+    const data = {
+      files: files.value,
+      folders: folders.value,
+      version: 1,
+      updatedAt: Date.now()
+    }
+
+    // 使用sendBeacon发送数据，即使页面关闭也能完成
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+    navigator.sendBeacon('/api/file-metadata', blob)
+  }
+
   // 初始化文件数据
   async function initFiles() {
     isLoadingFiles.value = true
@@ -1582,6 +1654,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       const cloudLoaded = await loadFilesFromCloud()
 
       if (cloudLoaded) {
+        // 标记已从云端成功加载
+        isFileCloudInitialized.value = true
         // 同步到本地
         saveFilesLocal()
       } else {
@@ -1591,6 +1665,13 @@ export const useDesktopStore = defineStore('desktop', () => {
           const parsed = JSON.parse(localData)
           files.value = parsed.files || []
           folders.value = parsed.folders || []
+          // 如果本地有数据，标记为已初始化（允许后续同步到云端）
+          if ((parsed.files && parsed.files.length > 0) || (parsed.folders && parsed.folders.length > 0)) {
+            isFileCloudInitialized.value = true
+          }
+        } else {
+          // 新用户，没有任何数据，标记为已初始化
+          isFileCloudInitialized.value = true
         }
       }
     } catch (error) {
@@ -1601,6 +1682,13 @@ export const useDesktopStore = defineStore('desktop', () => {
         const parsed = JSON.parse(localData)
         files.value = parsed.files || []
         folders.value = parsed.folders || []
+        // 从本地加载成功，标记为已初始化
+        if ((parsed.files && parsed.files.length > 0) || (parsed.folders && parsed.folders.length > 0)) {
+          isFileCloudInitialized.value = true
+        }
+      } else {
+        // 加载失败且无本地数据，不标记为已初始化，防止空数据同步
+        isFileCloudInitialized.value = false
       }
     } finally {
       isLoadingFiles.value = false
@@ -1748,6 +1836,10 @@ export const useDesktopStore = defineStore('desktop', () => {
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
+    // File sync state
+    fileSyncStatus,
+    lastFileSyncTime,
+    fileSyncErrorMessage,
     // File state
     files,
     folders,
@@ -1827,6 +1919,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveFilesLocal,
     loadFilesFromCloud,
     saveFilesToCloud,
+    syncFilesToCloud,
+    syncFilesBeforeUnload,
     initFiles,
     toggleFileSelection,
     selectAllFiles,
