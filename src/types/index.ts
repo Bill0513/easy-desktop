@@ -103,7 +103,7 @@ export interface DesktopData {
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'navigation' | 'news'
+export type TabType = 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file'
 
 // 新闻项
 export interface NewsItem {

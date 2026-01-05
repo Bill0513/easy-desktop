@@ -11,7 +11,9 @@ const showSettings = ref(false)
 const tabs = [
   { id: 'desktop' as TabType, name: '记录', icon: '📝', description: '便签、待办、文本' },
   { id: 'navigation' as TabType, name: '导航', icon: '🌐', description: '网页导航站' },
-  { id: 'news' as TabType, name: '热点', icon: '🔥', description: '新闻热搜' }
+  { id: 'news' as TabType, name: '热点', icon: '🔥', description: '新闻热搜' },
+  { id: 'resource-search' as TabType, name: '资源', icon: '🔍', description: '资源搜索' },
+  { id: 'file' as TabType, name: '文件', icon: '📁', description: '文件管理' }
 ]
 
 const handleTabClick = (tabId: TabType) => {

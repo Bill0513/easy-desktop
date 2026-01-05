@@ -8,6 +8,8 @@ import GlobalSearch from '@/components/GlobalSearch.vue'
 import TabBar from '@/components/TabBar.vue'
 import NavigationPage from '@/components/NavigationPage.vue'
 import NewsPage from '@/components/NewsPage.vue'
+import ResourceSearchPage from '@/components/ResourceSearchPage.vue'
+import FilePage from '@/components/FilePage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 
 const store = useDesktopStore()
@@ -105,6 +107,16 @@ const handleUnlock = async () => {
       <!-- 新闻 Tab -->
       <div v-show="store.activeTab === 'news'" class="w-full h-full">
         <NewsPage />
+      </div>
+
+      <!-- 资源搜索 Tab -->
+      <div v-show="store.activeTab === 'resource-search'" class="w-full h-full">
+        <ResourceSearchPage />
+      </div>
+
+      <!-- 文件 Tab -->
+      <div v-show="store.activeTab === 'file'" class="w-full h-full">
+        <FilePage />
       </div>
     </template>
   </div>
