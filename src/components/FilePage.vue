@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
+import FilePreviewDialog from './FilePreviewDialog.vue'
+import draggable from 'vuedraggable'
 
 const store = useDesktopStore()
 
@@ -10,6 +12,18 @@ const showUploadDialog = ref(false)
 const uploadMode = ref<'file' | 'folder'>('file')
 const isUploading = ref(false)
 const uploadProgress = ref(0)
+const previewFile = ref<FileItem | null>(null)
+
+// 拖拽状态
+const isDragging = ref(false)
+
+// 可拖拽的文件列表（用于 v-model）
+const draggableItems = computed({
+  get: () => store.currentFolderItems,
+  set: (value) => {
+    store.reorderFileItems(value)
+  }
+})
 
 const contextMenu = ref({
   show: false,
@@ -154,9 +168,14 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
   if (item.type === 'folder') {
     store.currentFolderId = item.id
   } else {
-    // TODO: 打开文件预览
-    console.log('预览文件:', item.name)
+    // 打开文件预览
+    previewFile.value = item
   }
+}
+
+// 关闭预览
+const closePreview = () => {
+  previewFile.value = null
 }
 </script>
 
@@ -230,69 +249,89 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
       </div>
 
       <!-- 文件列表 - 网格视图 -->
-      <div v-else-if="store.fileViewMode === 'grid'" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <div
-          v-for="item in store.currentFolderItems"
-          :key="item.id"
-          class="card-hand-drawn p-4 cursor-pointer hover:scale-105 transition-transform"
-          @dblclick="handleItemDoubleClick(item)"
-          @contextmenu="(e) => handleItemContextMenu(e, item)"
-        >
-          <!-- 图标 -->
-          <div class="text-5xl text-center mb-2">
-            {{ item.type === 'folder' ? '📁' : '📄' }}
-          </div>
-          <!-- 名称 -->
-          <div class="font-handwritten text-sm text-center text-pencil truncate" :title="item.name">
-            {{ item.name }}
-          </div>
-          <!-- 文件大小 -->
-          <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-pencil/60 mt-1">
-            {{ Math.round(item.size / 1024) }} KB
-          </div>
-          <!-- 上传进度 -->
-          <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="mt-2">
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
+      <draggable
+        v-else-if="store.fileViewMode === 'grid'"
+        v-model="draggableItems"
+        class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"
+        item-key="id"
+        :animation="200"
+        ghost-class="opacity-50"
+        @start="isDragging = true"
+        @end="isDragging = false"
+      >
+        <template #item="{ element: item }">
+          <div
+            class="card-hand-drawn p-4 cursor-pointer hover:scale-105 transition-transform"
+            :class="{ 'cursor-move': isDragging }"
+            @dblclick="handleItemDoubleClick(item)"
+            @contextmenu="(e) => handleItemContextMenu(e, item)"
+          >
+            <!-- 图标 -->
+            <div class="text-5xl text-center mb-2">
+              {{ item.type === 'folder' ? '📁' : '📄' }}
             </div>
-            <div class="text-xs text-center text-pencil/60 mt-1">{{ item.uploadProgress }}%</div>
+            <!-- 名称 -->
+            <div class="font-handwritten text-sm text-center text-pencil truncate" :title="item.name">
+              {{ item.name }}
+            </div>
+            <!-- 文件大小 -->
+            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-pencil/60 mt-1">
+              {{ Math.round(item.size / 1024) }} KB
+            </div>
+            <!-- 上传进度 -->
+            <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="mt-2">
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
+              </div>
+              <div class="text-xs text-center text-pencil/60 mt-1">{{ item.uploadProgress }}%</div>
+            </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </draggable>
 
       <!-- 文件列表 - 列表视图 -->
-      <div v-else class="space-y-2">
-        <div
-          v-for="item in store.currentFolderItems"
-          :key="item.id"
-          class="card-hand-drawn p-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors"
-          @dblclick="handleItemDoubleClick(item)"
-          @contextmenu="(e) => handleItemContextMenu(e, item)"
-        >
-          <!-- 图标 -->
-          <div class="text-2xl">
-            {{ item.type === 'folder' ? '📁' : '📄' }}
-          </div>
-          <!-- 名称 -->
-          <div class="flex-1 font-handwritten text-sm text-pencil truncate" :title="item.name">
-            {{ item.name }}
-          </div>
-          <!-- 文件大小 -->
-          <div v-if="item.type === 'file'" class="font-handwritten text-xs text-pencil/60">
-            {{ Math.round(item.size / 1024) }} KB
-          </div>
-          <!-- 日期 -->
-          <div class="font-handwritten text-xs text-pencil/60">
-            {{ new Date(item.updatedAt).toLocaleDateString() }}
-          </div>
-          <!-- 上传进度 -->
-          <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="w-24">
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
+      <draggable
+        v-else
+        v-model="draggableItems"
+        class="space-y-2"
+        item-key="id"
+        :animation="200"
+        ghost-class="opacity-50"
+        @start="isDragging = true"
+        @end="isDragging = false"
+      >
+        <template #item="{ element: item }">
+          <div
+            class="card-hand-drawn p-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors"
+            :class="{ 'cursor-move': isDragging }"
+            @dblclick="handleItemDoubleClick(item)"
+            @contextmenu="(e) => handleItemContextMenu(e, item)"
+          >
+            <!-- 图标 -->
+            <div class="text-2xl">
+              {{ item.type === 'folder' ? '📁' : '📄' }}
+            </div>
+            <!-- 名称 -->
+            <div class="flex-1 font-handwritten text-sm text-pencil truncate" :title="item.name">
+              {{ item.name }}
+            </div>
+            <!-- 文件大小 -->
+            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-pencil/60">
+              {{ Math.round(item.size / 1024) }} KB
+            </div>
+            <!-- 日期 -->
+            <div class="font-handwritten text-xs text-pencil/60">
+              {{ new Date(item.updatedAt).toLocaleDateString() }}
+            </div>
+            <!-- 上传进度 -->
+            <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="w-24">
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </draggable>
     </div>
 
     <!-- 右键菜单 -->
@@ -450,5 +489,8 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
         </div>
       </Transition>
     </Teleport>
+
+    <!-- 文件预览对话框 -->
+    <FilePreviewDialog :file="previewFile" @close="closePreview" />
   </div>
 </template>
