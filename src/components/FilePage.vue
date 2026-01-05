@@ -414,7 +414,7 @@ const closePreview = () => {
     @drop="handleDrop"
   >
     <!-- 工具栏 -->
-    <div class="flex items-center gap-3 p-4 pr-64 border-b-2 border-pencil/20">
+    <div class="flex items-center gap-3 p-4 border-b-2 border-pencil/20">
       <button
         class="btn-hand-drawn p-3"
         @click="handleUploadFiles"
@@ -442,6 +442,26 @@ const closePreview = () => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
       </button>
+    </div>
+
+    <!-- 面包屑导航 -->
+    <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-pencil/10">
+      <button
+        class="font-handwritten text-sm hover:text-accent transition-colors"
+        @click="store.currentFolderId = null"
+      >
+        📁 根目录
+      </button>
+      <template v-for="folder in store.breadcrumbPath" :key="folder.id">
+        <span class="text-pencil/40">/</span>
+        <button
+          class="font-handwritten text-sm hover:text-accent transition-colors"
+          @click="store.currentFolderId = folder.id"
+        >
+          {{ folder.name }}
+        </button>
+      </template>
+
       <div class="flex-1"></div>
 
       <!-- 排序选项 -->
@@ -478,25 +498,6 @@ const closePreview = () => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
         </svg>
       </button>
-    </div>
-
-    <!-- 面包屑导航 -->
-    <div class="flex items-center gap-2 px-4 py-3 border-b border-pencil/10">
-      <button
-        class="font-handwritten text-sm hover:text-accent transition-colors"
-        @click="store.currentFolderId = null"
-      >
-        📁 根目录
-      </button>
-      <template v-for="folder in store.breadcrumbPath" :key="folder.id">
-        <span class="text-pencil/40">/</span>
-        <button
-          class="font-handwritten text-sm hover:text-accent transition-colors"
-          @click="store.currentFolderId = folder.id"
-        >
-          {{ folder.name }}
-        </button>
-      </template>
     </div>
 
     <!-- 主内容区 -->
