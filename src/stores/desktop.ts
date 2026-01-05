@@ -1220,6 +1220,366 @@ export const useDesktopStore = defineStore('desktop', () => {
     return { success: successCount, skipped: skippedCount, categories: categoriesCount }
   }
 
+  // File Management Actions
+
+  // 创建文件夹
+  function createFolder(name: string, parentId: string | null = null): FolderItem {
+    const folder: FolderItem = {
+      id: uuidv4(),
+      name,
+      type: 'folder',
+      parentId,
+      order: folders.value.filter(f => f.parentId === parentId).length,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }
+    folders.value.push(folder)
+    saveFilesLocal()
+    return folder
+  }
+
+  // 删除文件夹（递归删除子文件夹和文件）
+  async function deleteFolder(id: string) {
+    // 查找所有子文件夹
+    const childFolders = folders.value.filter(f => f.parentId === id)
+
+    // 递归删除子文件夹
+    for (const childFolder of childFolders) {
+      await deleteFolder(childFolder.id)
+    }
+
+    // 查找并删除该文件夹下的所有文件
+    const childFiles = files.value.filter(f => f.parentId === id)
+    for (const file of childFiles) {
+      await deleteFile(file.id)
+    }
+
+    // 删除文件夹本身
+    const index = folders.value.findIndex(f => f.id === id)
+    if (index !== -1) {
+      folders.value.splice(index, 1)
+      saveFilesLocal()
+    }
+  }
+
+  // 删除文件（同时删除 R2 和元数据）
+  async function deleteFile(id: string) {
+    const file = files.value.find(f => f.id === id)
+    if (file && file.url) {
+      try {
+        // 从 R2 删除文件
+        await fetch('/api/file', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.url }),
+        })
+      } catch (error) {
+        console.error('Failed to delete file from R2:', error)
+      }
+    }
+
+    // 从元数据中删除
+    const index = files.value.findIndex(f => f.id === id)
+    if (index !== -1) {
+      files.value.splice(index, 1)
+      saveFilesLocal()
+    }
+  }
+
+  // 重命名文件或文件夹
+  function renameItem(id: string, newName: string, itemType: 'file' | 'folder') {
+    if (itemType === 'folder') {
+      const folder = folders.value.find(f => f.id === id)
+      if (folder) {
+        folder.name = newName
+        folder.updatedAt = Date.now()
+        saveFilesLocal()
+      }
+    } else {
+      const file = files.value.find(f => f.id === id)
+      if (file) {
+        file.name = newName
+        file.updatedAt = Date.now()
+        saveFilesLocal()
+      }
+    }
+  }
+
+  // 拖拽排序
+  function reorderFileItems(items: (FileItem | FolderItem)[]) {
+    items.forEach((item, index) => {
+      if (item.type === 'folder') {
+        const folder = folders.value.find(f => f.id === item.id)
+        if (folder) {
+          folder.order = index
+          folder.updatedAt = Date.now()
+        }
+      } else {
+        const file = files.value.find(f => f.id === item.id)
+        if (file) {
+          file.order = index
+          file.updatedAt = Date.now()
+        }
+      }
+    })
+    saveFilesLocal()
+  }
+
+  // 上传单个文件
+  async function uploadFile(file: File, parentId: string | null = null): Promise<FileItem> {
+    // 验证文件大小（20MB）
+    const MAX_SIZE = 20 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      throw new Error(`文件大小超过 20MB 限制（${Math.round(file.size / 1024 / 1024)}MB）`)
+    }
+
+    // 创建文件项（显示上传进度）
+    const fileItem: FileItem = {
+      id: uuidv4(),
+      name: file.name,
+      type: 'file',
+      size: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      url: '', // 上传成功后填充
+      parentId,
+      order: files.value.filter(f => f.parentId === parentId).length,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      uploadProgress: 0
+    }
+
+    files.value.push(fileItem)
+
+    try {
+      // 使用 XMLHttpRequest 上传以支持进度监听
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await new Promise<{ success: boolean; filename: string; size: number; mimeType: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100)
+            fileItem.uploadProgress = progress
+          }
+        })
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            resolve(JSON.parse(xhr.responseText))
+          } else {
+            reject(new Error(`Upload failed: ${xhr.statusText}`))
+          }
+        })
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload failed'))
+        })
+
+        xhr.open('POST', '/api/file')
+        xhr.send(formData)
+      })
+
+      // 更新文件项
+      fileItem.url = response.filename
+      fileItem.uploadProgress = undefined
+      saveFilesLocal()
+
+      return fileItem
+    } catch (error) {
+      // 上传失败，删除文件项
+      const index = files.value.findIndex(f => f.id === fileItem.id)
+      if (index !== -1) {
+        files.value.splice(index, 1)
+      }
+      throw error
+    }
+  }
+
+  // 批量上传文件
+  async function uploadFiles(fileList: FileList, parentId: string | null = null): Promise<{ success: number; failed: number }> {
+    let successCount = 0
+    let failedCount = 0
+
+    for (let i = 0; i < fileList.length; i++) {
+      try {
+        await uploadFile(fileList[i], parentId)
+        successCount++
+      } catch (error) {
+        console.error('Failed to upload file:', fileList[i].name, error)
+        failedCount++
+      }
+    }
+
+    return { success: successCount, failed: failedCount }
+  }
+
+  // 上传文件夹
+  async function uploadFolder(fileList: FileList): Promise<{ success: number; failed: number }> {
+    // 解析文件夹结构
+    const folderMap = new Map<string, string | null>() // path -> folderId
+    folderMap.set('', currentFolderId.value) // 根路径映射到当前文件夹
+
+    // 收集所有文件夹路径
+    const folderPaths = new Set<string>()
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i] as File & { webkitRelativePath?: string }
+      if (file.webkitRelativePath) {
+        const pathParts = file.webkitRelativePath.split('/')
+        // 移除文件名，只保留文件夹路径
+        pathParts.pop()
+
+        // 添加所有层级的路径
+        let currentPath = ''
+        for (const part of pathParts) {
+          currentPath = currentPath ? `${currentPath}/${part}` : part
+          folderPaths.add(currentPath)
+        }
+      }
+    }
+
+    // 按路径深度排序，确保父文件夹先创建
+    const sortedPaths = Array.from(folderPaths).sort((a, b) => {
+      const depthA = a.split('/').length
+      const depthB = b.split('/').length
+      return depthA - depthB
+    })
+
+    // 创建所有文件夹
+    for (const path of sortedPaths) {
+      const pathParts = path.split('/')
+      const folderName = pathParts[pathParts.length - 1]
+      const parentPath = pathParts.slice(0, -1).join('/')
+      const parentId = folderMap.get(parentPath) || null
+
+      const folder = createFolder(folderName, parentId)
+      folderMap.set(path, folder.id)
+    }
+
+    // 上传所有文件
+    let successCount = 0
+    let failedCount = 0
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i] as File & { webkitRelativePath?: string }
+      if (file.webkitRelativePath) {
+        const pathParts = file.webkitRelativePath.split('/')
+        pathParts.pop() // 移除文件名
+        const folderPath = pathParts.join('/')
+        const parentId = folderMap.get(folderPath) || null
+
+        try {
+          await uploadFile(file, parentId)
+          successCount++
+        } catch (error) {
+          console.error('Failed to upload file:', file.name, error)
+          failedCount++
+        }
+      }
+    }
+
+    return { success: successCount, failed: failedCount }
+  }
+
+  // 保存文件数据到 localStorage
+  function saveFilesLocal() {
+    const data = {
+      files: files.value,
+      folders: folders.value,
+      version: 1,
+      updatedAt: Date.now()
+    }
+    localStorage.setItem('cloud-desktop-files', JSON.stringify(data))
+  }
+
+  // 从云端加载文件数据
+  async function loadFilesFromCloud() {
+    try {
+      const response = await fetch('/api/file-metadata')
+      if (response.ok) {
+        const data = await response.json()
+        if (data) {
+          files.value = data.files || []
+          folders.value = data.folders || []
+          return true
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load files from cloud:', error)
+    }
+    return false
+  }
+
+  // 同步文件数据到云端
+  async function saveFilesToCloud() {
+    try {
+      const data = {
+        files: files.value,
+        folders: folders.value,
+        version: 1,
+        updatedAt: Date.now()
+      }
+
+      const response = await fetch('/api/file-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+
+      if (response.status === 409) {
+        // 数据冲突，使用服务器数据
+        const conflictData = await response.json()
+        if (conflictData.serverData) {
+          files.value = conflictData.serverData.files || []
+          folders.value = conflictData.serverData.folders || []
+          saveFilesLocal()
+        }
+        throw new Error('数据冲突：已自动使用服务器最新数据')
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save files to cloud')
+      }
+    } catch (error) {
+      console.error('Failed to save files to cloud:', error)
+      throw error
+    }
+  }
+
+  // 初始化文件数据
+  async function initFiles() {
+    isLoadingFiles.value = true
+    try {
+      // 先尝试从云端加载
+      const cloudLoaded = await loadFilesFromCloud()
+
+      if (cloudLoaded) {
+        // 同步到本地
+        saveFilesLocal()
+      } else {
+        // 云端无数据，尝试从本地加载
+        const localData = localStorage.getItem('cloud-desktop-files')
+        if (localData) {
+          const parsed = JSON.parse(localData)
+          files.value = parsed.files || []
+          folders.value = parsed.folders || []
+        }
+      }
+    } catch (error) {
+      console.error('Failed to init files:', error)
+      // 加载失败，尝试从本地恢复
+      const localData = localStorage.getItem('cloud-desktop-files')
+      if (localData) {
+        const parsed = JSON.parse(localData)
+        files.value = parsed.files || []
+        folders.value = parsed.folders || []
+      }
+    } finally {
+      isLoadingFiles.value = false
+    }
+  }
+
   return {
     // State
     widgets,
@@ -1307,5 +1667,18 @@ export const useDesktopStore = defineStore('desktop', () => {
     addCategory,
     importNavigationSites,
     deleteCategory,
+    // File actions
+    createFolder,
+    deleteFolder,
+    deleteFile,
+    renameItem,
+    reorderFileItems,
+    uploadFile,
+    uploadFiles,
+    uploadFolder,
+    saveFilesLocal,
+    loadFilesFromCloud,
+    saveFilesToCloud,
+    initFiles,
   }
 })
