@@ -658,13 +658,6 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-pencil/60 mt-1">
               {{ Math.round(item.size / 1024) }} KB
             </div>
-            <!-- 上传进度 -->
-            <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="mt-2">
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
-              </div>
-              <div class="text-xs text-center text-pencil/60 mt-1">{{ item.uploadProgress }}%</div>
-            </div>
           </div>
         </template>
       </draggable>
@@ -721,12 +714,6 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             <!-- 日期 -->
             <div class="font-handwritten text-xs text-pencil/60">
               {{ new Date(item.updatedAt).toLocaleDateString() }}
-            </div>
-            <!-- 上传进度 -->
-            <div v-if="item.type === 'file' && item.uploadProgress !== undefined" class="w-24">
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-accent h-2 rounded-full transition-all" :style="{ width: item.uploadProgress + '%' }"></div>
-              </div>
             </div>
           </div>
         </template>

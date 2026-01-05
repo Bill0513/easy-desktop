@@ -16,6 +16,13 @@ const handleRemove = (e: MouseEvent, id: string) => {
     emit('remove', id)
   }
 }
+
+// 获取缩略图完整URL
+const getThumbnailUrl = (thumbnail: string | undefined) => {
+  if (!thumbnail) return ''
+  const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
+  return `${imageDomain}/${thumbnail}`
+}
 </script>
 
 <template>
@@ -35,7 +42,7 @@ const handleRemove = (e: MouseEvent, id: string) => {
       >
         <!-- Thumbnail or icon -->
         <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
-          <img v-if="item.thumbnail" :src="item.thumbnail" alt="缩略图" class="w-full h-full object-cover" />
+          <img v-if="item.thumbnail" :src="getThumbnailUrl(item.thumbnail)" alt="缩略图" class="w-full h-full object-cover" />
           <div v-else class="text-4xl">🧠</div>
         </div>
 

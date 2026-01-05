@@ -261,36 +261,54 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col bg-paper">
-    <!-- Toolbar -->
-    <div class="flex items-center gap-3 p-4 border-b-2 border-pencil/20">
-      <button class="btn-hand-drawn px-4 py-2 text-sm" @click="handleNew">
-        ➕ 新建
-      </button>
-      <button class="btn-hand-drawn px-4 py-2 text-sm" @click="showOpenDialog = true">
-        📂 打开
-      </button>
+  <div class="w-full h-full flex bg-paper">
+    <!-- Left sidebar with tools -->
+    <div class="w-16 flex-shrink-0 border-r-2 border-pencil/20 flex flex-col items-center gap-3 py-4">
       <button
-        class="btn-hand-drawn px-4 py-2 text-sm"
-        @click="handleSave"
-        :disabled="!hasUnsavedChanges || isSaving"
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        @click="handleNew"
+        title="新建"
       >
-        {{ isSaving ? '💾 保存中...' : '💾 保存' }}
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
       </button>
 
-      <div class="flex-1 text-center">
-        <span class="font-handwritten text-lg text-pencil">
-          {{ currentFileName || '未命名思维导图' }}
-          <span v-if="hasUnsavedChanges" class="text-accent">*</span>
-        </span>
-      </div>
+      <button
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        @click="showOpenDialog = true"
+        title="打开"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+      </button>
+
+      <button
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        :class="{ 'opacity-50': !hasUnsavedChanges || isSaving }"
+        @click="handleSave"
+        :disabled="!hasUnsavedChanges || isSaving"
+        title="保存"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg>
+      </button>
+
+      <div class="flex-1"></div>
 
       <!-- Export dropdown -->
       <div class="relative group">
-        <button class="btn-hand-drawn px-4 py-2 text-sm">
-          📤 导出
+        <button
+          class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+          title="导出"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
         </button>
-        <div class="absolute right-0 top-full mt-2 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+        <div class="absolute left-full ml-2 top-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
           <button
             class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
             @click="handleExport('png')"
@@ -301,7 +319,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
             class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
             @click="handleExport('svg')"
           >
-            SVG 矢量图
+            SVG 矢量
           </button>
           <button
             class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
@@ -313,32 +331,26 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       </div>
     </div>
 
-    <!-- Mind map canvas -->
-    <div class="flex-1 relative overflow-hidden">
-      <div
-        ref="mindMapContainer"
-        class="w-full h-full"
-        style="font-family: 'Patrick Hand', 'Kalam', cursive;"
-      />
-
-      <!-- Empty state -->
-      <div
-        v-if="!store.currentMindMapId"
-        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-      >
-        <div class="text-6xl mb-4">🧠</div>
-        <h3 class="font-handwritten text-2xl text-pencil mb-2">开始创建思维导图</h3>
-        <p class="font-handwritten text-pencil/60">点击"新建"或"打开"开始</p>
-        <p class="font-handwritten text-sm text-pencil/40 mt-4">快捷键：Ctrl+N 新建 | Ctrl+O 打开 | Ctrl+S 保存</p>
+    <!-- Main content area -->
+    <div class="flex-1 flex flex-col">
+      <!-- Title bar -->
+      <div class="flex items-center justify-center p-4 border-b-2 border-pencil/20">
+        <span class="font-handwritten text-lg text-pencil">
+          {{ currentFileName || '未命名思维导图' }}
+          <span v-if="hasUnsavedChanges" class="text-accent">*</span>
+        </span>
       </div>
-    </div>
 
-    <!-- History section -->
-    <MindMapHistory
-      :history="store.mindMapHistory"
-      @open="handleOpen"
-      @remove="store.removeMindMapFromHistory"
-    />
+      <!-- Mind map container -->
+      <div ref="mindMapContainer" class="flex-1 relative"></div>
+
+      <!-- History section -->
+      <MindMapHistory
+        :history="store.mindMapHistory"
+        @open="handleOpen"
+        @remove="store.removeMindMapFromHistory"
+      />
+    </div>
 
     <!-- New dialog -->
     <Teleport to="body">
