@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
 import FilePreviewDialog from './FilePreviewDialog.vue'
@@ -16,6 +16,7 @@ const previewFile = ref<FileItem | null>(null)
 
 // 拖拽状态
 const isDragging = ref(false)
+const isDragOver = ref(false)
 
 // 可拖拽的文件列表（用于 v-model）
 const draggableItems = computed({
@@ -24,6 +25,51 @@ const draggableItems = computed({
     store.reorderFileItems(value)
   }
 })
+
+// 拖拽上传处理
+const handleDragOver = (e: DragEvent) => {
+  e.preventDefault()
+  isDragOver.value = true
+}
+
+const handleDragLeave = (e: DragEvent) => {
+  e.preventDefault()
+  isDragOver.value = false
+}
+
+const handleDrop = async (e: DragEvent) => {
+  e.preventDefault()
+  isDragOver.value = false
+
+  if (!e.dataTransfer) return
+
+  const items = e.dataTransfer.items
+  if (!items || items.length === 0) return
+
+  isUploading.value = true
+
+  try {
+    const files: File[] = []
+
+    // 收集所有文件
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.kind === 'file') {
+        const file = item.getAsFile()
+        if (file) files.push(file)
+      }
+    }
+
+    if (files.length > 0) {
+      const result = await store.uploadFiles(files as unknown as FileList, store.currentFolderId)
+      alert(`上传完成！成功：${result.success} 个，失败：${result.failed} 个`)
+    }
+  } catch (error) {
+    alert('上传失败：' + (error instanceof Error ? error.message : '未知错误'))
+  } finally {
+    isUploading.value = false
+  }
+}
 
 const contextMenu = ref({
   show: false,
@@ -37,7 +83,87 @@ const contextMenu = ref({
 // 初始化文件数据
 onMounted(() => {
   store.initFiles()
+  // 添加快捷键监听
+  window.addEventListener('keydown', handleKeyDown)
 })
+
+// 清理
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
+
+// 快捷键处理
+const handleKeyDown = (e: KeyboardEvent) => {
+  // 如果在输入框中，不处理快捷键
+  const target = e.target as HTMLElement
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+    return
+  }
+
+  // Ctrl+A 全选
+  if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+    e.preventDefault()
+    store.selectAllFiles()
+  }
+
+  // Ctrl+C 复制
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    e.preventDefault()
+    if (store.selectedFileIds.size > 0) {
+      store.copyFiles(Array.from(store.selectedFileIds))
+    }
+  }
+
+  // Ctrl+X 剪切
+  if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+    e.preventDefault()
+    if (store.selectedFileIds.size > 0) {
+      store.cutFiles(Array.from(store.selectedFileIds))
+    }
+  }
+
+  // Ctrl+V 粘贴
+  if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+    e.preventDefault()
+    store.pasteFiles()
+  }
+
+  // Delete 删除
+  if (e.key === 'Delete') {
+    e.preventDefault()
+    if (store.selectedFileIds.size > 0) {
+      handleBatchDelete()
+    }
+  }
+
+  // Escape 取消选择
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    store.clearFileSelection()
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  const count = store.selectedFileIds.size
+  if (!confirm(`确定要删除选中的 ${count} 个项目吗？`)) return
+
+  try {
+    for (const id of store.selectedFileIds) {
+      const item = store.currentFolderItems.find(i => i.id === id)
+      if (item) {
+        if (item.type === 'folder') {
+          await store.deleteFolder(id)
+        } else {
+          await store.deleteFile(id)
+        }
+      }
+    }
+    store.clearFileSelection()
+  } catch (error) {
+    alert('删除失败：' + (error instanceof Error ? error.message : '未知错误'))
+  }
+}
 
 // 右键菜单处理
 const handleBlankContextMenu = (e: MouseEvent) => {
@@ -173,6 +299,21 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
   }
 }
 
+// 点击选择处理
+const handleItemClick = (e: MouseEvent, item: FileItem | FolderItem) => {
+  if (e.ctrlKey || e.metaKey) {
+    // Ctrl/Cmd + 点击：切换选中状态
+    store.toggleFileSelection(item.id)
+  } else if (e.shiftKey) {
+    // Shift + 点击：范围选择（暂不实现）
+    store.toggleFileSelection(item.id)
+  } else {
+    // 普通点击：清除其他选择，只选中当前项
+    store.clearFileSelection()
+    store.toggleFileSelection(item.id)
+  }
+}
+
 // 关闭预览
 const closePreview = () => {
   previewFile.value = null
@@ -182,8 +323,12 @@ const closePreview = () => {
 <template>
   <div
     class="w-full h-full flex flex-col bg-paper overflow-hidden"
+    :class="{ 'ring-4 ring-accent ring-opacity-50': isDragOver }"
     @click="handleClick"
     @contextmenu="handleBlankContextMenu"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
   >
     <!-- 工具栏 -->
     <div class="flex items-center gap-3 p-4 border-b-2 border-pencil/20">
@@ -206,6 +351,26 @@ const closePreview = () => {
         ➕ 新建文件夹
       </button>
       <div class="flex-1"></div>
+
+      <!-- 排序选项 -->
+      <div class="flex items-center gap-2">
+        <select
+          v-model="store.fileSortBy"
+          class="input-hand-drawn px-3 py-1 text-sm"
+        >
+          <option value="name">按名称</option>
+          <option value="size">按大小</option>
+          <option value="date">按日期</option>
+        </select>
+        <button
+          class="btn-hand-drawn px-3 py-1 text-sm"
+          @click="store.fileSortOrder = store.fileSortOrder === 'asc' ? 'desc' : 'asc'"
+          :title="store.fileSortOrder === 'asc' ? '升序' : '降序'"
+        >
+          {{ store.fileSortOrder === 'asc' ? '↑' : '↓' }}
+        </button>
+      </div>
+
       <button
         class="btn-hand-drawn px-4 py-2 text-sm"
         @click="store.fileViewMode = store.fileViewMode === 'grid' ? 'list' : 'grid'"
@@ -262,7 +427,11 @@ const closePreview = () => {
         <template #item="{ element: item }">
           <div
             class="card-hand-drawn p-4 cursor-pointer hover:scale-105 transition-transform"
-            :class="{ 'cursor-move': isDragging }"
+            :class="{
+              'cursor-move': isDragging,
+              'ring-2 ring-accent': store.selectedFileIds.has(item.id)
+            }"
+            @click="(e) => handleItemClick(e, item)"
             @dblclick="handleItemDoubleClick(item)"
             @contextmenu="(e) => handleItemContextMenu(e, item)"
           >
@@ -303,7 +472,11 @@ const closePreview = () => {
         <template #item="{ element: item }">
           <div
             class="card-hand-drawn p-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors"
-            :class="{ 'cursor-move': isDragging }"
+            :class="{
+              'cursor-move': isDragging,
+              'ring-2 ring-accent': store.selectedFileIds.has(item.id)
+            }"
+            @click="(e) => handleItemClick(e, item)"
             @dblclick="handleItemDoubleClick(item)"
             @contextmenu="(e) => handleItemContextMenu(e, item)"
           >

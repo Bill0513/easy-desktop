@@ -52,6 +52,10 @@ export const useDesktopStore = defineStore('desktop', () => {
   const isLoadingFiles = ref(false)
   const previewFile = ref<FileItem | null>(null)
   const showFileUploadDialog = ref(false)
+  const fileSortBy = ref<'name' | 'size' | 'date'>('name')
+  const fileSortOrder = ref<'asc' | 'desc'>('asc')
+  const clipboard = ref<{ items: (FileItem | FolderItem)[]; operation: 'copy' | 'cut' } | null>(null)
+  const selectedFileIds = ref<Set<string>>(new Set())
 
   // Sync state
   const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
@@ -119,16 +123,39 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // 当前文件夹下的项目（文件+文件夹）
   const currentFolderItems = computed(() => {
-    const folderItems = folders.value
-      .filter(f => f.parentId === currentFolderId.value)
-      .sort((a, b) => a.order - b.order)
+    const folderItems = folders.value.filter(f => f.parentId === currentFolderId.value)
+    const fileItems = files.value.filter(f => f.parentId === currentFolderId.value)
 
-    const fileItems = files.value
-      .filter(f => f.parentId === currentFolderId.value)
-      .sort((a, b) => a.order - b.order)
+    // 排序函数
+    const sortItems = (items: (FileItem | FolderItem)[]) => {
+      return items.sort((a, b) => {
+        let comparison = 0
+
+        switch (fileSortBy.value) {
+          case 'name':
+            comparison = a.name.localeCompare(b.name, 'zh-CN')
+            break
+          case 'size':
+            // 文件夹大小视为 0
+            const sizeA = a.type === 'file' ? a.size : 0
+            const sizeB = b.type === 'file' ? b.size : 0
+            comparison = sizeA - sizeB
+            break
+          case 'date':
+            comparison = a.updatedAt - b.updatedAt
+            break
+        }
+
+        return fileSortOrder.value === 'asc' ? comparison : -comparison
+      })
+    }
+
+    // 分别排序文件夹和文件
+    const sortedFolders = sortItems([...folderItems])
+    const sortedFiles = sortItems([...fileItems])
 
     // 文件夹在前，文件在后
-    return [...folderItems, ...fileItems]
+    return [...sortedFolders, ...sortedFiles]
   })
 
   // 面包屑路径
@@ -1580,6 +1607,123 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // 文件选择操作
+  function toggleFileSelection(id: string) {
+    if (selectedFileIds.value.has(id)) {
+      selectedFileIds.value.delete(id)
+    } else {
+      selectedFileIds.value.add(id)
+    }
+  }
+
+  function selectAllFiles() {
+    selectedFileIds.value.clear()
+    currentFolderItems.value.forEach(item => {
+      selectedFileIds.value.add(item.id)
+    })
+  }
+
+  function clearFileSelection() {
+    selectedFileIds.value.clear()
+  }
+
+  // 复制操作
+  function copyFiles(ids: string[]) {
+    const items: (FileItem | FolderItem)[] = []
+    ids.forEach(id => {
+      const file = files.value.find(f => f.id === id)
+      if (file) {
+        items.push(file)
+      } else {
+        const folder = folders.value.find(f => f.id === id)
+        if (folder) items.push(folder)
+      }
+    })
+
+    if (items.length > 0) {
+      clipboard.value = { items, operation: 'copy' }
+    }
+  }
+
+  // 剪切操作
+  function cutFiles(ids: string[]) {
+    const items: (FileItem | FolderItem)[] = []
+    ids.forEach(id => {
+      const file = files.value.find(f => f.id === id)
+      if (file) {
+        items.push(file)
+      } else {
+        const folder = folders.value.find(f => f.id === id)
+        if (folder) items.push(folder)
+      }
+    })
+
+    if (items.length > 0) {
+      clipboard.value = { items, operation: 'cut' }
+    }
+  }
+
+  // 粘贴操作
+  async function pasteFiles() {
+    if (!clipboard.value) return
+
+    const { items, operation } = clipboard.value
+    const targetFolderId = currentFolderId.value
+
+    for (const item of items) {
+      if (operation === 'copy') {
+        // 复制文件或文件夹
+        if (item.type === 'file') {
+          const newFile: FileItem = {
+            ...item,
+            id: uuidv4(),
+            name: `${item.name} (副本)`,
+            parentId: targetFolderId,
+            order: files.value.filter(f => f.parentId === targetFolderId).length,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          }
+          files.value.push(newFile)
+        } else {
+          const newFolder: FolderItem = {
+            ...item,
+            id: uuidv4(),
+            name: `${item.name} (副本)`,
+            parentId: targetFolderId,
+            order: folders.value.filter(f => f.parentId === targetFolderId).length,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          }
+          folders.value.push(newFolder)
+        }
+      } else {
+        // 剪切（移动）文件或文件夹
+        if (item.type === 'file') {
+          const file = files.value.find(f => f.id === item.id)
+          if (file) {
+            file.parentId = targetFolderId
+            file.order = files.value.filter(f => f.parentId === targetFolderId).length
+            file.updatedAt = Date.now()
+          }
+        } else {
+          const folder = folders.value.find(f => f.id === item.id)
+          if (folder) {
+            folder.parentId = targetFolderId
+            folder.order = folders.value.filter(f => f.parentId === targetFolderId).length
+            folder.updatedAt = Date.now()
+          }
+        }
+      }
+    }
+
+    // 剪切操作后清空剪贴板
+    if (operation === 'cut') {
+      clipboard.value = null
+    }
+
+    saveFilesLocal()
+  }
+
   return {
     // State
     widgets,
@@ -1612,6 +1756,10 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoadingFiles,
     previewFile,
     showFileUploadDialog,
+    fileSortBy,
+    fileSortOrder,
+    clipboard,
+    selectedFileIds,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -1680,5 +1828,11 @@ export const useDesktopStore = defineStore('desktop', () => {
     loadFilesFromCloud,
     saveFilesToCloud,
     initFiles,
+    toggleFileSelection,
+    selectAllFiles,
+    clearFileSelection,
+    copyFiles,
+    cutFiles,
+    pasteFiles,
   }
 })
