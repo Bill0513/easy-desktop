@@ -103,7 +103,7 @@ export interface DesktopData {
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file'
+export type TabType = 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file' | 'mindmap'
 
 // 新闻项
 export interface NewsItem {
@@ -195,4 +195,30 @@ export interface FileData {
   folders: FolderItem[]
   version: number
   updatedAt: number
+}
+
+// 思维导图文件元数据
+export interface MindMapFile {
+  id: string
+  name: string
+  fileId: string  // Reference to FileItem in file system
+  thumbnail?: string  // Base64 encoded thumbnail (optional for v1)
+  lastOpened: number
+  createdAt: number
+  updatedAt: number
+}
+
+// 思维导图数据结构 (MindElixir format)
+export interface MindMapData {
+  nodeData: {
+    id: string
+    topic: string
+    root: boolean
+    children?: MindMapData['nodeData'][]
+    expanded?: boolean
+    style?: Record<string, any>
+  }
+  linkData?: Record<string, any>
+  theme?: Record<string, any>
+  direction?: number
 }

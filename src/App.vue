@@ -10,6 +10,7 @@ import NavigationPage from '@/components/NavigationPage.vue'
 import NewsPage from '@/components/NewsPage.vue'
 import ResourceSearchPage from '@/components/ResourceSearchPage.vue'
 import FilePage from '@/components/FilePage.vue'
+import MindMapPage from '@/components/MindMapPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 
 const store = useDesktopStore()
@@ -122,6 +123,11 @@ const handleUnlock = async () => {
       <!-- 文件 Tab -->
       <div v-show="store.activeTab === 'file'" class="w-full h-full">
         <FilePage />
+      </div>
+
+      <!-- 思维导图 Tab -->
+      <div v-show="store.activeTab === 'mindmap'" class="w-full h-full">
+        <MindMapPage />
       </div>
     </template>
   </div>

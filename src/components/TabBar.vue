@@ -13,7 +13,8 @@ const tabs = [
   { id: 'navigation' as TabType, name: '导航', icon: '🌐', description: '网页导航站' },
   { id: 'news' as TabType, name: '热点', icon: '🔥', description: '新闻热搜' },
   { id: 'resource-search' as TabType, name: '资源', icon: '🔍', description: '资源搜索' },
-  { id: 'file' as TabType, name: '文件', icon: '📁', description: '文件管理' }
+  { id: 'file' as TabType, name: '文件', icon: '📁', description: '文件管理' },
+  { id: 'mindmap' as TabType, name: '思维导图', icon: '🧠', description: '思维导图编辑' }
 ]
 
 const handleTabClick = (tabId: TabType) => {

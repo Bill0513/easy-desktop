@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, MindMapData } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -68,6 +68,11 @@ export const useDesktopStore = defineStore('desktop', () => {
   const lastFileSyncTime = ref<number | null>(null)
   const fileSyncErrorMessage = ref<string>('')
   const isFileCloudInitialized = ref(false) // 标记文件是否已从云端成功加载过数据
+
+  // Mind map state
+  const mindMapHistory = ref<MindMapFile[]>([])
+  const currentMindMapId = ref<string | null>(null)
+  const isLoadingMindMap = ref(false)
 
   // Getters
   const getWidgetById = computed(() => {
@@ -1812,6 +1817,123 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveFilesLocal()
   }
 
+  // Mind Map Actions
+
+  function loadMindMapHistory() {
+    try {
+      const cached = localStorage.getItem('cloud-desktop-mindmap-history')
+      if (cached) {
+        const data = JSON.parse(cached)
+        mindMapHistory.value = data.recentFiles || []
+      }
+    } catch (error) {
+      console.error('Failed to load mind map history:', error)
+    }
+  }
+
+  function saveMindMapHistory() {
+    try {
+      const data = {
+        recentFiles: mindMapHistory.value.slice(0, 10),
+        version: 1,
+        updatedAt: Date.now()
+      }
+      localStorage.setItem('cloud-desktop-mindmap-history', JSON.stringify(data))
+    } catch (error) {
+      console.error('Failed to save mind map history:', error)
+    }
+  }
+
+  function updateMindMapHistory(mindMapFile: MindMapFile) {
+    const index = mindMapHistory.value.findIndex(m => m.id === mindMapFile.id)
+    if (index !== -1) {
+      mindMapHistory.value.splice(index, 1)
+    }
+    mindMapHistory.value.unshift(mindMapFile)
+    if (mindMapHistory.value.length > 10) {
+      mindMapHistory.value = mindMapHistory.value.slice(0, 10)
+    }
+    saveMindMapHistory()
+  }
+
+  function removeMindMapFromHistory(id: string) {
+    const index = mindMapHistory.value.findIndex(m => m.id === id)
+    if (index !== -1) {
+      mindMapHistory.value.splice(index, 1)
+      saveMindMapHistory()
+    }
+  }
+
+  async function createMindMapFile(name: string): Promise<FileItem> {
+    const defaultData = {
+      nodeData: {
+        id: uuidv4(),
+        topic: name,
+        root: true,
+        children: []
+      },
+      direction: 1
+    }
+
+    const blob = new Blob([JSON.stringify(defaultData, null, 2)], { type: 'application/json' })
+    const file = new File([blob], `${name}.mindmap`, { type: 'application/json' })
+
+    return await uploadFile(file, currentFolderId.value)
+  }
+
+  async function loadMindMapFile(fileId: string): Promise<MindMapData | null> {
+    try {
+      const file = files.value.find(f => f.id === fileId)
+      if (!file) return null
+
+      const response = await fetch(`/api/file?filename=${file.url}`)
+      if (!response.ok) throw new Error('Failed to load mind map')
+
+      return await response.json()
+    } catch (error) {
+      console.error('Failed to load mind map:', error)
+      return null
+    }
+  }
+
+  async function saveMindMapFile(fileId: string, data: MindMapData): Promise<boolean> {
+    try {
+      const file = files.value.find(f => f.id === fileId)
+      if (!file) return false
+
+      // Delete old file from R2
+      await fetch('/api/file', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.url })
+      })
+
+      // Upload new file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const newFile = new File([blob], file.name, { type: 'application/json' })
+
+      const formData = new FormData()
+      formData.append('file', newFile)
+
+      const response = await fetch('/api/file', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) throw new Error('Failed to save mind map')
+
+      const result = await response.json()
+      file.url = result.filename
+      file.updatedAt = Date.now()
+      saveFilesLocal()
+
+      return true
+    } catch (error) {
+      console.error('Failed to save mind map:', error)
+      return false
+    }
+  }
+
   return {
     // State
     widgets,
@@ -1852,6 +1974,10 @@ export const useDesktopStore = defineStore('desktop', () => {
     fileSortOrder,
     clipboard,
     selectedFileIds,
+    // Mind map state
+    mindMapHistory,
+    currentMindMapId,
+    isLoadingMindMap,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -1928,5 +2054,13 @@ export const useDesktopStore = defineStore('desktop', () => {
     copyFiles,
     cutFiles,
     pasteFiles,
+    // Mind map actions
+    loadMindMapHistory,
+    saveMindMapHistory,
+    updateMindMapHistory,
+    removeMindMapFromHistory,
+    createMindMapFile,
+    loadMindMapFile,
+    saveMindMapFile,
   }
 })
