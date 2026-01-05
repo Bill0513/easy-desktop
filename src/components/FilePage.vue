@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
 import FilePreviewDialog from './FilePreviewDialog.vue'
+import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 
 const store = useDesktopStore()
@@ -13,6 +14,86 @@ const uploadMode = ref<'file' | 'folder'>('file')
 const isUploading = ref(false)
 const uploadProgress = ref(0)
 const previewFile = ref<FileItem | null>(null)
+
+// 自定义对话框状态
+const dialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  type: 'alert' as 'prompt' | 'confirm' | 'alert',
+  defaultValue: '',
+  onConfirm: (_value?: string) => {},
+  onCancel: () => {}
+})
+
+// 显示提示对话框
+const showPrompt = (title: string, defaultValue = ''): Promise<string | null> => {
+  return new Promise((resolve) => {
+    dialog.value = {
+      show: true,
+      title,
+      message: '',
+      type: 'prompt',
+      defaultValue,
+      onConfirm: (value) => {
+        resolve(value || null)
+      },
+      onCancel: () => {
+        resolve(null)
+      }
+    }
+  })
+}
+
+// 显示确认对话框
+const showConfirm = (title: string, message = ''): Promise<boolean> => {
+  return new Promise((resolve) => {
+    dialog.value = {
+      show: true,
+      title,
+      message,
+      type: 'confirm',
+      defaultValue: '',
+      onConfirm: () => {
+        resolve(true)
+      },
+      onCancel: () => {
+        resolve(false)
+      }
+    }
+  })
+}
+
+// 显示警告对话框
+const showAlert = (title: string, message = ''): Promise<void> => {
+  return new Promise((resolve) => {
+    dialog.value = {
+      show: true,
+      title,
+      message,
+      type: 'alert',
+      defaultValue: '',
+      onConfirm: () => {
+        resolve()
+      },
+      onCancel: () => {
+        resolve()
+      }
+    }
+  })
+}
+
+// 对话框确认处理
+const handleDialogConfirm = (value?: string) => {
+  dialog.value.onConfirm(value)
+  dialog.value.show = false
+}
+
+// 对话框取消处理
+const handleDialogCancel = () => {
+  dialog.value.onCancel()
+  dialog.value.show = false
+}
 
 // 拖拽状态
 const isDragging = ref(false)
@@ -62,10 +143,10 @@ const handleDrop = async (e: DragEvent) => {
 
     if (files.length > 0) {
       const result = await store.uploadFiles(files as unknown as FileList, store.currentFolderId)
-      alert(`上传完成！成功：${result.success} 个，失败：${result.failed} 个`)
+      await showAlert('上传完成', `成功：${result.success} 个，失败：${result.failed} 个`)
     }
   } catch (error) {
-    alert('上传失败：' + (error instanceof Error ? error.message : '未知错误'))
+    await showAlert('上传失败', error instanceof Error ? error.message : '未知错误')
   } finally {
     isUploading.value = false
   }
@@ -146,7 +227,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
 // 批量删除
 const handleBatchDelete = async () => {
   const count = store.selectedFileIds.size
-  if (!confirm(`确定要删除选中的 ${count} 个项目吗？`)) return
+  const confirmed = await showConfirm('确认删除', `确定要删除选中的 ${count} 个项目吗？`)
+  if (!confirmed) return
 
   try {
     for (const id of store.selectedFileIds) {
@@ -161,7 +243,7 @@ const handleBatchDelete = async () => {
     }
     store.clearFileSelection()
   } catch (error) {
-    alert('删除失败：' + (error instanceof Error ? error.message : '未知错误'))
+    await showAlert('删除失败', error instanceof Error ? error.message : '未知错误')
   }
 }
 
@@ -203,8 +285,8 @@ const handleClick = () => {
 }
 
 // 新建文件夹
-const handleCreateFolder = () => {
-  const name = prompt('请输入文件夹名称：')
+const handleCreateFolder = async () => {
+  const name = await showPrompt('新建文件夹', '')
   if (name && name.trim()) {
     store.createFolder(name.trim(), store.currentFolderId)
   }
@@ -212,11 +294,11 @@ const handleCreateFolder = () => {
 }
 
 // 重命名
-const handleRename = () => {
+const handleRename = async () => {
   if (!contextMenu.value.item) return
 
   const item = contextMenu.value.item
-  const newName = prompt('请输入新名称：', item.name)
+  const newName = await showPrompt('重命名', item.name)
   if (newName && newName.trim() && newName !== item.name) {
     store.renameItem(item.id, newName.trim(), item.type)
   }
@@ -232,7 +314,8 @@ const handleDelete = async () => {
     ? `确定要删除文件夹"${item.name}"及其所有内容吗？`
     : `确定要删除文件"${item.name}"吗？`
 
-  if (confirm(confirmMsg)) {
+  const confirmed = await showConfirm('确认删除', confirmMsg)
+  if (confirmed) {
     try {
       if (item.type === 'folder') {
         await store.deleteFolder(item.id)
@@ -240,7 +323,7 @@ const handleDelete = async () => {
         await store.deleteFile(item.id)
       }
     } catch (error) {
-      alert('删除失败：' + (error instanceof Error ? error.message : '未知错误'))
+      await showAlert('删除失败', error instanceof Error ? error.message : '未知错误')
     }
   }
   closeContextMenu()
@@ -274,14 +357,14 @@ const handleFileSelect = async (e: Event) => {
   try {
     if (uploadMode.value === 'folder') {
       const result = await store.uploadFolder(input.files)
-      alert(`上传完成！成功：${result.success} 个，失败：${result.failed} 个`)
+      await showAlert('上传完成', `成功：${result.success} 个，失败：${result.failed} 个`)
     } else {
       const result = await store.uploadFiles(input.files, store.currentFolderId)
-      alert(`上传完成！成功：${result.success} 个，失败：${result.failed} 个`)
+      await showAlert('上传完成', `成功：${result.success} 个，失败：${result.failed} 个`)
     }
     showUploadDialog.value = false
   } catch (error) {
-    alert('上传失败：' + (error instanceof Error ? error.message : '未知错误'))
+    await showAlert('上传失败', error instanceof Error ? error.message : '未知错误')
   } finally {
     isUploading.value = false
     uploadProgress.value = 0
@@ -331,24 +414,33 @@ const closePreview = () => {
     @drop="handleDrop"
   >
     <!-- 工具栏 -->
-    <div class="flex items-center gap-3 p-4 border-b-2 border-pencil/20">
+    <div class="flex items-center gap-3 p-4 pr-64 border-b-2 border-pencil/20">
       <button
-        class="btn-hand-drawn px-4 py-2 text-sm"
+        class="btn-hand-drawn p-3"
         @click="handleUploadFiles"
+        title="上传文件"
       >
-        📤 上传文件
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
       </button>
       <button
-        class="btn-hand-drawn px-4 py-2 text-sm"
+        class="btn-hand-drawn p-3"
         @click="handleUploadFolder"
+        title="上传文件夹"
       >
-        📁 上传文件夹
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
       </button>
       <button
-        class="btn-hand-drawn px-4 py-2 text-sm"
+        class="btn-hand-drawn p-3"
         @click="handleCreateFolder"
+        title="新建文件夹"
       >
-        ➕ 新建文件夹
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
       </button>
       <div class="flex-1"></div>
 
@@ -363,19 +455,28 @@ const closePreview = () => {
           <option value="date">按日期</option>
         </select>
         <button
-          class="btn-hand-drawn px-3 py-1 text-sm"
+          class="btn-hand-drawn p-3"
           @click="store.fileSortOrder = store.fileSortOrder === 'asc' ? 'desc' : 'asc'"
           :title="store.fileSortOrder === 'asc' ? '升序' : '降序'"
         >
-          {{ store.fileSortOrder === 'asc' ? '↑' : '↓' }}
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path v-if="store.fileSortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
       </div>
 
       <button
-        class="btn-hand-drawn px-4 py-2 text-sm"
+        class="btn-hand-drawn p-3"
         @click="store.fileViewMode = store.fileViewMode === 'grid' ? 'list' : 'grid'"
+        :title="store.fileViewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'"
       >
-        {{ store.fileViewMode === 'grid' ? '📋 列表' : '🔲 网格' }}
+        <svg v-if="store.fileViewMode === 'grid'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
       </button>
     </div>
 
@@ -417,7 +518,7 @@ const closePreview = () => {
       <draggable
         v-else-if="store.fileViewMode === 'grid'"
         v-model="draggableItems"
-        class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"
+        class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-8 gap-4"
         item-key="id"
         :animation="200"
         ghost-class="opacity-50"
@@ -665,5 +766,17 @@ const closePreview = () => {
 
     <!-- 文件预览对话框 -->
     <FilePreviewDialog :file="previewFile" @close="closePreview" />
+
+    <!-- 自定义对话框 -->
+    <HandDrawnDialog
+      :show="dialog.show"
+      :title="dialog.title"
+      :message="dialog.message"
+      :type="dialog.type"
+      :default-value="dialog.defaultValue"
+      @confirm="handleDialogConfirm"
+      @cancel="handleDialogCancel"
+      @close="dialog.show = false"
+    />
   </div>
 </template>
