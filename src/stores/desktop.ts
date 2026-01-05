@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -44,6 +44,15 @@ export const useDesktopStore = defineStore('desktop', () => {
   const searchHistory = ref<string[]>([])
   const searchEngine = ref<string>('google')
 
+  // File state
+  const files = ref<FileItem[]>([])
+  const folders = ref<FolderItem[]>([])
+  const currentFolderId = ref<string | null>(null)
+  const fileViewMode = ref<FileViewMode>('grid')
+  const isLoadingFiles = ref(false)
+  const previewFile = ref<FileItem | null>(null)
+  const showFileUploadDialog = ref(false)
+
   // Sync state
   const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
   const lastSyncTime = ref<number | null>(null)
@@ -74,7 +83,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (!searchQuery.value.trim()) return []
     const query = searchQuery.value.toLowerCase()
 
-    // 全局搜索：同时搜索桌面组件和导航网站
+    // 全局搜索：同时搜索桌面组件、导航网站和文件
     const widgetResults = widgets.value.filter(widget => {
       if (widget.title.toLowerCase().includes(query)) return true
 
@@ -96,8 +105,45 @@ export const useDesktopStore = defineStore('desktop', () => {
       site.description.toLowerCase().includes(query)
     )
 
-    // 合并结果：桌面组件在前，导航网站在后
-    return [...widgetResults, ...siteResults]
+    const fileResults = files.value.filter(file =>
+      file.name.toLowerCase().includes(query)
+    )
+
+    const folderResults = folders.value.filter(folder =>
+      folder.name.toLowerCase().includes(query)
+    )
+
+    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹最后
+    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults]
+  })
+
+  // 当前文件夹下的项目（文件+文件夹）
+  const currentFolderItems = computed(() => {
+    const folderItems = folders.value
+      .filter(f => f.parentId === currentFolderId.value)
+      .sort((a, b) => a.order - b.order)
+
+    const fileItems = files.value
+      .filter(f => f.parentId === currentFolderId.value)
+      .sort((a, b) => a.order - b.order)
+
+    // 文件夹在前，文件在后
+    return [...folderItems, ...fileItems]
+  })
+
+  // 面包屑路径
+  const breadcrumbPath = computed(() => {
+    const path: FolderItem[] = []
+    let currentId = currentFolderId.value
+
+    while (currentId) {
+      const folder = folders.value.find(f => f.id === currentId)
+      if (!folder) break
+      path.unshift(folder)
+      currentId = folder.parentId
+    }
+
+    return path
   })
 
   // 排序后的导航站网站
@@ -1198,6 +1244,14 @@ export const useDesktopStore = defineStore('desktop', () => {
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
+    // File state
+    files,
+    folders,
+    currentFolderId,
+    fileViewMode,
+    isLoadingFiles,
+    previewFile,
+    showFileUploadDialog,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -1207,6 +1261,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     sortedNavigationSites,
     allCategories,
     filteredNavigationSites,
+    // File getters
+    currentFolderItems,
+    breadcrumbPath,
     // Actions
     init,
     loadFromCloud,

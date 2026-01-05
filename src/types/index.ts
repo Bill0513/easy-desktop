@@ -154,3 +154,45 @@ export interface NavigationData {
   version: number
   updatedAt: number
 }
+
+// 文件项
+export interface FileItem {
+  id: string
+  name: string
+  type: 'file'
+  size: number
+  mimeType: string
+  url: string  // R2文件名
+  parentId: string | null
+  order: number
+  createdAt: number
+  updatedAt: number
+  uploadProgress?: number
+  uploadError?: string
+}
+
+// 文件夹项
+export interface FolderItem {
+  id: string
+  name: string
+  type: 'folder'
+  parentId: string | null
+  order: number
+  createdAt: number
+  updatedAt: number
+  isExpanded?: boolean
+}
+
+// 文件系统项联合类型
+export type FileSystemItem = FileItem | FolderItem
+
+// 文件视图模式
+export type FileViewMode = 'grid' | 'list'
+
+// 文件数据存储格式
+export interface FileData {
+  files: FileItem[]
+  folders: FolderItem[]
+  version: number
+  updatedAt: number
+}

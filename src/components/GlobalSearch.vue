@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { Widget, NavigationSite } from '@/types'
+import type { Widget, NavigationSite, FileItem, FolderItem } from '@/types'
 
 const store = useDesktopStore()
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -18,49 +18,65 @@ const typeNames: Record<string, string> = {
   text: '文本',
   image: '图片',
   markdown: 'Markdown',
+  file: '文件',
 }
 
 // 类型守卫
-const isWidget = (item: Widget | NavigationSite): item is Widget => {
+const isWidget = (item: Widget | NavigationSite | FileItem | FolderItem): item is Widget => {
   return 'type' in item && 'title' in item
 }
 
-const isNavigationSite = (item: Widget | NavigationSite): item is NavigationSite => {
-  return 'name' in item && 'url' in item
+const isNavigationSite = (item: Widget | NavigationSite | FileItem | FolderItem): item is NavigationSite => {
+  return 'name' in item && 'url' in item && 'description' in item
+}
+
+const isFileItem = (item: Widget | NavigationSite | FileItem | FolderItem): item is FileItem => {
+  return 'type' in item && item.type === 'file' && 'mimeType' in item
+}
+
+const isFolderItem = (item: Widget | NavigationSite | FileItem | FolderItem): item is FolderItem => {
+  return 'type' in item && item.type === 'folder' && !('mimeType' in item)
 }
 
 // 获取显示标题
-const getItemTitle = (item: Widget | NavigationSite): string => {
+const getItemTitle = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
   if (isWidget(item)) return item.title
   if (isNavigationSite(item)) return item.name
+  if (isFileItem(item) || isFolderItem(item)) return item.name
   return ''
 }
 
 // 获取显示类型
-const getItemType = (item: Widget | NavigationSite): string => {
+const getItemType = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
   if (isWidget(item)) return typeNames[item.type] || item.type
   if (isNavigationSite(item)) return '网站'
+  if (isFolderItem(item)) return '文件夹'
+  if (isFileItem(item)) return '文件'
   return ''
 }
 
 // 获取显示状态
-const getItemStatus = (item: Widget | NavigationSite): string => {
+const getItemStatus = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
   if (isWidget(item)) return item.isMinimized ? '已最小化' : '在桌面'
   if (isNavigationSite(item)) return item.url
+  if (isFileItem(item)) return `${Math.round(item.size / 1024)} KB`
+  if (isFolderItem(item)) return '文件夹'
   return ''
 }
 
 // 获取显示颜色
-const getItemColor = (item: Widget | NavigationSite): string => {
+const getItemColor = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
   if (isWidget(item) && 'color' in item) return (item as any).color
   if (isNavigationSite(item)) return item.color
   return '#bbdefb'
 }
 
 // 获取类型首字母
-const getItemTypeInitial = (item: Widget | NavigationSite): string => {
+const getItemTypeInitial = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
   if (isWidget(item)) return typeNames[item.type]?.charAt(0) || item.type.charAt(0).toUpperCase()
   if (isNavigationSite(item)) return item.name.charAt(0).toUpperCase()
+  if (isFolderItem(item)) return '📁'
+  if (isFileItem(item)) return '📄'
   return '?'
 }
 
@@ -134,7 +150,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 }
 
 // 点击结果
-const handleResultClick = (item: Widget | NavigationSite) => {
+const handleResultClick = (item: Widget | NavigationSite | FileItem | FolderItem) => {
   if (isWidget(item)) {
     store.focusWidget(item.id)
   } else if (isNavigationSite(item)) {
@@ -145,6 +161,17 @@ const handleResultClick = (item: Widget | NavigationSite) => {
       url = 'https://' + url
     }
     window.open(url, '_blank')
+    store.closeSearch()
+  } else if (isFolderItem(item)) {
+    // 切换到文件tab并导航到该文件夹
+    store.setActiveTab('file')
+    store.currentFolderId = item.id
+    store.closeSearch()
+  } else if (isFileItem(item)) {
+    // 切换到文件tab并导航到文件所在文件夹
+    store.setActiveTab('file')
+    store.currentFolderId = item.parentId
+    // TODO: 打开文件预览
     store.closeSearch()
   }
 }
