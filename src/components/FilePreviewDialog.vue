@@ -45,7 +45,9 @@ const fileType = computed(() => {
 
   // Excel
   if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      fileName.endsWith('.xlsx')) return 'xlsx'
+      mimeType === 'application/vnd.ms-excel' ||
+      fileName.endsWith('.xlsx') ||
+      fileName.endsWith('.xls')) return 'xlsx'
 
   // 文本
   if (mimeType.startsWith('text/') ||
@@ -194,18 +196,30 @@ const handleContentClick = (e: Event) => {
             </div>
 
             <!-- PDF 预览 -->
-            <div v-else-if="fileType === 'pdf'" class="h-full">
-              <VueOfficePdf :src="fileUrl" />
+            <div v-else-if="fileType === 'pdf'" class="h-full w-full">
+              <VueOfficePdf
+                :src="fileUrl"
+                @rendered="() => console.log('PDF rendered')"
+                @error="(err: any) => { loadError = 'PDF加载失败：' + err; console.error('PDF error:', err) }"
+              />
             </div>
 
             <!-- Word 预览 -->
-            <div v-else-if="fileType === 'docx'" class="h-full overflow-auto">
-              <VueOfficeDocx :src="fileUrl" />
+            <div v-else-if="fileType === 'docx'" class="h-full w-full overflow-auto">
+              <VueOfficeDocx
+                :src="fileUrl"
+                @rendered="() => console.log('Word rendered')"
+                @error="(err: any) => { loadError = 'Word加载失败：' + err; console.error('Word error:', err) }"
+              />
             </div>
 
             <!-- Excel 预览 -->
-            <div v-else-if="fileType === 'xlsx'" class="h-full overflow-auto">
-              <VueOfficeExcel :src="fileUrl" />
+            <div v-else-if="fileType === 'xlsx'" class="h-full w-full overflow-auto">
+              <VueOfficeExcel
+                :src="fileUrl"
+                @rendered="() => console.log('Excel rendered')"
+                @error="(err: any) => { loadError = 'Excel加载失败：' + err; console.error('Excel error:', err) }"
+              />
             </div>
 
             <!-- 文本预览 -->
