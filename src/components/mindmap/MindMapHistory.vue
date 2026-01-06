@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MindMapFile } from '@/types'
+import { Brain, X } from 'lucide-vue-next'
 
 defineProps<{
   history: MindMapFile[]
@@ -43,7 +44,7 @@ const getThumbnailUrl = (thumbnail: string | undefined) => {
         <!-- Thumbnail or icon -->
         <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
           <img v-if="item.thumbnail" :src="getThumbnailUrl(item.thumbnail)" alt="缩略图" class="w-full h-full object-cover" />
-          <div v-else class="text-4xl">🧠</div>
+          <Brain v-else :stroke-width="2" class="w-10 h-10 text-pencil/60" />
         </div>
 
         <!-- Name -->
@@ -58,10 +59,10 @@ const getThumbnailUrl = (thumbnail: string | undefined) => {
 
         <!-- Remove button -->
         <button
-          class="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+          class="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
           @click="(e) => handleRemove(e, item.id)"
         >
-          ✕
+          <X :stroke-width="2.5" class="w-4 h-4" />
         </button>
       </div>
     </div>

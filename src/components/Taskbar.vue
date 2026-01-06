@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, type Component } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import {
+  StickyNote,
+  CheckSquare,
+  FileText,
+  Image,
+  FileCode
+} from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -26,14 +33,14 @@ const typeNames: Record<string, string> = {
 }
 
 // 获取组件图标
-const getWidgetIcon = (type: string) => {
+const getWidgetIcon = (type: string): Component => {
   switch (type) {
-    case 'note': return '📝'
-    case 'todo': return '✅'
-    case 'text': return '📋'
-    case 'image': return '🖼️'
-    case 'markdown': return '📝'
-    default: return '📋'
+    case 'note': return StickyNote
+    case 'todo': return CheckSquare
+    case 'text': return FileText
+    case 'image': return Image
+    case 'markdown': return FileCode
+    default: return FileText
   }
 }
 
@@ -94,7 +101,7 @@ const restoreWidget = (id: string) => {
         <button
           class="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
         >
-          <span class="text-lg">{{ getWidgetIcon(type) }}</span>
+          <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-5 h-5" />
           <span class="font-handwritten text-sm">
             {{ `${typeNames[type]} (${widgets.length})` }}
           </span>
@@ -125,7 +132,7 @@ const restoreWidget = (id: string) => {
               class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
               @click="restoreWidget(widget.id)"
             >
-              <span>{{ getWidgetIcon(type) }}</span>
+              <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-4 h-4" />
               <span class="flex-1 truncate">{{ widget.title }}</span>
             </button>
           </div>

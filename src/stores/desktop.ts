@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, MindMapData } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode } from '@/types'
 
 const STORAGE_KEY = 'cloud-desktop-data'
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -1865,14 +1865,16 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   async function createMindMapFile(name: string): Promise<FileItem> {
+    // 使用 simple-mind-map 格式
     const defaultData = {
-      nodeData: {
-        id: uuidv4(),
-        topic: name,
-        root: true,
+      root: {
+        data: {
+          text: name,
+          expand: true,
+          uid: uuidv4()
+        },
         children: []
-      },
-      direction: 1
+      }
     }
 
     const blob = new Blob([JSON.stringify(defaultData, null, 2)], { type: 'application/json' })
@@ -1881,7 +1883,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     return await uploadFile(file, currentFolderId.value)
   }
 
-  async function loadMindMapFile(fileId: string): Promise<MindMapData | null> {
+  async function loadMindMapFile(fileId: string): Promise<SimpleMindMapNode | null> {
     try {
       const file = files.value.find(f => f.id === fileId)
       if (!file) return null
@@ -1889,17 +1891,37 @@ export const useDesktopStore = defineStore('desktop', () => {
       const response = await fetch(`/api/file?filename=${file.url}`)
       if (!response.ok) throw new Error('Failed to load mind map')
 
-      return await response.json()
+      const data = await response.json()
+
+      // 返回 root 节点数据
+      if (data.root) {
+        return data.root
+      }
+
+      // 如果是旧格式，返回默认数据
+      return {
+        data: {
+          text: '新建思维导图',
+          expand: true,
+          uid: 'root'
+        },
+        children: []
+      }
     } catch (error) {
       console.error('Failed to load mind map:', error)
       return null
     }
   }
 
-  async function saveMindMapFile(fileId: string, data: MindMapData): Promise<boolean> {
+  async function saveMindMapFile(fileId: string, data: SimpleMindMapNode): Promise<boolean> {
     try {
       const file = files.value.find(f => f.id === fileId)
       if (!file) return false
+
+      // 包装为完整的 MindMapData 格式
+      const mindMapData = {
+        root: data
+      }
 
       // Delete old file from R2
       await fetch('/api/file', {
@@ -1909,7 +1931,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       })
 
       // Upload new file
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const blob = new Blob([JSON.stringify(mindMapData, null, 2)], { type: 'application/json' })
       const newFile = new File([blob], file.name, { type: 'application/json' })
 
       const formData = new FormData()

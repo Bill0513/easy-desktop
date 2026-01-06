@@ -1,20 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, type Component } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { TabType } from '@/types'
 import SettingsDialog from '@/components/SettingsDialog.vue'
+import {
+  StickyNote,
+  Globe,
+  Flame,
+  Search,
+  FolderOpen,
+  Brain,
+  Settings
+} from 'lucide-vue-next'
 
 const store = useDesktopStore()
 const isExpanded = ref(false)
 const showSettings = ref(false)
 
-const tabs = [
-  { id: 'desktop' as TabType, name: '记录', icon: '📝', description: '便签、待办、文本' },
-  { id: 'navigation' as TabType, name: '导航', icon: '🌐', description: '网页导航站' },
-  { id: 'news' as TabType, name: '热点', icon: '🔥', description: '新闻热搜' },
-  { id: 'resource-search' as TabType, name: '资源', icon: '🔍', description: '资源搜索' },
-  { id: 'file' as TabType, name: '文件', icon: '📁', description: '文件管理' },
-  { id: 'mindmap' as TabType, name: '思维导图', icon: '🧠', description: '思维导图编辑' }
+const tabs: { id: TabType; name: string; icon: Component; description: string }[] = [
+  { id: 'desktop', name: '记录', icon: StickyNote, description: '便签、待办、文本' },
+  { id: 'navigation', name: '导航', icon: Globe, description: '网页导航站' },
+  { id: 'news', name: '热点', icon: Flame, description: '新闻热搜' },
+  { id: 'resource-search', name: '资源', icon: Search, description: '资源搜索' },
+  { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' },
+  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' }
 ]
 
 const handleTabClick = (tabId: TabType) => {
@@ -68,12 +77,12 @@ const handleCloseSettings = () => {
           @click="handleTabClick(tab.id)"
         >
           <!-- 图标 -->
-          <span
-            class="text-3xl transition-transform group-hover:scale-110"
+          <component
+            :is="tab.icon"
+            :stroke-width="2.5"
+            class="w-7 h-7 transition-transform group-hover:scale-110"
             :class="store.activeTab === tab.id ? 'animate-bounce' : ''"
-          >
-            {{ tab.icon }}
-          </span>
+          />
 
           <!-- 名称 -->
           <span
@@ -107,9 +116,10 @@ const handleCloseSettings = () => {
           @click="handleSettingsClick"
         >
           <!-- 图标 -->
-          <span class="text-3xl transition-transform group-hover:scale-110">
-            ⚙️
-          </span>
+          <Settings
+            :stroke-width="2.5"
+            class="w-7 h-7 transition-transform group-hover:scale-110"
+          />
 
           <!-- 名称 -->
           <span class="font-handwritten text-sm font-medium whitespace-nowrap text-pencil">

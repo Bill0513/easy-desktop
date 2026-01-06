@@ -209,17 +209,28 @@ export interface MindMapFile {
   updatedAt: number
 }
 
-// 思维导图数据结构 (MindElixir format)
+// simple-mind-map 节点数据
+export interface SimpleMindMapNodeData {
+  text: string
+  uid?: string
+  expand?: boolean
+  image?: string
+  icon?: string[]
+  tag?: string[]
+  hyperlink?: string
+  note?: string
+  [key: string]: any
+}
+
+// simple-mind-map 节点
+export interface SimpleMindMapNode {
+  data: SimpleMindMapNodeData
+  children?: SimpleMindMapNode[]
+}
+
+// 思维导图数据结构 (simple-mind-map format)
 export interface MindMapData {
-  nodeData: {
-    id: string
-    topic: string
-    root: boolean
-    children?: MindMapData['nodeData'][]
-    expanded?: boolean
-    style?: Record<string, any>
-  }
-  linkData?: Record<string, any>
-  theme?: Record<string, any>
-  direction?: number
+  root: SimpleMindMapNode
+  theme?: string
+  layout?: string
 }

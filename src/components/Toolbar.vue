@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { useDesktopStore } from '@/stores/desktop'
 import SearchBar from './SearchBar.vue'
+import {
+  StickyNote,
+  CheckSquare,
+  FileText,
+  FileCode,
+  Image
+} from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -19,7 +26,7 @@ const addWidget = (type: string) => {
         title="添加便签"
         @click="addWidget('note')"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform">📝</span>
+        <StickyNote :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">便签</span>
       </button>
 
@@ -29,7 +36,7 @@ const addWidget = (type: string) => {
         title="添加待办"
         @click="addWidget('todo')"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform">✅</span>
+        <CheckSquare :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">待办</span>
       </button>
 
@@ -39,7 +46,7 @@ const addWidget = (type: string) => {
         title="添加文本"
         @click="addWidget('text')"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform">📋</span>
+        <FileText :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">文本</span>
       </button>
 
@@ -49,7 +56,7 @@ const addWidget = (type: string) => {
         title="添加Markdown"
         @click="addWidget('markdown')"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform">📝</span>
+        <FileCode :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">Markdown</span>
       </button>
 
@@ -59,7 +66,7 @@ const addWidget = (type: string) => {
         title="添加图片"
         @click="addWidget('image')"
       >
-        <span class="text-2xl group-hover:scale-110 transition-transform">🖼️</span>
+        <Image :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">图片</span>
       </button>
 
