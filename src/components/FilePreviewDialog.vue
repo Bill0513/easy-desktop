@@ -20,6 +20,10 @@ const fileContent = ref<string>('')
 const isLoading = ref(false)
 const loadError = ref<string>('')
 
+// 下载状态
+const isDownloading = ref(false)
+const downloadProgress = ref(0)
+
 // 文件类型判断
 const fileType = computed(() => {
   if (!props.file) return 'unknown'
@@ -100,14 +104,62 @@ watch(() => props.file, (newFile) => {
   }
 }, { immediate: true })
 
-// 下载文件
-const handleDownload = () => {
-  if (!props.file) return
+// 下载文件（带进度）
+const handleDownload = async () => {
+  if (!props.file || isDownloading.value) return
 
+  isDownloading.value = true
+  downloadProgress.value = 0
+
+  try {
+    const response = await fetch(fileUrl.value)
+    if (!response.ok) throw new Error('下载失败')
+
+    const contentLength = response.headers.get('content-length')
+    const total = contentLength ? parseInt(contentLength, 10) : 0
+
+    if (!response.body) {
+      // 如果没有 body stream，直接下载
+      const blob = await response.blob()
+      triggerDownload(blob)
+      return
+    }
+
+    const reader = response.body.getReader()
+    const chunks: Uint8Array[] = []
+    let receivedLength = 0
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      chunks.push(value)
+      receivedLength += value.length
+
+      if (total > 0) {
+        downloadProgress.value = Math.round((receivedLength / total) * 100)
+      }
+    }
+
+    const blob = new Blob(chunks)
+    triggerDownload(blob)
+  } catch (error) {
+    console.error('Download failed:', error)
+  } finally {
+    isDownloading.value = false
+    downloadProgress.value = 0
+  }
+}
+
+// 触发下载
+const triggerDownload = (blob: Blob) => {
+  if (!props.file) return
+  const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
-  link.href = fileUrl.value
+  link.href = url
   link.download = props.file.name
   link.click()
+  URL.revokeObjectURL(url)
 }
 
 // 关闭对话框
@@ -147,12 +199,44 @@ const handleContentClick = (e: Event) => {
               {{ file.name }}
             </h2>
             <div class="flex items-center gap-2 ml-4">
-              <button
-                class="btn-hand-drawn px-3 py-1 text-sm"
-                @click="handleDownload"
-              >
-                💾 下载
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  class="btn-hand-drawn px-3 py-1 text-sm flex items-center gap-2"
+                  :disabled="isDownloading"
+                  :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
+                  @click="handleDownload"
+                >
+                  💾 下载
+                </button>
+                <!-- 圆形进度条 -->
+                <div v-if="isDownloading" class="relative w-6 h-6">
+                  <svg class="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      fill="none"
+                      stroke="#e5e0d8"
+                      stroke-width="3"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      fill="none"
+                      stroke="#ff4d4d"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      :stroke-dasharray="62.83"
+                      :stroke-dashoffset="62.83 - (62.83 * downloadProgress) / 100"
+                      class="transition-all duration-150"
+                    />
+                  </svg>
+                  <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-pencil">
+                    {{ downloadProgress }}
+                  </span>
+                </div>
+              </div>
               <button
                 class="btn-hand-drawn px-3 py-1 text-sm"
                 @click="handleClose"
@@ -214,9 +298,10 @@ const handleContentClick = (e: Event) => {
             </div>
 
             <!-- Excel 预览 -->
-            <div v-else-if="fileType === 'xlsx'" class="h-full w-full overflow-auto">
+            <div v-else-if="fileType === 'xlsx'" class="w-full overflow-auto" style="min-height: 500px; height: 70vh;">
               <VueOfficeExcel
                 :src="fileUrl"
+                style="height: 100%;"
                 @rendered="() => console.log('Excel rendered')"
                 @error="(err: any) => { loadError = 'Excel加载失败：' + err; console.error('Excel error:', err) }"
               />
@@ -234,12 +319,44 @@ const handleContentClick = (e: Event) => {
               <p class="font-handwritten text-pencil/60 mb-4">
                 文件类型：{{ file.mimeType }}
               </p>
-              <button
-                class="btn-hand-drawn px-4 py-2"
-                @click="handleDownload"
-              >
-                💾 下载文件
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  class="btn-hand-drawn px-4 py-2 flex items-center gap-2"
+                  :disabled="isDownloading"
+                  :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
+                  @click="handleDownload"
+                >
+                  💾 下载文件
+                </button>
+                <!-- 圆形进度条 -->
+                <div v-if="isDownloading" class="relative w-8 h-8">
+                  <svg class="w-8 h-8 transform -rotate-90" viewBox="0 0 24 24">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      fill="none"
+                      stroke="#e5e0d8"
+                      stroke-width="3"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      fill="none"
+                      stroke="#ff4d4d"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      :stroke-dasharray="62.83"
+                      :stroke-dashoffset="62.83 - (62.83 * downloadProgress) / 100"
+                      class="transition-all duration-150"
+                    />
+                  </svg>
+                  <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-pencil">
+                    {{ downloadProgress }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

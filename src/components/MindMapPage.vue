@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import MindElixir from 'mind-elixir'
 import type { MindMapData, MindMapFile } from '@/types'
@@ -18,6 +18,7 @@ const isSaving = ref(false)
 const showNewDialog = ref(false)
 const showOpenDialog = ref(false)
 const newMapName = ref('')
+const isInitialized = ref(false)
 
 // Auto-save timer
 let autoSaveTimer: number | null = null
@@ -26,7 +27,17 @@ let autoSaveTimer: number | null = null
 onMounted(async () => {
   store.loadMindMapHistory()
 
+  // Wait for DOM to be fully rendered
+  await nextTick()
+
   if (mindMapContainer.value) {
+    // Ensure container has dimensions
+    const container = mindMapContainer.value
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      // Wait a bit more for layout
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
     mindElixir = new MindElixir({
       el: mindMapContainer.value,
       direction: MindElixir.SIDE,
@@ -62,6 +73,7 @@ onMounted(async () => {
     }
 
     mindElixir.init(defaultData as any)
+    isInitialized.value = true
 
     // Listen for changes
     mindElixir.bus.addListener('operation', handleMindMapChange)
@@ -265,34 +277,34 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
     <!-- Left sidebar with tools -->
     <div class="w-16 flex-shrink-0 border-r-2 border-pencil/20 flex flex-col items-center gap-3 py-4">
       <button
-        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center text-pencil"
         @click="handleNew"
         title="新建"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
 
       <button
-        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center text-pencil"
         @click="showOpenDialog = true"
         title="打开"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
         </svg>
       </button>
 
       <button
-        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+        class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center text-pencil"
         :class="{ 'opacity-50': !hasUnsavedChanges || isSaving }"
         @click="handleSave"
         :disabled="!hasUnsavedChanges || isSaving"
         title="保存"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
         </svg>
       </button>
 
@@ -301,14 +313,14 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- Export dropdown -->
       <div class="relative group">
         <button
-          class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center"
+          class="btn-hand-drawn p-3 w-12 h-12 flex items-center justify-center text-pencil"
           title="导出"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
         </button>
-        <div class="absolute left-full ml-2 top-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+        <div class="absolute left-full ml-2 top-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 bg-paper">
           <button
             class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
             @click="handleExport('png')"
@@ -342,7 +354,11 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       </div>
 
       <!-- Mind map container -->
-      <div ref="mindMapContainer" class="flex-1 relative"></div>
+      <div
+        ref="mindMapContainer"
+        class="flex-1 relative overflow-hidden"
+        style="min-height: 400px;"
+      ></div>
 
       <!-- History section -->
       <MindMapHistory
@@ -445,9 +461,16 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 </template>
 
 <style scoped>
-/* Apply hand-drawn styling to MindElixir elements */
+/* Ensure mind map container has proper dimensions */
 :deep(.mind-elixir) {
   font-family: 'Patrick Hand', 'Kalam', cursive !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:deep(.map-container) {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 :deep(.mind-elixir-node) {
@@ -460,5 +483,13 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
   box-shadow: 4px 4px 0px #2d2d2d !important;
   background: #fdfbf7 !important;
   border: 2px solid #2d2d2d !important;
+}
+
+:deep(me-root) {
+  font-family: 'Patrick Hand', 'Kalam', cursive !important;
+}
+
+:deep(me-tpc) {
+  font-family: 'Patrick Hand', 'Kalam', cursive !important;
 }
 </style>

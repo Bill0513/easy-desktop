@@ -650,13 +650,19 @@ const getItemIcon = (item: FileItem | FolderItem) => {
                 />
               </svg>
             </div>
-            <!-- 名称 -->
-            <div class="font-handwritten text-sm text-center text-pencil truncate" :title="item.name">
+            <!-- 名称 - 显示两行 -->
+            <div
+              class="font-handwritten text-sm text-center text-pencil line-clamp-2 leading-tight min-h-[2.5rem]"
+              :title="item.name"
+            >
               {{ item.name }}
             </div>
-            <!-- 文件大小 -->
+            <!-- 文件大小和上传日期 -->
             <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-pencil/60 mt-1">
               {{ Math.round(item.size / 1024) }} KB
+            </div>
+            <div class="font-handwritten text-xs text-center text-pencil/40 mt-0.5">
+              {{ new Date(item.createdAt).toLocaleDateString() }}
             </div>
           </div>
         </template>
