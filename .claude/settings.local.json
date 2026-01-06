@@ -21,7 +21,11 @@
       "WebFetch(domain:tiptap.dev)",
       "Bash(mkdir:*)",
       "Bash(git push:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
