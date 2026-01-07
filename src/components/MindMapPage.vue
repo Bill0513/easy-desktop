@@ -11,7 +11,6 @@ import type { MindMapFile, SimpleMindMapNode } from '@/types'
 import MindMapHistory from './mindmap/MindMapHistory.vue'
 import {
   Plus,
-  FolderOpen,
   Save,
   Download,
   Brain,
@@ -45,9 +44,15 @@ const currentFileName = ref<string>('')
 const hasUnsavedChanges = ref(false)
 const isSaving = ref(false)
 const showNewDialog = ref(false)
-const showOpenDialog = ref(false)
 const newMapName = ref('')
 const isInitialized = ref(false)
+const isMindMapOpen = ref(false)  // 是否打开了思维导图
+
+// 手绘风格确认对话框状态
+const showConfirmDialog = ref(false)
+const confirmDialogTitle = ref('')
+const confirmDialogMessage = ref('')
+const confirmDialogCallback = ref<(() => void) | null>(null)
 
 // Context menu state
 const showContextMenu = ref(false)
@@ -276,13 +281,7 @@ const initMindMap = async (retryCount = 0): Promise<boolean> => {
 
 // Initialize mind map
 onMounted(async () => {
-  store.loadMindMapHistory()
-
-  // Wait for DOM to be fully rendered
-  await nextTick()
-
-  // Try to initialize mind map
-  await initMindMap()
+  store.loadMindMaps()
 
   // Keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown)
@@ -293,7 +292,7 @@ onMounted(async () => {
 
 // Watch for tab changes to reinitialize if needed
 watch(() => store.activeTab, async (newTab) => {
-  if (newTab === 'mindmap' && !isInitialized.value) {
+  if (newTab === 'mindmap' && isMindMapOpen.value && !isInitialized.value) {
     await nextTick()
     await initMindMap()
   }
@@ -351,20 +350,38 @@ const handleKeyDown = (e: KeyboardEvent) => {
     e.preventDefault()
     handleNew()
   }
+}
 
-  // Ctrl+O: Open
-  if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-    e.preventDefault()
-    showOpenDialog.value = true
+// 显示手绘风格确认对话框
+const showHandDrawnConfirm = (title: string, message: string, callback: () => void) => {
+  confirmDialogTitle.value = title
+  confirmDialogMessage.value = message
+  confirmDialogCallback.value = callback
+  showConfirmDialog.value = true
+}
+
+// 确认对话框确认
+const handleConfirmDialogConfirm = () => {
+  showConfirmDialog.value = false
+  if (confirmDialogCallback.value) {
+    confirmDialogCallback.value()
   }
+}
+
+// 确认对话框取消
+const handleConfirmDialogCancel = () => {
+  showConfirmDialog.value = false
+  confirmDialogCallback.value = null
 }
 
 // Create new mind map
 const handleNew = () => {
   if (hasUnsavedChanges.value) {
-    if (!confirm('当前思维导图有未保存的更改，是否继续？')) {
-      return
-    }
+    showHandDrawnConfirm('未保存的更改', '当前思维导图有未保存的更改，是否继续？', () => {
+      showNewDialog.value = true
+      newMapName.value = ''
+    })
+    return
   }
 
   showNewDialog.value = true
@@ -374,60 +391,62 @@ const handleNew = () => {
 // Confirm new mind map creation
 const confirmNew = async () => {
   if (!newMapName.value.trim()) {
-    alert('请输入思维导图名称')
     return
   }
 
   try {
-    const fileItem = await store.createMindMapFile(newMapName.value.trim())
-    store.currentMindMapId = fileItem.id
-    currentFileName.value = fileItem.name
+    const mindMapFile = store.createMindMap(newMapName.value.trim())
+    store.currentMindMapId = mindMapFile.id
+    currentFileName.value = mindMapFile.name
     hasUnsavedChanges.value = false
+    isMindMapOpen.value = true
+
+    // 初始化思维导图（如果还没初始化）
+    if (!isInitialized.value) {
+      await nextTick()
+      await initMindMap()
+    }
 
     // Reset mind map with new data
-    const defaultData = getDefaultData(newMapName.value.trim())
-    mindMapInstance.value?.setData(defaultData)
+    mindMapInstance.value?.setData(mindMapFile.data)
 
     showNewDialog.value = false
   } catch (error) {
-    alert('创建失败：' + (error instanceof Error ? error.message : '未知错误'))
+    console.error('创建失败:', error)
   }
 }
 
 // Open existing mind map
 const handleOpen = async (mindMapFile: MindMapFile) => {
-  if (hasUnsavedChanges.value) {
-    if (!confirm('当前思维导图有未保存的更改，是否继续？')) {
-      return
-    }
-  }
-
-  try {
-    const data = await store.loadMindMapFile(mindMapFile.fileId)
+  const doOpen = async () => {
+    const data = store.loadMindMap(mindMapFile.id)
     if (data) {
-      mindMapInstance.value?.setData(data)
-      store.currentMindMapId = mindMapFile.fileId
+      store.currentMindMapId = mindMapFile.id
       currentFileName.value = mindMapFile.name
       hasUnsavedChanges.value = false
+      isMindMapOpen.value = true
 
-      // Update history
-      const updatedFile: MindMapFile = {
-        ...mindMapFile,
-        lastOpened: Date.now()
+      // 初始化思维导图（如果还没初始化）
+      if (!isInitialized.value) {
+        await nextTick()
+        await initMindMap()
       }
-      store.updateMindMapHistory(updatedFile)
 
-      showOpenDialog.value = false
+      mindMapInstance.value?.setData(data)
     }
-  } catch (error) {
-    alert('打开失败：' + (error instanceof Error ? error.message : '未知错误'))
   }
+
+  if (hasUnsavedChanges.value) {
+    showHandDrawnConfirm('未保存的更改', '当前思维导图有未保存的更改，是否继续？', doOpen)
+    return
+  }
+
+  await doOpen()
 }
 
 // Save current mind map
-const handleSave = async () => {
+const handleSave = () => {
   if (!store.currentMindMapId || !mindMapInstance.value) {
-    alert('请先创建或打开一个思维导图')
     return
   }
 
@@ -435,26 +454,13 @@ const handleSave = async () => {
 
   try {
     const data = mindMapInstance.value.getData(true) as SimpleMindMapNode
-    const success = await store.saveMindMapFile(store.currentMindMapId, data)
+    const success = store.saveMindMap(store.currentMindMapId, data)
 
     if (success) {
       hasUnsavedChanges.value = false
-
-      // Update history
-      const mindMapFile: MindMapFile = {
-        id: store.currentMindMapId,
-        name: currentFileName.value,
-        fileId: store.currentMindMapId,
-        lastOpened: Date.now(),
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }
-      store.updateMindMapHistory(mindMapFile)
-    } else {
-      alert('保存失败')
     }
   } catch (error) {
-    alert('保存失败：' + (error instanceof Error ? error.message : '未知错误'))
+    console.error('保存失败:', error)
   } finally {
     isSaving.value = false
   }
@@ -497,16 +503,6 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       >
         <Plus :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">新建</span>
-      </button>
-
-      <!-- 打开 -->
-      <button
-        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
-        title="打开 (Ctrl+O)"
-        @click="showOpenDialog = true"
-      >
-        <FolderOpen :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">打开</span>
       </button>
 
       <!-- 保存 -->
@@ -613,8 +609,8 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 
     <!-- Main content area -->
     <div class="flex-1 flex flex-col">
-      <!-- Title bar with tips -->
-      <div class="flex items-center justify-between p-4 border-b-2 border-pencil/20">
+      <!-- Title bar with tips (only show when mind map is open) -->
+      <div v-if="isMindMapOpen" class="flex items-center justify-between p-4 border-b-2 border-pencil/20">
         <div class="text-xs font-handwritten text-pencil/40">
           Tab: 添加子节点 | Enter: 添加同级节点 | Delete: 删除 | 双击编辑
         </div>
@@ -627,19 +623,36 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         </div>
       </div>
 
-      <!-- Mind map container -->
+      <!-- Mind map container (only show when mind map is open) -->
       <div
+        v-if="isMindMapOpen"
         ref="mindMapContainer"
         class="flex-1 relative overflow-hidden"
         style="min-height: 400px;"
         @contextmenu="handleContextMenu"
       ></div>
 
+      <!-- Empty state (show when no mind map is open) -->
+      <div v-else class="flex-1 flex items-center justify-center">
+        <div class="text-center">
+          <Brain :stroke-width="1.5" class="w-24 h-24 mx-auto mb-6 text-pencil/30" />
+          <h2 class="font-handwritten text-2xl text-pencil mb-2">开始创建思维导图</h2>
+          <p class="font-handwritten text-pencil/60 mb-6">点击"新建"创建新的思维导图，或从下方历史记录中选择</p>
+          <button
+            class="btn-hand-drawn px-6 py-3 font-handwritten text-lg"
+            @click="handleNew"
+          >
+            <Plus :stroke-width="2.5" class="w-5 h-5 inline-block mr-2" />
+            新建思维导图
+          </button>
+        </div>
+      </div>
+
       <!-- History section -->
       <MindMapHistory
-        :history="store.mindMapHistory"
+        :history="store.mindMaps"
         @open="handleOpen"
-        @remove="store.removeMindMapFromHistory"
+        @remove="store.deleteMindMap"
       />
     </div>
 
@@ -762,7 +775,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       </Transition>
     </Teleport>
 
-    <!-- Open dialog -->
+    <!-- Hand-drawn style confirm dialog -->
     <Teleport to="body">
       <Transition
         enter-active-class="transition duration-200 ease-out"
@@ -773,41 +786,22 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         leave-to-class="opacity-0"
       >
         <div
-          v-if="showOpenDialog"
+          v-if="showConfirmDialog"
           class="fixed inset-0 z-[10000] flex items-center justify-center bg-pencil/50"
-          @click.self="showOpenDialog = false"
+          @click.self="handleConfirmDialogCancel"
         >
-          <div class="card-hand-drawn p-6 max-w-2xl w-full mx-4 bg-paper" style="box-shadow: 8px 8px 0px #2d2d2d;">
-            <h2 class="font-handwritten text-2xl text-pencil mb-4">打开思维导图</h2>
+          <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-paper" style="box-shadow: 8px 8px 0px #2d2d2d;">
+            <h2 class="font-handwritten text-2xl text-pencil mb-4">{{ confirmDialogTitle }}</h2>
+            <p class="font-handwritten text-pencil/80 mb-6">{{ confirmDialogMessage }}</p>
 
-            <!-- File list from file system -->
-            <div class="max-h-96 overflow-y-auto space-y-2">
-              <div
-                v-for="file in store.files.filter(f => f.name.endsWith('.mindmap'))"
-                :key="file.id"
-                class="card-hand-drawn p-3 cursor-pointer hover:bg-muted/30 transition-colors"
-                @click="handleOpen({ id: file.id, name: file.name, fileId: file.id, lastOpened: Date.now(), createdAt: file.createdAt, updatedAt: file.updatedAt })"
-              >
-                <div class="flex items-center gap-3">
-                  <Brain :stroke-width="2" class="w-6 h-6 text-pencil/60" />
-                  <div class="flex-1">
-                    <div class="font-handwritten text-sm text-pencil">{{ file.name }}</div>
-                    <div class="font-handwritten text-xs text-pencil/60">
-                      {{ new Date(file.updatedAt).toLocaleString() }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="store.files.filter(f => f.name.endsWith('.mindmap')).length === 0" class="text-center py-8">
-                <FolderOpen :stroke-width="2" class="w-10 h-10 mx-auto mb-2 text-pencil/40" />
-                <p class="font-handwritten text-pencil/60">暂无思维导图文件</p>
-              </div>
+            <div class="flex gap-3">
+              <button class="btn-hand-drawn px-4 py-2 flex-1" @click="handleConfirmDialogConfirm">
+                确定
+              </button>
+              <button class="btn-hand-drawn px-4 py-2 flex-1" @click="handleConfirmDialogCancel">
+                取消
+              </button>
             </div>
-
-            <button class="btn-hand-drawn px-4 py-2 w-full mt-4" @click="showOpenDialog = false">
-              关闭
-            </button>
           </div>
         </div>
       </Transition>

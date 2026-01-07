@@ -17,6 +17,13 @@ const emit = defineEmits<{
 }>()
 
 const store = useDesktopStore()
+
+// 点击组件任意位置提升层级
+const handleWidgetMouseDown = () => {
+  store.bringToFront(props.widget.id)
+  store.selectWidget(props.widget.id)
+}
+
 const isEditingTitle = ref(false)
 const titleInput = ref<HTMLInputElement | null>(null)
 const editedTitle = ref('')
@@ -192,6 +199,7 @@ const stopResize = () => {
     ]"
     :style="wrapperStyle"
     :data-widget-id="widget.id"
+    @mousedown="handleWidgetMouseDown"
   >
     <!-- 拖拽手柄（标题栏） -->
     <div
