@@ -149,10 +149,14 @@ const handlePaste = async (e: ClipboardEvent) => {
       return
     }
 
-    // 检查是否在 Editor.js 编辑器内（通过检查父元素）
+    // 检查是否在富文本编辑器内（通过检查父元素）
+    // 支持 TipTap (ProseMirror) 和 Editor.js
     let element = activeElement as HTMLElement
     while (element) {
-      if (element.classList?.contains('codex-editor') ||
+      if (element.classList?.contains('ProseMirror') ||
+          element.classList?.contains('tiptap-editor') ||
+          element.classList?.contains('notion-editor') ||
+          element.classList?.contains('codex-editor') ||
           element.classList?.contains('ce-block') ||
           element.classList?.contains('editor-container')) {
         return
