@@ -148,6 +148,17 @@ const handlePaste = async (e: ClipboardEvent) => {
     if (isEditable) {
       return
     }
+
+    // 检查是否在 Editor.js 编辑器内（通过检查父元素）
+    let element = activeElement as HTMLElement
+    while (element) {
+      if (element.classList?.contains('codex-editor') ||
+          element.classList?.contains('ce-block') ||
+          element.classList?.contains('editor-container')) {
+        return
+      }
+      element = element.parentElement as HTMLElement
+    }
   }
 
   const items = e.clipboardData?.items
