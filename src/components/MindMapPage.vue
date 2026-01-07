@@ -432,7 +432,7 @@ const handleOpen = async (mindMapFile: MindMapFile) => {
         await initMindMap()
       }
 
-      mindMapInstance.value?.setData(data)
+      mindMapInstance.value?.setFullData(data)
     }
   }
 
