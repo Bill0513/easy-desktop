@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import WidgetWrapper from './widgets/WidgetWrapper.vue'
 import Taskbar from './Taskbar.vue'
@@ -135,11 +135,32 @@ const visibleWidgets = computed(() => {
 
 // 处理粘贴事件 - 只在桌面空白区域粘贴时创建 widget
 const handlePaste = async (e: ClipboardEvent) => {
-  // 只有当粘贴目标是桌面本身时才处理
-  // 这样可以确保在 TipTap 等编辑器中粘贴时不会被拦截
-  const target = e.target as HTMLElement
-  if (!target.classList?.contains('desktop-canvas')) {
-    return
+  // 只在桌面 tab 下处理粘贴
+  if (store.activeTab !== 'desktop') return
+
+  // 检查当前焦点元素，如果在可编辑元素上，不拦截粘贴事件
+  const activeElement = document.activeElement
+  if (activeElement) {
+    const tagName = activeElement.tagName.toLowerCase()
+    const isEditable =
+      tagName === 'input' ||
+      tagName === 'textarea' ||
+      (activeElement as HTMLElement).isContentEditable
+
+    // 如果焦点在可编辑元素上，让浏览器处理默认粘贴行为
+    if (isEditable) {
+      return
+    }
+
+    // 检查是否在富文本编辑器内（通过检查父元素）
+    let element = activeElement as HTMLElement
+    while (element) {
+      if (element.classList?.contains('ProseMirror') ||
+          element.classList?.contains('tiptap-editor')) {
+        return
+      }
+      element = element.parentElement as HTMLElement
+    }
   }
 
   const items = e.clipboardData?.items
@@ -233,13 +254,20 @@ const handlePaste = async (e: ClipboardEvent) => {
   }
 }
 
+// 挂载和卸载粘贴事件监听
+onMounted(() => {
+  document.addEventListener('paste', handlePaste)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('paste', handlePaste)
+})
 </script>
 
 <template>
   <div
     class="w-full h-full relative desktop-canvas"
     @click="handleDesktopClick"
-    @paste="handlePaste"
   >
     <!-- 背景装饰 -->
     <div class="absolute inset-0 pointer-events-none opacity-5">
