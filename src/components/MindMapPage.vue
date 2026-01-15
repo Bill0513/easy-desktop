@@ -643,7 +643,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
           <Download :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
           <span class="text-[10px] font-handwritten text-pencil/60">导出</span>
         </button>
-        <div class="absolute left-full ml-2 top-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 bg-paper">
+        <div class="absolute left-full ml-2 bottom-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 bg-paper">
           <button
             class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
             @click="handleExport('png')"
@@ -671,7 +671,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- Title bar with tips (only show when mind map is open) -->
       <div v-if="isMindMapOpen" class="flex items-center justify-between p-4 border-b-2 border-pencil/20">
         <div class="text-xs font-handwritten text-pencil/40">
-          Tab: 添加子节点 | Enter: 添加同级节点 | Delete: 删除 | 双击编辑
+          
         </div>
         <span class="font-handwritten text-lg text-pencil">
           {{ currentFileName || '未命名思维导图' }}
