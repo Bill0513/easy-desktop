@@ -56,3 +56,11 @@ coverage/
 Thumbs.db
 .DS_Store
 .env.example
+
+# Local development server
+server/data/
+server/storage/
+*.db
+*.db-shm
+*.db-wal
+error-image

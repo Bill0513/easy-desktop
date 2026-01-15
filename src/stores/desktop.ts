@@ -236,84 +236,28 @@ export const useDesktopStore = defineStore('desktop', () => {
         }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
-        // 同步云端数据到本地存储
-        saveToLocal()
       } else {
-        // 云端无数据，尝试从本地加载
-        const localData = localStorage.getItem(STORAGE_KEY)
-        if (localData) {
-          const parsed = JSON.parse(localData)
-          widgets.value = parsed.widgets || []
-          maxZIndex.value = parsed.maxZIndex || 100
-          // 加载导航站数据
-          if (parsed.navigationSites !== undefined) {
-            navigationSites.value = parsed.navigationSites
-          }
-          // 加载分类数据
-          if (parsed.categories !== undefined) {
-            navigationCategories.value = parsed.categories
-          }
-          // 加载启用的新闻源
-          if (parsed.enabledNewsSources !== undefined) {
-            enabledSources.value = new Set(parsed.enabledNewsSources)
-          }
-          // 加载搜索历史和搜索引擎
-          if (parsed.searchHistory !== undefined) {
-            searchHistory.value = parsed.searchHistory
-          }
-          if (parsed.searchEngine !== undefined) {
-            searchEngine.value = parsed.searchEngine
-          }
-          // 加载思维导图历史记录
-          if (parsed.mindMaps !== undefined) {
-            mindMaps.value = parsed.mindMaps
-          }
-          // 如果本地有数据，标记为已初始化（允许后续同步到云端）
-          if (parsed.widgets && parsed.widgets.length > 0) {
-            isCloudInitialized.value = true
-          }
-        } else {
-          widgets.value = []
-          maxZIndex.value = 100
-          // 新用户，没有任何数据，标记为已初始化
-          isCloudInitialized.value = true
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load data:', error)
-      const localData = localStorage.getItem(STORAGE_KEY)
-      if (localData) {
-        const parsed = JSON.parse(localData)
-        widgets.value = parsed.widgets || []
-        maxZIndex.value = parsed.maxZIndex || 100
-        // 加载导航站数据
-        if (parsed.navigationSites !== undefined) {
-          navigationSites.value = parsed.navigationSites
-        }
-        // 加载分类数据
-        if (parsed.categories !== undefined) {
-          navigationCategories.value = parsed.categories
-        }
-        // 加载启用的新闻源
-        if (parsed.enabledNewsSources !== undefined) {
-          enabledSources.value = new Set(parsed.enabledNewsSources)
-        }
-        // 加载思维导图数据
-        if (parsed.mindMaps !== undefined) {
-          mindMaps.value = parsed.mindMaps
-        }
-        // 从本地加载成功，标记为已初始化
-        if (parsed.widgets && parsed.widgets.length > 0) {
-          isCloudInitialized.value = true
-        }
-      } else {
+        // 云端无数据，初始化为空
         widgets.value = []
         maxZIndex.value = 100
-        // 加载失败且无本地数据，不标记为已初始化，防止空数据同步
-        isCloudInitialized.value = false
+        // 新用户，没有任何数据，标记为已初始化
+        isCloudInitialized.value = true
       }
+    } catch (error) {
+      console.error('Failed to load data from server:', error)
+      // 服务器不可用时，初始化为空数据
+      widgets.value = []
+      maxZIndex.value = 100
+      // 不标记为已初始化，防止空数据覆盖服务器数据
+      isCloudInitialized.value = false
     } finally {
       isLoading.value = false
+    }
+
+    // 加载当前激活的标签页（从 localStorage，这是临时 UI 状态）
+    const savedTab = localStorage.getItem(TAB_STORAGE_KEY)
+    if (savedTab) {
+      activeTab.value = savedTab as TabType
     }
   }
 
@@ -364,9 +308,6 @@ export const useDesktopStore = defineStore('desktop', () => {
             navigationSites.value = conflictData.serverData.navigationSites || []
             navigationCategories.value = conflictData.serverData.categories || ['工作', '学习', '其他']
 
-            // 同步到本地存储
-            saveToLocal()
-
             // 标记为已初始化
             isCloudInitialized.value = true
           }
@@ -387,9 +328,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           navigationSites.value = conflictData.serverData.navigationSites || []
           navigationCategories.value = conflictData.serverData.categories || ['工作', '学习', '其他']
 
-          // 同步到本地存储
-          saveToLocal()
-
           // 抛出错误，让调用者知道发生了冲突
           throw new Error('数据冲突：已自动使用服务器最新数据')
         }
@@ -404,25 +342,26 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // 已移除 localStorage 依赖，所有数据通过 API 持久化
   function saveToLocal() {
-    const data: DesktopData = {
-      widgets: widgets.value,
-      maxZIndex: maxZIndex.value,
-      navigationSites: navigationSites.value,
-      categories: navigationCategories.value,
-      enabledNewsSources: Array.from(enabledSources.value),
-      searchHistory: searchHistory.value,
-      searchEngine: searchEngine.value,
-      mindMaps: mindMaps.value,
-      version: 1,
-      updatedAt: Date.now()
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    // 不再使用 localStorage 存储数据
   }
 
-  // 只保存到本地，不同步到云端
+  // 防抖定时器
+  let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+  // 保存数据到服务器（使用防抖，避免频繁请求）
   function save() {
-    saveToLocal()
+    // 清除之前的定时器
+    if (saveDebounceTimer) {
+      clearTimeout(saveDebounceTimer)
+    }
+
+    // 设置新的定时器，500ms 后执行同步
+    saveDebounceTimer = setTimeout(() => {
+      syncToCloud()
+      saveDebounceTimer = null
+    }, 500)
   }
 
   // 手动同步到云端
