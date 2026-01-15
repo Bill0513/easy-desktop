@@ -47,6 +47,7 @@ const showNewDialog = ref(false)
 const newMapName = ref('')
 const isInitialized = ref(false)
 const isMindMapOpen = ref(false)  // 是否打开了思维导图
+const isLoadingData = ref(false)  // 是否正在加载数据（用于区分是加载还是用户编辑）
 
 // 手绘风格确认对话框状态
 const showConfirmDialog = ref(false)
@@ -59,8 +60,14 @@ const showContextMenu = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const hasActiveNode = ref(false)
 
+// Undo/Redo state
+const canUndo = ref(false)
+const canRedo = ref(false)
+
 // Auto-save timer
 let autoSaveTimer: number | null = null
+// Loading data timer (用于延迟重置 isLoadingData 标志)
+let loadingDataTimer: number | null = null
 
 // 手绘风格主题配置
 const handDrawnTheme = {
@@ -177,6 +184,17 @@ const pasteNode = () => {
   hideContextMenu()
 }
 
+// Update undo/redo state
+const updateUndoRedoState = () => {
+  if (mindMapInstance.value) {
+    const history = (mindMapInstance.value as any).command.history
+    if (history) {
+      canUndo.value = history.activeIndex > 0
+      canRedo.value = history.activeIndex < history.length - 1
+    }
+  }
+}
+
 const undo = () => {
   if (mindMapInstance.value) {
     mindMapInstance.value.execCommand('BACK')
@@ -256,6 +274,12 @@ const initMindMap = async (retryCount = 0): Promise<boolean> => {
     // Listen for changes
     instance.on('data_change', handleMindMapChange)
 
+    // Listen for undo/redo state changes
+    instance.on('back_forward', (index: number, length: number) => {
+      canUndo.value = index > 0
+      canRedo.value = index < length - 1
+    })
+
     // Listen for node active state
     instance.on('node_active', (_node: any, activeNodeList: any[]) => {
       hasActiveNode.value = activeNodeList && activeNodeList.length > 0
@@ -319,6 +343,11 @@ onUnmounted(() => {
 
 // Handle mind map changes
 const handleMindMapChange = () => {
+  // 如果正在加载数据，不标记为未保存
+  if (isLoadingData.value) {
+    return
+  }
+
   hasUnsavedChanges.value = true
 
   // Reset auto-save timer
@@ -407,8 +436,21 @@ const confirmNew = async () => {
       await initMindMap()
     }
 
+    // 清除之前的定时器
+    if (loadingDataTimer) {
+      clearTimeout(loadingDataTimer)
+    }
+
+    // 设置加载标志，防止 data_change 事件标记为未保存
+    isLoadingData.value = true
     // Reset mind map with new data
     mindMapInstance.value?.setData(mindMapFile.data)
+    // 延迟重置标志，确保所有异步事件都已处理完毕
+    loadingDataTimer = window.setTimeout(() => {
+      isLoadingData.value = false
+      // 更新撤销/重做状态
+      updateUndoRedoState()
+    }, 200)
 
     showNewDialog.value = false
   } catch (error) {
@@ -432,7 +474,20 @@ const handleOpen = async (mindMapFile: MindMapFile) => {
         await initMindMap()
       }
 
+      // 清除之前的定时器
+      if (loadingDataTimer) {
+        clearTimeout(loadingDataTimer)
+      }
+
+      // 设置加载标志，防止 data_change 事件标记为未保存
+      isLoadingData.value = true
       mindMapInstance.value?.setFullData(data)
+      // 延迟重置标志，确保所有异步事件都已处理完毕
+      loadingDataTimer = window.setTimeout(() => {
+        isLoadingData.value = false
+        // 更新撤销/重做状态
+        updateUndoRedoState()
+      }, 200)
     }
   }
 
@@ -523,8 +578,10 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- 撤销 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
+        :class="{ 'opacity-50 cursor-not-allowed': !canUndo }"
         title="撤销 (Ctrl+Z)"
         @click="undo"
+        :disabled="!canUndo"
       >
         <Undo :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">撤销</span>
@@ -533,8 +590,10 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- 重做 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
+        :class="{ 'opacity-50 cursor-not-allowed': !canRedo }"
         title="重做 (Ctrl+Y)"
         @click="redo"
+        :disabled="!canRedo"
       >
         <Redo :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">重做</span>

@@ -38,41 +38,55 @@ const cancelRemove = () => {
 
 <template>
   <div class="border-t-2 border-pencil/20 bg-paper/50 p-4">
-    <h3 class="font-handwritten text-lg text-pencil mb-3">最近打开</h3>
+    <div class="flex items-start justify-between mb-3 gap-4">
+      <div class="flex-1">
+        <h3 class="font-handwritten text-lg text-pencil mb-3">最近打开</h3>
 
-    <div v-if="history.length === 0" class="text-center py-4">
-      <p class="font-handwritten text-sm text-pencil/60">暂无历史记录</p>
-    </div>
-
-    <div v-else class="flex gap-3 overflow-x-auto pb-2">
-      <div
-        v-for="item in history"
-        :key="item.id"
-        class="card-hand-drawn p-3 min-w-[180px] cursor-pointer hover:scale-105 transition-transform group relative"
-        @dblclick="emit('open', item)"
-      >
-        <!-- Thumbnail or icon -->
-        <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
-          <Brain :stroke-width="2" class="w-10 h-10 text-pencil/60" />
+        <div v-if="history.length === 0" class="text-center py-4">
+          <p class="font-handwritten text-sm text-pencil/60">暂无历史记录</p>
         </div>
 
-        <!-- Name -->
-        <div class="font-handwritten text-sm text-pencil truncate" :title="item.name">
-          {{ item.name }}
-        </div>
+        <div v-else class="flex gap-3 overflow-x-auto pb-2 flex-nowrap scrollbar-thin">
+          <div
+            v-for="item in history"
+            :key="item.id"
+            class="card-hand-drawn p-3 min-w-[180px] flex-shrink-0 cursor-pointer hover:scale-105 transition-transform group relative"
+            @dblclick="emit('open', item)"
+          >
+            <!-- Thumbnail or icon -->
+            <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
+              <Brain :stroke-width="2" class="w-10 h-10 text-pencil/60" />
+            </div>
 
-        <!-- Last opened -->
-        <div class="font-handwritten text-xs text-pencil/60">
-          {{ new Date(item.lastOpened).toLocaleDateString() }}
-        </div>
+            <!-- Name -->
+            <div class="font-handwritten text-sm text-pencil truncate" :title="item.name">
+              {{ item.name }}
+            </div>
 
-        <!-- Remove button -->
-        <button
-          class="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-          @click="(e) => handleRemove(e, item.id)"
-        >
-          <X :stroke-width="2.5" class="w-4 h-4" />
-        </button>
+            <!-- Last opened -->
+            <div class="font-handwritten text-xs text-pencil/60">
+              {{ new Date(item.lastOpened).toLocaleDateString() }}
+            </div>
+
+            <!-- Remove button -->
+            <button
+              class="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              @click="(e) => handleRemove(e, item.id)"
+            >
+              <X :stroke-width="2.5" class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷键提示 -->
+      <div class="flex-shrink-0 font-handwritten text-xs text-pencil/60 space-y-1">
+        <div>Tab: 添加子节点</div>
+        <div>Enter: 添加同级节点</div>
+        <div>Ctrl+C: 复制</div>
+        <div>Ctrl+X: 剪切</div>
+        <div>Ctrl+V: 粘贴</div>
+        <div>Delete: 删除</div>
       </div>
     </div>
 
@@ -109,3 +123,24 @@ const cancelRemove = () => {
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* 自定义滚动条样式 */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #e5e0d8;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #2d2d2d;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #ff4d4d;
+}
+</style>
