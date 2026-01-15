@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { MindMapFile } from '@/types'
 import { Brain, X } from 'lucide-vue-next'
 
@@ -11,18 +12,27 @@ const emit = defineEmits<{
   remove: [id: string]
 }>()
 
+// 手绘风格确认对话框状态
+const showConfirmDialog = ref(false)
+const pendingRemoveId = ref<string | null>(null)
+
 const handleRemove = (e: MouseEvent, id: string) => {
   e.stopPropagation()
-  if (confirm('确定要从历史记录中移除吗？')) {
-    emit('remove', id)
-  }
+  pendingRemoveId.value = id
+  showConfirmDialog.value = true
 }
 
-// 获取缩略图完整URL
-const getThumbnailUrl = (thumbnail: string | undefined) => {
-  if (!thumbnail) return ''
-  const imageDomain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
-  return `${imageDomain}/${thumbnail}`
+const confirmRemove = () => {
+  if (pendingRemoveId.value) {
+    emit('remove', pendingRemoveId.value)
+  }
+  showConfirmDialog.value = false
+  pendingRemoveId.value = null
+}
+
+const cancelRemove = () => {
+  showConfirmDialog.value = false
+  pendingRemoveId.value = null
 }
 </script>
 
@@ -39,12 +49,11 @@ const getThumbnailUrl = (thumbnail: string | undefined) => {
         v-for="item in history"
         :key="item.id"
         class="card-hand-drawn p-3 min-w-[180px] cursor-pointer hover:scale-105 transition-transform group relative"
-        @click="emit('open', item)"
+        @dblclick="emit('open', item)"
       >
         <!-- Thumbnail or icon -->
         <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
-          <img v-if="item.thumbnail" :src="getThumbnailUrl(item.thumbnail)" alt="缩略图" class="w-full h-full object-cover" />
-          <Brain v-else :stroke-width="2" class="w-10 h-10 text-pencil/60" />
+          <Brain :stroke-width="2" class="w-10 h-10 text-pencil/60" />
         </div>
 
         <!-- Name -->
@@ -66,5 +75,37 @@ const getThumbnailUrl = (thumbnail: string | undefined) => {
         </button>
       </div>
     </div>
+
+    <!-- Hand-drawn style confirm dialog -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showConfirmDialog"
+          class="fixed inset-0 z-[10000] flex items-center justify-center bg-pencil/50"
+          @click.self="cancelRemove"
+        >
+          <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-paper" style="box-shadow: 8px 8px 0px #2d2d2d;">
+            <h2 class="font-handwritten text-2xl text-pencil mb-4">删除确认</h2>
+            <p class="font-handwritten text-pencil/80 mb-6">确定要删除这个思维导图吗？此操作不可恢复。</p>
+
+            <div class="flex gap-3">
+              <button class="btn-hand-drawn px-4 py-2 flex-1 bg-accent/10 hover:bg-accent/20" @click="confirmRemove">
+                删除
+              </button>
+              <button class="btn-hand-drawn px-4 py-2 flex-1" @click="cancelRemove">
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

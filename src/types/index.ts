@@ -98,7 +98,7 @@ export interface DesktopData {
   enabledNewsSources?: string[]  // 启用的新闻源ID列表
   searchHistory?: string[]  // 搜索历史
   searchEngine?: string  // 搜索引擎偏好
-  mindMapHistory?: MindMapFile[]  // 思维导图历史记录
+  mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
   version: number
   updatedAt: number
 }
@@ -202,8 +202,8 @@ export interface FileData {
 export interface MindMapFile {
   id: string
   name: string
-  fileId: string  // Reference to FileItem in file system
-  thumbnail?: string  // Base64 encoded thumbnail (optional for v1)
+  data: SimpleMindMapNode  // 思维导图数据直接存储在 KV 中
+  thumbnail?: string  // 缩略图 (可选)
   lastOpened: number
   createdAt: number
   updatedAt: number

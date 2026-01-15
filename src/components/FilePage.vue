@@ -222,10 +222,23 @@ onUnmounted(() => {
 
 // 快捷键处理
 const handleKeyDown = (e: KeyboardEvent) => {
-  // 如果在输入框中，不处理快捷键
+  // 只在文件 tab 下处理快捷键
+  if (store.activeTab !== 'file') return
+
+  // 如果在输入框或可编辑元素中，不处理快捷键
   const target = e.target as HTMLElement
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) {
     return
+  }
+
+  // 检查是否在富文本编辑器内
+  let element = target
+  while (element) {
+    if (element.classList?.contains('ProseMirror') ||
+        element.classList?.contains('tiptap-editor')) {
+      return
+    }
+    element = element.parentElement as HTMLElement
   }
 
   // Ctrl+A 全选

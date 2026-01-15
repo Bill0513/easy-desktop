@@ -70,7 +70,7 @@ export const useDesktopStore = defineStore('desktop', () => {
   const isFileCloudInitialized = ref(false) // 标记文件是否已从云端成功加载过数据
 
   // Mind map state
-  const mindMapHistory = ref<MindMapFile[]>([])
+  const mindMaps = ref<MindMapFile[]>([])
   const currentMindMapId = ref<string | null>(null)
   const isLoadingMindMap = ref(false)
 
@@ -231,8 +231,8 @@ export const useDesktopStore = defineStore('desktop', () => {
           searchEngine.value = cloudData.searchEngine
         }
         // 加载思维导图历史记录
-        if (cloudData.mindMapHistory !== undefined) {
-          mindMapHistory.value = cloudData.mindMapHistory
+        if (cloudData.mindMaps !== undefined) {
+          mindMaps.value = cloudData.mindMaps
         }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
@@ -265,8 +265,8 @@ export const useDesktopStore = defineStore('desktop', () => {
             searchEngine.value = parsed.searchEngine
           }
           // 加载思维导图历史记录
-          if (parsed.mindMapHistory !== undefined) {
-            mindMapHistory.value = parsed.mindMapHistory
+          if (parsed.mindMaps !== undefined) {
+            mindMaps.value = parsed.mindMaps
           }
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           if (parsed.widgets && parsed.widgets.length > 0) {
@@ -298,9 +298,9 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (parsed.enabledNewsSources !== undefined) {
           enabledSources.value = new Set(parsed.enabledNewsSources)
         }
-        // 加载思维导图历史记录
-        if (parsed.mindMapHistory !== undefined) {
-          mindMapHistory.value = parsed.mindMapHistory
+        // 加载思维导图数据
+        if (parsed.mindMaps !== undefined) {
+          mindMaps.value = parsed.mindMaps
         }
         // 从本地加载成功，标记为已初始化
         if (parsed.widgets && parsed.widgets.length > 0) {
@@ -339,7 +339,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         enabledNewsSources: Array.from(enabledSources.value),
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
-        mindMapHistory: mindMapHistory.value,
+        mindMaps: mindMaps.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -413,7 +413,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       enabledNewsSources: Array.from(enabledSources.value),
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
-      mindMapHistory: mindMapHistory.value,
+      mindMaps: mindMaps.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -487,7 +487,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       enabledNewsSources: Array.from(enabledSources.value),
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
-      mindMapHistory: mindMapHistory.value,
+      mindMaps: mindMaps.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1834,125 +1834,87 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // Mind Map Actions
 
-  function loadMindMapHistory() {
-    // 思维导图历史记录现在从 init() 中统一加载，无需单独初始化
+  function loadMindMaps() {
+    // 思维导图数据现在从 init() 中统一加载，无需单独初始化
     // 保留此方法以保持向后兼容，但不执行任何操作
   }
 
-  function saveMindMapHistory() {
+  function saveMindMaps() {
     // 使用统一的 save() 方法保存到 localStorage 和 KV
     save()
   }
 
-  function updateMindMapHistory(mindMapFile: MindMapFile) {
-    const index = mindMapHistory.value.findIndex(m => m.id === mindMapFile.id)
+  // 创建新的思维导图
+  function createMindMap(name: string): MindMapFile {
+    const now = Date.now()
+    const id = uuidv4()
+
+    const defaultData: SimpleMindMapNode = {
+      data: {
+        text: name,
+        expand: true,
+        uid: id
+      },
+      children: []
+    }
+
+    const mindMapFile: MindMapFile = {
+      id,
+      name,
+      data: defaultData,
+      lastOpened: now,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    mindMaps.value.unshift(mindMapFile)
+    saveMindMaps()
+
+    return mindMapFile
+  }
+
+  // 加载思维导图数据
+  function loadMindMap(id: string): SimpleMindMapNode | null {
+    const mindMap = mindMaps.value.find(m => m.id === id)
+    if (!mindMap) return null
+
+    // 更新最后打开时间
+    mindMap.lastOpened = Date.now()
+    saveMindMaps()
+
+    return mindMap.data
+  }
+
+  // 保存思维导图数据
+  function saveMindMap(id: string, data: SimpleMindMapNode): boolean {
+    const mindMap = mindMaps.value.find(m => m.id === id)
+    if (!mindMap) return false
+
+    mindMap.data = data
+    mindMap.updatedAt = Date.now()
+    saveMindMaps()
+
+    return true
+  }
+
+  // 更新思维导图名称
+  function renameMindMap(id: string, newName: string): boolean {
+    const mindMap = mindMaps.value.find(m => m.id === id)
+    if (!mindMap) return false
+
+    mindMap.name = newName
+    mindMap.updatedAt = Date.now()
+    saveMindMaps()
+
+    return true
+  }
+
+  // 删除思维导图
+  function deleteMindMap(id: string) {
+    const index = mindMaps.value.findIndex(m => m.id === id)
     if (index !== -1) {
-      mindMapHistory.value.splice(index, 1)
-    }
-    mindMapHistory.value.unshift(mindMapFile)
-    if (mindMapHistory.value.length > 10) {
-      mindMapHistory.value = mindMapHistory.value.slice(0, 10)
-    }
-    saveMindMapHistory()
-  }
-
-  function removeMindMapFromHistory(id: string) {
-    const index = mindMapHistory.value.findIndex(m => m.id === id)
-    if (index !== -1) {
-      mindMapHistory.value.splice(index, 1)
-      saveMindMapHistory()
-    }
-  }
-
-  async function createMindMapFile(name: string): Promise<FileItem> {
-    // 使用 simple-mind-map 格式
-    const defaultData = {
-      root: {
-        data: {
-          text: name,
-          expand: true,
-          uid: uuidv4()
-        },
-        children: []
-      }
-    }
-
-    const blob = new Blob([JSON.stringify(defaultData, null, 2)], { type: 'application/json' })
-    const file = new File([blob], `${name}.mindmap`, { type: 'application/json' })
-
-    return await uploadFile(file, currentFolderId.value)
-  }
-
-  async function loadMindMapFile(fileId: string): Promise<SimpleMindMapNode | null> {
-    try {
-      const file = files.value.find(f => f.id === fileId)
-      if (!file) return null
-
-      const response = await fetch(`/api/file?filename=${file.url}`)
-      if (!response.ok) throw new Error('Failed to load mind map')
-
-      const data = await response.json()
-
-      // 返回 root 节点数据
-      if (data.root) {
-        return data.root
-      }
-
-      // 如果是旧格式，返回默认数据
-      return {
-        data: {
-          text: '新建思维导图',
-          expand: true,
-          uid: 'root'
-        },
-        children: []
-      }
-    } catch (error) {
-      console.error('Failed to load mind map:', error)
-      return null
-    }
-  }
-
-  async function saveMindMapFile(fileId: string, data: SimpleMindMapNode): Promise<boolean> {
-    try {
-      const file = files.value.find(f => f.id === fileId)
-      if (!file) return false
-
-      // 包装为完整的 MindMapData 格式
-      const mindMapData = {
-        root: data
-      }
-
-      // Delete old file from R2
-      await fetch('/api/file', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.url })
-      })
-
-      // Upload new file
-      const blob = new Blob([JSON.stringify(mindMapData, null, 2)], { type: 'application/json' })
-      const newFile = new File([blob], file.name, { type: 'application/json' })
-
-      const formData = new FormData()
-      formData.append('file', newFile)
-
-      const response = await fetch('/api/file', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (!response.ok) throw new Error('Failed to save mind map')
-
-      const result = await response.json()
-      file.url = result.filename
-      file.updatedAt = Date.now()
-      saveFilesLocal()
-
-      return true
-    } catch (error) {
-      console.error('Failed to save mind map:', error)
-      return false
+      mindMaps.value.splice(index, 1)
+      saveMindMaps()
     }
   }
 
@@ -1997,7 +1959,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     clipboard,
     selectedFileIds,
     // Mind map state
-    mindMapHistory,
+    mindMaps,
     currentMindMapId,
     isLoadingMindMap,
     // Getters
@@ -2077,12 +2039,11 @@ export const useDesktopStore = defineStore('desktop', () => {
     cutFiles,
     pasteFiles,
     // Mind map actions
-    loadMindMapHistory,
-    saveMindMapHistory,
-    updateMindMapHistory,
-    removeMindMapFromHistory,
-    createMindMapFile,
-    loadMindMapFile,
-    saveMindMapFile,
+    loadMindMaps,
+    createMindMap,
+    loadMindMap,
+    saveMindMap,
+    renameMindMap,
+    deleteMindMap,
   }
 })

@@ -133,8 +133,11 @@ const visibleWidgets = computed(() => {
   return store.widgets.filter(w => !w.isMinimized)
 })
 
-// 处理粘贴事件
+// 处理粘贴事件 - 只在桌面空白区域粘贴时创建 widget
 const handlePaste = async (e: ClipboardEvent) => {
+  // 只在桌面 tab 下处理粘贴
+  if (store.activeTab !== 'desktop') return
+
   // 检查当前焦点元素，如果在可编辑元素上，不拦截粘贴事件
   const activeElement = document.activeElement
   if (activeElement) {
@@ -147,6 +150,16 @@ const handlePaste = async (e: ClipboardEvent) => {
     // 如果焦点在可编辑元素上，让浏览器处理默认粘贴行为
     if (isEditable) {
       return
+    }
+
+    // 检查是否在富文本编辑器内（通过检查父元素）
+    let element = activeElement as HTMLElement
+    while (element) {
+      if (element.classList?.contains('ProseMirror') ||
+          element.classList?.contains('tiptap-editor')) {
+        return
+      }
+      element = element.parentElement as HTMLElement
     }
   }
 
@@ -253,7 +266,7 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="w-full h-full relative"
+    class="w-full h-full relative desktop-canvas"
     @click="handleDesktopClick"
   >
     <!-- 背景装饰 -->
