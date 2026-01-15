@@ -35,14 +35,32 @@ A hand-drawn style online desktop application built with Vue 3 + TypeScript. Use
     - `SiteFormDialog.vue` - Add/edit website form with auto-favicon fetching
     - `CategoryManagerDialog.vue` - Manage bookmark categories
   - News Tab:
-    - `NewsPage.vue` - News aggregator with source filtering (mock data)
+    - `NewsPage.vue` - News aggregator with source filtering (real-time data from multiple sources)
+  - Resource Search Tab:
+    - `ResourceSearchPage.vue` - Placeholder for future resource search feature
+  - File Tab:
+    - `FilePage.vue` - File manager with grid/list view, folder navigation, drag-to-reorder
+    - `FilePreviewDialog.vue` - Preview dialog for images, PDFs, Office documents (Word, Excel)
+    - Supports file upload (single/batch), folder upload, download, delete, copy/cut/paste
+    - File metadata stored in KV, actual files stored in R2 (20MB size limit per file)
+  - Mind Map Tab:
+    - `MindMapPage.vue` - Mind mapping editor using `simple-mind-map` library
+    - `MindMapHistory.vue` - History panel showing recent mind maps
+    - Features: create/open/save/export, undo/redo, zoom, node operations (add/delete/copy/paste)
+    - Mind map data stored as files in R2, metadata tracked in KV
   - Backup Management:
     - `BackupManager.vue` - Backup/restore interface with list view, manual backup, restore with confirmation
 
 ### Tab System
-- Three tabs: `desktop` (workspace), `navigation` (website bookmarks), and `news` (news feed)
+- Six tabs:
+  - `desktop` - Main workspace with draggable widgets
+  - `navigation` - Website bookmark manager with categories
+  - `news` - News aggregator with multiple sources
+  - `resource-search` - Resource search (placeholder, not yet implemented)
+  - `file` - File management system with upload/download/preview
+  - `mindmap` - Mind mapping tool using `simple-mind-map` library
 - Tab state persisted to localStorage via `TAB_STORAGE_KEY`
-- Global search (Ctrl/Cmd+F) active in both desktop and navigation tabs
+- Global search (Ctrl/Cmd+F) active in desktop and navigation tabs
 - Tab switching via `TabBar.vue` (left-side hover menu)
 
 ### Widget System
@@ -78,11 +96,14 @@ Single Pinia store managing:
 - All widgets array with position (x, y), size, z-index, minimize/maximize state
 - Selection and drag state
 - Global search state (`isSearchOpen`, `searchQuery`, `searchResults`)
-- Tab state (`activeTab`: 'desktop' | 'navigation' | 'news')
+- Tab state (`activeTab`: 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file' | 'mindmap')
 - Navigation state (`navigationSites`, `navigationCategories`, `selectedCategory`)
 - News state (`newsSources`, `isLoadingNews`, `enabledSources`)
-- Sync state (`syncStatus`, `lastSyncTime`, `syncErrorMessage`)
-- Persistence to localStorage + optional Cloudflare KV
+- File state (`files`, `folders`, `currentFolderId`, `fileViewMode`, `clipboard`, `selectedFileIds`)
+- Mind map state (`mindMapHistory`, `currentMindMapId`, `isLoadingMindMap`)
+- Sync state (`syncStatus`, `lastSyncTime`, `syncErrorMessage`, `isCloudInitialized`)
+- File sync state (`fileSyncStatus`, `lastFileSyncTime`, `isFileCloudInitialized`)
+- Persistence to localStorage + Cloudflare KV + R2
 
 Key methods:
 - `createWidget()` - Factory for all widget types with default sizes
@@ -92,11 +113,20 @@ Key methods:
 - `syncBeforeUnload()` - Uses sendBeacon API to ensure data is sent before page closes
 - `deleteImageWidget()` - Special deletion that also removes from R2
 - `updateTodoItem()` - Update todo item text (supports inline editing)
-- `setActiveTab()` - Switch between desktop/navigation/news tabs
-- `fetchNews()` / `fetchNewsBySource()` - Load news data with caching (mock data)
+- `setActiveTab()` - Switch between desktop/navigation/news/resource-search/file/mindmap tabs
+- `fetchNews()` / `fetchNewsBySource()` - Load news data with caching
 - `addNavigationSite()` / `updateNavigationSite()` / `deleteNavigationSite()` - Manage navigation bookmarks
 - `reorderNavigationSites()` - Update order after drag-and-drop
 - `addCategory()` / `deleteCategory()` - Manage bookmark categories
+- File operations:
+  - `uploadFile()` / `uploadFolder()` - Upload files/folders to R2 with progress tracking
+  - `downloadFile()` / `deleteFile()` / `deleteFolder()` - File management operations
+  - `createFolder()` / `renameFile()` / `renameFolder()` - Folder and file operations
+  - `copyItems()` / `cutItems()` / `pasteItems()` - Clipboard operations
+  - `syncFilesToCloud()` / `syncFilesBeforeUnload()` - File metadata sync to KV
+- Mind map operations:
+  - `createMindMap()` / `openMindMap()` / `saveMindMap()` - Mind map file management
+  - `deleteMindMap()` / `updateMindMapHistory()` - History management
 
 ### Drag & Drop System
 **Desktop Widgets:**
@@ -129,29 +159,41 @@ Example:
 ```
 
 ### Persistence
-- **Primary**: Cloudflare KV via `/api/desktop` endpoints (stores all widget data + navigation sites + categories)
-- **Secondary**: Cloudflare R2 via `/api/image` endpoints (stores image files)
+- **Primary**: Cloudflare KV via `/api/desktop` endpoints (stores all widget data + navigation sites + categories + mind map history)
+- **Secondary**: Cloudflare R2 via `/api/image` and `/api/file` endpoints (stores image files, uploaded files, mind map data files)
 - **Fallback**: localStorage `cloud-desktop-data` (complete data backup)
-- **News cache**: localStorage `cloud-desktop-news-cache` (mock news data)
-- **Backup**: Automated daily backups to R2 (see BACKUP.md for configuration)
+- **File metadata**: Separate KV key `file-metadata` for file system structure
+- **News cache**: D1 database via `/api/news` endpoints (real-time news data with caching)
+- **Backup**: Automated daily backups to R2 (see Backup & Recovery System section)
 - **Sync strategy**:
   - `save()` writes to localStorage immediately
-  - `syncToCloud()` syncs to Cloudflare KV (auto-runs every 5 minutes + on page unload)
+  - `syncToCloud()` syncs desktop data to Cloudflare KV (auto-runs every 5 minutes + on page unload)
+  - `syncFilesToCloud()` syncs file metadata to KV (separate from desktop data)
   - `init()` loads from cloud first, falls back to localStorage if cloud unavailable
-  - `syncBeforeUnload()` uses sendBeacon API for reliable sync on page close
-  - **Data protection**: `isCloudInitialized` flag prevents empty data from overwriting cloud data
+  - `initFiles()` loads file metadata from cloud
+  - `syncBeforeUnload()` / `syncFilesBeforeUnload()` use sendBeacon API for reliable sync on page close
+  - **Data protection**: `isCloudInitialized` and `isFileCloudInitialized` flags prevent empty data from overwriting cloud data
   - **Server-side protection**: API rejects empty data when cloud has existing data
 
 ### Cloudflare Functions API
 Located in `functions/api/`:
 - `desktop.ts` - GET/POST/DELETE for widget data in KV namespace `DESKTOP_DATA`
 - `image.ts` - POST (upload), GET (retrieve), DELETE for images in R2 bucket `IMAGE_BUCKET`
+- `file.ts` - POST (upload), GET (retrieve), DELETE for files in R2 bucket `IMAGE_BUCKET` (20MB limit)
+- `file-metadata.ts` - GET/POST for file system metadata in KV namespace `DESKTOP_DATA`
+- `news.ts` - GET for real-time news data with D1 database caching
+- `init-news-cache.ts` - POST to initialize D1 news cache database
 - `restore.ts` - GET (list backups), POST (restore from backup) for data recovery
 
 Located in `functions/scheduled/`:
 - `backup.ts` - Automated backup job (triggered by Cron or manual POST request)
 
-Both require environment bindings configured in Cloudflare Pages dashboard.
+Located in `functions/news/`:
+- `sources/` - Individual news source scrapers (baidu, github, zhihu, douyin, etc.)
+- `registry.ts` - News source registry and management
+- `utils.ts` - Shared utilities for news fetching
+
+All require environment bindings configured in Cloudflare Pages dashboard.
 
 ### Navigation System
 The navigation tab provides a visual bookmark manager:
@@ -168,6 +210,67 @@ The navigation tab provides a visual bookmark manager:
 Data structure:
 - `NavigationSite`: id, name, url, icon, description, color, category, order, timestamps
 - Stored in same KV entry as widgets under `navigationSites` and `categories` fields
+
+### File Management System
+The file tab provides a full-featured file manager:
+- **Storage**: File metadata in KV (`file-metadata` key), actual files in R2 bucket (20MB limit per file)
+- **Folder structure**: Hierarchical folder system with `parentId` references
+- **View modes**: Grid view (default) or list view toggle
+- **Upload**: Single file, batch files, or entire folder upload with progress tracking
+- **Preview**: Built-in preview for images, PDFs, Word (.docx), Excel (.xlsx) files
+- **Operations**: Download, delete, rename, copy/cut/paste, drag-to-reorder
+- **Sorting**: Sort by name, size, or date (ascending/descending)
+- **Multi-select**: Shift+click for range selection, Ctrl/Cmd+click for individual selection
+- **Clipboard**: Copy/cut files and folders, paste into different folders
+- **Sync**: Separate sync status for file metadata (`fileSyncStatus`, `isFileCloudInitialized`)
+
+Data structures:
+- `FileItem`: id, name, type='file', size, mimeType, url (R2 key), parentId, order, timestamps
+- `FolderItem`: id, name, type='folder', parentId, order, timestamps, isExpanded
+- Stored in KV under `file-metadata` key as `FileData` object
+
+### Mind Map System
+The mind map tab provides a visual mind mapping tool:
+- **Library**: Uses `simple-mind-map` library with plugins (Drag, Select, Export, KeyboardNavigation)
+- **Storage**: Mind map data stored as JSON files in R2, metadata tracked in KV
+- **Features**:
+  - Create new mind maps with custom names
+  - Open recent mind maps from history panel
+  - Auto-save on changes (debounced)
+  - Export to PNG/SVG/JSON/PDF formats
+  - Undo/redo support
+  - Zoom in/out/fit controls
+  - Node operations: add child/sibling, delete, copy/cut/paste
+- **History**: Recent mind maps tracked with `lastOpened` timestamp
+- **File integration**: Mind maps stored as files in file system, referenced by `fileId`
+
+Data structures:
+- `MindMapFile`: id, name, fileId (reference to FileItem), thumbnail (optional), lastOpened, timestamps
+- `SimpleMindMapNode`: data (text, uid, expand, image, icon, tag, hyperlink, note), children
+- `MindMapData`: root (SimpleMindMapNode), theme, layout
+- Stored in KV under `mindMapHistory` field in main desktop data
+
+### News Aggregation System
+The news tab provides real-time news from multiple sources:
+- **Sources**: 18+ news sources including GitHub, Baidu, Zhihu, Douyin, Hupu, IT Home, Juejin, etc.
+- **Architecture**: Each source has a dedicated scraper in `functions/news/sources/`
+- **Caching**: News data cached in D1 database to reduce API calls and improve performance
+- **Registry**: Centralized source registry in `functions/news/registry.ts` for easy management
+- **Filtering**: Users can enable/disable specific news sources
+- **Real-time**: News fetched on-demand with automatic cache invalidation
+- **Error handling**: Individual source failures don't affect other sources
+
+News source structure:
+- Each source exports `fetchNews()` function returning `NewsItem[]`
+- `NewsItem`: id, title, url, extra (hover description, info like star count)
+- Sources registered in `NEWS_SOURCES` array in registry
+- Cache key format: `news:{sourceId}` with TTL in D1
+
+Adding new news sources:
+1. Create scraper in `functions/news/sources/{source-name}.ts`
+2. Implement `fetchNews()` function following existing patterns
+3. Register in `functions/news/registry.ts` `NEWS_SOURCES` array
+4. Add source ID to default `enabledSources` in store (optional)
 
 ### Backup & Recovery System
 Automated backup system to protect against data loss:
@@ -203,15 +306,26 @@ Automated backup system to protect against data loss:
 | `src/components/DesktopCanvas.vue` | Canvas, drag logic, widget z-ordering, paste event handling |
 | `src/components/widgets/WidgetWrapper.vue` | Widget container with title bar, controls, resize handle |
 | `src/components/NavigationPage.vue` | Website bookmark manager with drag-to-reorder and categories |
+| `src/components/NewsPage.vue` | News aggregator with real-time data from multiple sources |
+| `src/components/ResourceSearchPage.vue` | Resource search page (placeholder, not yet implemented) |
+| `src/components/FilePage.vue` | File manager with upload/download/preview, grid/list view |
+| `src/components/FilePreviewDialog.vue` | File preview dialog for images, PDFs, Office documents |
+| `src/components/MindMapPage.vue` | Mind mapping editor using simple-mind-map library |
+| `src/components/mindmap/MindMapHistory.vue` | Mind map history panel with recent files |
 | `src/components/BackupManager.vue` | Backup/restore UI with list, manual backup, restore confirmation |
 | `src/components/TabBar.vue` | Left-side tab switcher with hover expansion |
 | `src/components/PasswordInput.vue` | 6-digit password entry with auto-focus navigation |
 | `src/components/SyncStatus.vue` | Visual sync status indicator (idle/syncing/success/error) |
-| `src/types/index.ts` | TypeScript interfaces for all widget types, tabs, navigation, news |
+| `src/types/index.ts` | TypeScript interfaces for all widget types, tabs, navigation, news, files, mind maps |
+| `src/utils/fileIcons.ts` | File icon mapping utilities for different file types |
 | `functions/api/desktop.ts` | Cloudflare KV persistence API with empty data protection |
 | `functions/api/image.ts` | Cloudflare R2 image storage API |
+| `functions/api/file.ts` | Cloudflare R2 file storage API (20MB limit per file) |
+| `functions/api/file-metadata.ts` | Cloudflare KV file metadata persistence API |
+| `functions/api/news.ts` | News aggregation API with D1 database caching |
 | `functions/api/restore.ts` | Backup restore API - list and restore from R2 backups |
 | `functions/scheduled/backup.ts` | Backup job - saves KV data to R2, cleans old backups (30 days) |
+| `functions/news/registry.ts` | News source registry and management |
 | `.github/workflows/backup.yml` | GitHub Actions daily backup trigger (uses BACKUP_DOMAIN secret) |
 
 ## Design System
@@ -248,6 +362,7 @@ Style utilities in `src/style.css`:
 ### Adding New Features
 When adding new widget types, follow the 9-step checklist in the Widget System section.
 When adding new tabs, update: `TabType` union, `App.vue` template, `TabBar.vue` icons, store state.
+When adding new news sources, create scraper in `functions/news/sources/`, register in `functions/news/registry.ts`.
 
 ### Common Pitfalls
 - Don't forget IME handling for Enter key in input fields (Chinese/Japanese/Korean input)
@@ -255,13 +370,27 @@ When adding new tabs, update: `TabType` union, `App.vue` template, `TabBar.vue` 
 - Don't modify widget position directly - always use store methods
 - Remember to add resize handle only for text-based widgets (note, text, markdown, todo)
 - Navigation site order is managed by `order` field, not array index
+- File uploads have 20MB size limit per file - validate before upload
+- Mind map instance uses `shallowRef` to preserve the instance - don't use regular `ref`
+- Separate sync for desktop data (`syncToCloud`) and file metadata (`syncFilesToCloud`)
 
 ## Deployment
 
 Deploy to Cloudflare Pages with required bindings:
-- KV namespace: `DESKTOP_DATA` (for widget persistence)
-- R2 bucket: `IMAGE_BUCKET` (for image storage)
-- Environment variable: `VITE_DESKTOP_PASSWORD` (optional, defaults to "000000")
+- **KV namespace**: `DESKTOP_DATA` (for widget persistence and file metadata)
+- **R2 bucket**: `IMAGE_BUCKET` (for image storage, file storage, mind map data, backups)
+- **D1 database**: `NEWS_CACHE_DB` (for news data caching)
+- **Environment variable**: `VITE_DESKTOP_PASSWORD` (optional, defaults to "000000")
 
 Build command: `npm run build`
 Output directory: `dist`
+
+### D1 Database Setup
+Initialize the news cache database with this schema:
+```sql
+CREATE TABLE IF NOT EXISTS news_cache (
+  id TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  updated INTEGER NOT NULL
+)
+```
