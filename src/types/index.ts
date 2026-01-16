@@ -1,5 +1,5 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown'
+export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown' | 'random-picker'
 
 // 待办事项项
 export interface TodoItem {
@@ -68,8 +68,15 @@ export interface CountdownWidget extends BaseWidget {
   description?: string  // 备注/描述
 }
 
+// 随机决策器组件
+export interface RandomPickerWidget extends BaseWidget {
+  type: 'random-picker'
+  options: string[]      // 选项列表
+  lastResult?: string    // 上次抽取结果
+}
+
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget | CountdownWidget
+export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget | CountdownWidget | RandomPickerWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {
@@ -86,6 +93,7 @@ export interface CreateWidgetParams {
   scale?: number
   targetDate?: string  // 倒计时目标日期
   description?: string  // 倒计时描述
+  options?: string[]   // 随机决策器选项
 }
 
 // 拖拽状态

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode } from '@/types'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
@@ -536,6 +536,19 @@ export const useDesktopStore = defineStore('desktop', () => {
         }
         widgets.value.push(countdown)
         return countdown
+      }
+
+      case 'random-picker': {
+        const randomPicker: RandomPickerWidget = {
+          ...base,
+          type: 'random-picker',
+          title: params.title ?? `决策器-${randomSuffix}`,
+          options: params.options ?? [],
+          width: params.width ?? 300,
+          height: params.height ?? 380,
+        }
+        widgets.value.push(randomPicker)
+        return randomPicker
       }
 
       default:

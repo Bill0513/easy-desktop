@@ -7,7 +7,8 @@ import {
   FileText,
   FileCode,
   Image,
-  Timer
+  Timer,
+  Dices
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -79,6 +80,16 @@ const addWidget = (type: string) => {
       >
         <Timer :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">倒计时</span>
+      </button>
+
+      <!-- 随机决策器 -->
+      <button
+        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
+        title="添加随机决策器"
+        @click="addWidget('random-picker')"
+      >
+        <Dices :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <span class="text-[10px] font-handwritten text-pencil/60">决策器</span>
       </button>
 
       <!-- 分隔线 -->

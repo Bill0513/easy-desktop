@@ -8,6 +8,7 @@ import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
 import MarkdownWidgetNotion from './MarkdownWidgetNotion.vue'
 import CountdownWidget from './CountdownWidget.vue'
+import RandomPickerWidget from './RandomPickerWidget.vue'
 import HandDrawnDialog from '../HandDrawnDialog.vue'
 
 const props = defineProps<{
@@ -108,6 +109,7 @@ const widgetComponent = computed(() => {
     case 'image': return ImageWidget
     case 'markdown': return MarkdownWidgetNotion
     case 'countdown': return CountdownWidget
+    case 'random-picker': return RandomPickerWidget
     default: return null
   }
 })
@@ -141,6 +143,9 @@ const hasUserData = computed(() => {
     case 'countdown':
       // 倒计时：检查是否设置了目标日期
       return !!(props.widget as any).targetDate
+    case 'random-picker':
+      // 随机决策器：检查是否有选项
+      return (props.widget as any).options?.length > 0
     default:
       return false
   }
@@ -196,9 +201,9 @@ const handleDownloadImage = () => {
   }
 }
 
-// 是否显示尺寸调整手柄（仅 note、text、markdown、todo、countdown 组件）
+// 是否显示尺寸调整手柄（仅 note、text、markdown、todo、countdown、random-picker 组件）
 const showResizeHandle = computed(() => {
-  return ['note', 'text', 'markdown', 'todo', 'countdown'].includes(props.widget.type) && !props.widget.isMaximized
+  return ['note', 'text', 'markdown', 'todo', 'countdown', 'random-picker'].includes(props.widget.type) && !props.widget.isMaximized
 })
 
 // 开始调整尺寸

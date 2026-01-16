@@ -7,7 +7,8 @@ import {
   FileText,
   Image,
   FileCode,
-  Timer
+  Timer,
+  Dices
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -32,6 +33,7 @@ const typeNames: Record<string, string> = {
   image: '图片',
   markdown: 'Markdown',
   countdown: '倒计时',
+  'random-picker': '决策器',
 }
 
 // 获取组件图标
@@ -43,6 +45,7 @@ const getWidgetIcon = (type: string): Component => {
     case 'image': return Image
     case 'markdown': return FileCode
     case 'countdown': return Timer
+    case 'random-picker': return Dices
     default: return FileText
   }
 }
