@@ -10,7 +10,9 @@ import {
   Search,
   FolderOpen,
   Brain,
-  Settings
+  Settings,
+  Code,
+  Bookmark
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -23,7 +25,9 @@ const tabs: { id: TabType; name: string; icon: Component; description: string }[
   { id: 'news', name: '热点', icon: Flame, description: '新闻热搜' },
   { id: 'resource-search', name: '资源', icon: Search, description: '资源搜索' },
   { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' },
-  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' }
+  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' },
+  { id: 'code-snippets', name: '代码片段', icon: Code, description: '代码收藏库' },
+  { id: 'web-clipper', name: '网页剪藏', icon: Bookmark, description: '网页内容收藏' }
 ]
 
 const handleTabClick = (tabId: TabType) => {
