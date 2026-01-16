@@ -6,7 +6,8 @@ import {
   CheckSquare,
   FileText,
   Image,
-  FileCode
+  FileCode,
+  Timer
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -30,6 +31,7 @@ const typeNames: Record<string, string> = {
   text: '文本',
   image: '图片',
   markdown: 'Markdown',
+  countdown: '倒计时',
 }
 
 // 获取组件图标
@@ -40,6 +42,7 @@ const getWidgetIcon = (type: string): Component => {
     case 'text': return FileText
     case 'image': return Image
     case 'markdown': return FileCode
+    case 'countdown': return Timer
     default: return FileText
   }
 }

@@ -1,5 +1,5 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown'
+export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown'
 
 // 待办事项项
 export interface TodoItem {
@@ -61,8 +61,15 @@ export interface MarkdownWidget extends BaseWidget {
   content: string
 }
 
+// 倒计时组件
+export interface CountdownWidget extends BaseWidget {
+  type: 'countdown'
+  targetDate: string  // ISO 日期字符串 YYYY-MM-DD
+  description?: string  // 备注/描述
+}
+
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget
+export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget | CountdownWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {
@@ -77,6 +84,8 @@ export interface CreateWidgetParams {
   src?: string
   filename?: string
   scale?: number
+  targetDate?: string  // 倒计时目标日期
+  description?: string  // 倒计时描述
 }
 
 // 拖拽状态

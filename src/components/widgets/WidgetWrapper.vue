@@ -7,6 +7,7 @@ import TodoWidget from './TodoWidget.vue'
 import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
 import MarkdownWidgetNotion from './MarkdownWidgetNotion.vue'
+import CountdownWidget from './CountdownWidget.vue'
 import HandDrawnDialog from '../HandDrawnDialog.vue'
 
 const props = defineProps<{
@@ -106,6 +107,7 @@ const widgetComponent = computed(() => {
     case 'text': return TextWidget
     case 'image': return ImageWidget
     case 'markdown': return MarkdownWidgetNotion
+    case 'countdown': return CountdownWidget
     default: return null
   }
 })
@@ -136,6 +138,9 @@ const hasUserData = computed(() => {
     case 'image':
       // 图片：始终认为有数据
       return true
+    case 'countdown':
+      // 倒计时：检查是否设置了目标日期
+      return !!(props.widget as any).targetDate
     default:
       return false
   }
@@ -191,9 +196,9 @@ const handleDownloadImage = () => {
   }
 }
 
-// 是否显示尺寸调整手柄（仅 note、text、markdown、todo 组件）
+// 是否显示尺寸调整手柄（仅 note、text、markdown、todo、countdown 组件）
 const showResizeHandle = computed(() => {
-  return ['note', 'text', 'markdown', 'todo'].includes(props.widget.type) && !props.widget.isMaximized
+  return ['note', 'text', 'markdown', 'todo', 'countdown'].includes(props.widget.type) && !props.widget.isMaximized
 })
 
 // 开始调整尺寸
