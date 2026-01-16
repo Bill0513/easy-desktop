@@ -7,6 +7,7 @@ import TodoWidget from './TodoWidget.vue'
 import TextWidget from './TextWidget.vue'
 import ImageWidget from './ImageWidget.vue'
 import MarkdownWidgetNotion from './MarkdownWidgetNotion.vue'
+import HandDrawnDialog from '../HandDrawnDialog.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -114,13 +115,61 @@ const handleDragStart = (e: MouseEvent) => {
   emit('dragStart', e, props.widget)
 }
 
+// 确认对话框状态
+const showDeleteConfirm = ref(false)
+
+// 判断组件是否包含用户数据
+const hasUserData = computed(() => {
+  switch (props.widget.type) {
+    case 'note':
+      // 便签：检查是否有内容
+      return !!(props.widget as any).content?.trim()
+    case 'todo':
+      // 待办：检查是否有待办项
+      return (props.widget as any).items?.length > 0
+    case 'text':
+      // 文本：检查是否有内容
+      return !!(props.widget as any).content?.trim()
+    case 'markdown':
+      // Markdown：检查是否有内容
+      return !!(props.widget as any).content?.trim()
+    case 'image':
+      // 图片：始终认为有数据
+      return true
+    default:
+      return false
+  }
+})
+
 // 删除组件
 const handleDeleteClick = () => {
+  // 如果组件包含用户数据，显示确认对话框
+  if (hasUserData.value) {
+    showDeleteConfirm.value = true
+  } else {
+    // 没有数据，直接删除
+    performDelete()
+  }
+}
+
+// 执行删除操作
+const performDelete = () => {
   if (props.widget.type === 'image') {
     store.deleteImageWidget(props.widget.id)
   } else {
     store.deleteWidget(props.widget.id)
   }
+}
+
+// 确认删除
+const handleConfirmDelete = () => {
+  performDelete()
+  showDeleteConfirm.value = false
+}
+
+// 取消删除
+const handleCancelDelete = () => {
+  showDeleteConfirm.value = false
 }
 
 // 下载图片
@@ -310,6 +359,19 @@ const stopResize = () => {
         </svg>
       </div>
     </div>
+
+    <!-- 删除确认对话框 -->
+    <HandDrawnDialog
+      :show="showDeleteConfirm"
+      type="confirm"
+      title="确认删除"
+      :message="`确定要删除「${widget.title}」吗？删除后将无法恢复。`"
+      confirm-text="删除"
+      cancel-text="取消"
+      @confirm="handleConfirmDelete"
+      @cancel="handleCancelDelete"
+      @close="handleCancelDelete"
+    />
   </div>
 </template>
 
