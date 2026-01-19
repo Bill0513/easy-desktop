@@ -20,7 +20,7 @@ import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-json'
 import HandDrawnDialog from './HandDrawnDialog.vue'
-import { Pencil, Trash2 } from 'lucide-vue-next'
+import { Pencil, Trash2, Plus } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -246,9 +246,10 @@ onUnmounted(() => {
     <div class="flex items-center gap-4 p-4 border-b-2 border-pencil">
       <button
         @click="createNew"
-        class="btn-hand-drawn px-4 py-2 bg-blue-100 text-pencil"
+        class="btn-hand-drawn px-4 py-2 bg-blue-100 text-pencil flex items-center gap-2"
       >
-        + 新建片段
+        <Plus :size="18" :stroke-width="2.5" />
+        <span>新建片段</span>
       </button>
       <select
         v-model="store.selectedLanguage"
