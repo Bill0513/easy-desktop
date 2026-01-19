@@ -20,6 +20,7 @@ import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-json'
 import HandDrawnDialog from './HandDrawnDialog.vue'
+import { Pencil, Trash2 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -307,17 +308,17 @@ onUnmounted(() => {
             <div class="flex gap-1">
               <button
                 @click.stop="editSnippet(snippet.id)"
-                class="text-blue-600 hover:text-blue-800 text-sm"
+                class="p-1 hover:bg-blue-100 rounded transition-colors"
                 title="编辑"
               >
-                ✎
+                <Pencil :size="16" :stroke-width="2.5" class="text-blue-600" />
               </button>
               <button
                 @click.stop="deleteSnippet(snippet.id)"
-                class="text-red-600 hover:text-red-800 text-sm"
+                class="p-1 hover:bg-red-100 rounded transition-colors"
                 title="删除"
               >
-                ✗
+                <Trash2 :size="16" :stroke-width="2.5" class="text-red-600" />
               </button>
             </div>
           </div>
