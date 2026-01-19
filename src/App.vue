@@ -14,9 +14,11 @@ import MindMapPage from '@/components/MindMapPage.vue'
 import CodeSnippetsPage from '@/components/CodeSnippetsPage.vue'
 import WebClipperPage from '@/components/WebClipperPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
+const toastContainer = ref<InstanceType<typeof ToastContainer> | null>(null)
 let syncInterval: number | null = null
 
 // Ctrl+F 快捷键打开搜索（仅在桌面Tab和导航Tab下生效）
@@ -68,6 +70,11 @@ const handleUnlock = async () => {
   store.loadActiveTab()
   store.initNavigation()
 
+  // 设置 toast 容器
+  if (toastContainer.value) {
+    store.setToastContainer(toastContainer.value)
+  }
+
   // 启动自动同步定时器（5分钟）
   syncInterval = window.setInterval(() => {
     store.syncToCloud()
@@ -87,6 +94,9 @@ const handleUnlock = async () => {
 
     <!-- 主界面 -->
     <template v-else>
+      <!-- Toast 容器 -->
+      <ToastContainer ref="toastContainer" />
+
       <!-- 同步状态 -->
       <SyncStatus />
 

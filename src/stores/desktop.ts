@@ -11,6 +11,9 @@ const DESKTOP_DATA_KEY = 'desktop-data' // IndexedDB 中的主数据键
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
 
+// Toast 容器引用
+let toastContainerRef: any = null
+
 export const useDesktopStore = defineStore('desktop', () => {
   // State
   const widgets = ref<Widget[]>([])
@@ -463,7 +466,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
     // 如果没有脏数据，跳过同步
     if (!hasDirtyData.value) {
-      console.log('没有需要同步的数据')
+      showToast('没有需要同步的数据', 'info')
       return
     }
 
@@ -2060,6 +2063,17 @@ export const useDesktopStore = defineStore('desktop', () => {
     return Array.from(tags).sort()
   })
 
+  // Toast 相关方法
+  function setToastContainer(container: any) {
+    toastContainerRef = container
+  }
+
+  function showToast(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration = 3000) {
+    if (toastContainerRef && toastContainerRef.addToast) {
+      toastContainerRef.addToast({ message, type, duration })
+    }
+  }
+
   return {
     // State
     widgets,
@@ -2203,5 +2217,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     updateCodeSnippet,
     deleteCodeSnippet,
     selectSnippet,
+    // Toast actions
+    setToastContainer,
+    showToast,
   }
 })
