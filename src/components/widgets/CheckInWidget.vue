@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { CheckInWidget, CheckInRecord } from '@/types'
+import { BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 const props = defineProps<{
   widget: CheckInWidget
@@ -218,7 +219,10 @@ const hideNote = () => {
 
     <!-- 统计信息 -->
     <div class="card-hand-drawn p-4 bg-yellow-50">
-      <div class="text-sm font-handwritten text-pencil/80 mb-2">📊 统计</div>
+      <div class="flex items-center gap-2 text-sm font-handwritten text-pencil/80 mb-2">
+        <BarChart3 :size="18" :stroke-width="2.5" />
+        <span>统计</span>
+      </div>
       <div class="space-y-1 text-sm font-handwritten">
         <div class="flex justify-between">
           <span>连续打卡：</span>
@@ -257,18 +261,19 @@ const hideNote = () => {
       <div class="flex items-center justify-between mb-3">
         <button
           @click="prevMonth"
-          class="btn-hand-drawn px-3 py-1 bg-gray-100 text-pencil text-sm"
+          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-pencil text-sm flex items-center"
         >
-          ◀
+          <ChevronLeft :size="16" :stroke-width="2.5" />
         </button>
-        <span class="font-handwritten font-bold text-pencil">
-          {{ currentYear }} 年 {{ monthName }}
-        </span>
+        <div class="flex items-center gap-2 font-handwritten font-bold text-pencil">
+          <Calendar :size="18" :stroke-width="2.5" />
+          <span>{{ currentYear }} 年 {{ monthName }}</span>
+        </div>
         <button
           @click="nextMonth"
-          class="btn-hand-drawn px-3 py-1 bg-gray-100 text-pencil text-sm"
+          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-pencil text-sm flex items-center"
         >
-          ▶
+          <ChevronRight :size="16" :stroke-width="2.5" />
         </button>
       </div>
 

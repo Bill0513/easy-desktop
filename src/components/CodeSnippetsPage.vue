@@ -251,7 +251,8 @@ onUnmounted(() => {
       </button>
       <select
         v-model="store.selectedLanguage"
-        class="input-hand-drawn px-3 py-2 bg-white w-[150px]"
+        class="input-hand-drawn px-3 py-2 bg-white"
+        style="width:150px"
       >
         <option value="all">全部语言</option>
         <option
@@ -266,7 +267,8 @@ onUnmounted(() => {
         v-model="store.snippetSearchQuery"
         type="text"
         placeholder="搜索片段..."
-        class="input-hand-drawn flex-1 px-3 py-2 bg-white w-[200px]"
+        class="input-hand-drawn flex-1 px-3 py-2 bg-white"
+        style="width:200px"
       />
     </div>
 
