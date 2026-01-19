@@ -17,6 +17,12 @@ import { fetchIthomeNews } from './sources/ithome'
 import { fetchJuejinNews } from './sources/juejin'
 import { fetchSspaiNews } from './sources/sspai'
 import { fetchSolidotNews } from './sources/solidot'
+import { fetchXueqiuNews } from './sources/xueqiu'
+import { fetchJin10News } from './sources/jin10'
+import { fetchGelonghuiNews } from './sources/gelonghui'
+import { fetchFastbullNews } from './sources/fastbull'
+import { fetchMktnewsNews } from './sources/mktnews'
+import { fetch36krNews } from './sources/36kr'
 
 // 新闻源注册表
 export const newsSources: Record<string, NewsSource> = {
@@ -127,6 +133,42 @@ export const newsSources: Record<string, NewsSource> = {
     name: 'Solidot',
     icon: '🔧',
     fetcher: fetchSolidotNews,
+  },
+  xueqiu: {
+    id: 'xueqiu',
+    name: '雪球',
+    icon: '📈',
+    fetcher: fetchXueqiuNews,
+  },
+  jin10: {
+    id: 'jin10',
+    name: '金十数据',
+    icon: '💹',
+    fetcher: fetchJin10News,
+  },
+  gelonghui: {
+    id: 'gelonghui',
+    name: '格隆汇',
+    icon: '💼',
+    fetcher: fetchGelonghuiNews,
+  },
+  fastbull: {
+    id: 'fastbull',
+    name: '快讯牛',
+    icon: '🐂',
+    fetcher: fetchFastbullNews,
+  },
+  mktnews: {
+    id: 'mktnews',
+    name: '市场快讯',
+    icon: '📊',
+    fetcher: fetchMktnewsNews,
+  },
+  '36kr': {
+    id: '36kr',
+    name: '36氪',
+    icon: '🚀',
+    fetcher: fetch36krNews,
   },
 }
 

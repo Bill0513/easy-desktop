@@ -140,7 +140,7 @@ export interface DesktopData {
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file' | 'mindmap' | 'code-snippets' | 'web-clipper'
+export type TabType = 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file' | 'mindmap' | 'code-snippets' | 'web-clipper' | 'ai-investment'
 
 // 新闻项
 export interface NewsItem {
@@ -281,4 +281,54 @@ export interface CodeSnippet {
   tags: string[]
   createdAt: number
   updatedAt: number
+}
+
+// AI 投资助手相关类型
+
+// 新闻分析结果
+export interface NewsAnalysis {
+  id: string
+  newsId: string | number
+  title: string
+  url: string
+  relevant: boolean           // 是否与 A 股相关
+  importance: number          // 重要性评分 1-10
+  sentiment: 'positive' | 'negative' | 'neutral'  // 情绪
+  sectors: string[]           // 涉及的板块
+  keywords: string[]          // 关键词
+  summary: string             // 一句话总结
+  analyzedAt: number
+}
+
+// 板块分析
+export interface SectorAnalysis {
+  sector: string              // 板块名称
+  hotScore: number            // 热度分数 0-100
+  mentionCount: number        // 被提及次数
+  positiveRatio: number       // 正面新闻占比 0-1
+  sentiment: 'positive' | 'negative' | 'neutral'  // 整体情绪
+  impact: 'short' | 'medium' | 'long'  // 影响周期
+  relatedNews: NewsAnalysis[] // 相关新闻
+  updatedAt: number
+}
+
+// 投资洞察
+export interface InvestmentInsight {
+  id: string
+  type: 'summary' | 'hot-sectors' | 'potential-sectors' | 'risk-alert' | 'upcoming-events'
+  title: string
+  content: string
+  sectors?: string[]          // 相关板块
+  importance: number          // 重要性 1-10
+  createdAt: number
+}
+
+// AI 分析状态
+export interface AIAnalysisState {
+  isAnalyzing: boolean
+  lastAnalyzedAt: number | null
+  newsAnalyses: NewsAnalysis[]
+  sectorAnalyses: SectorAnalysis[]
+  insights: InvestmentInsight[]
+  error: string | null
 }
