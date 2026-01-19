@@ -136,7 +136,7 @@ const onDragEnd = (evt: any) => {
 
 <template>
   <div
-    class="w-full h-full bg-paper flex flex-col"
+    class="w-full h-full flex flex-col"
     @contextmenu="handleBlankContextMenu"
     @click="closeContextMenu"
   >

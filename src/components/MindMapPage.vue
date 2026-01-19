@@ -547,7 +547,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 </script>
 
 <template>
-  <div class="w-full h-full flex bg-paper">
+  <div class="w-full h-full flex">
     <!-- Left sidebar with tools -->
     <div class="w-20 flex-shrink-0 border-r-2 border-pencil/20 flex flex-col items-center gap-2 py-4 bg-paper">
       <!-- 新建 -->

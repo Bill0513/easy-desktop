@@ -513,7 +513,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
 
 <template>
   <div
-    class="w-full h-full flex flex-col bg-paper overflow-hidden"
+    class="w-full h-full flex flex-col overflow-hidden"
     :class="{ 'ring-4 ring-accent ring-opacity-50': isDragOver }"
     @click="handleClick"
     @contextmenu="handleBlankContextMenu"

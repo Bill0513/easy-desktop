@@ -241,7 +241,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-screen bg-paper flex flex-col">
+  <div class="h-screen flex flex-col">
     <!-- 顶部工具栏 -->
     <div class="flex items-center gap-4 p-4 border-b-2 border-pencil">
       <button

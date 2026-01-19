@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-full bg-paper flex flex-col">
+  <div class="h-screen w-full flex flex-col">
     <!-- 顶部标题栏 -->
     <div class="flex-shrink-0 px-6 py-4">
       <h1 class="font-handwritten text-2xl font-bold text-pencil mb-1">
