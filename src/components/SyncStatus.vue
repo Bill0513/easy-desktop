@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import { RefreshCw } from 'lucide-vue-next'
+import { RefreshCw, Newspaper, Loader2 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -153,7 +153,8 @@ onUnmounted(() => {
         class="card-hand-drawn bg-paper px-3 py-2 flex items-center gap-2 text-sm"
         :class="isRefreshingNews ? 'text-blue-600' : 'text-gray-600'"
       >
-        <span class="text-base">{{ isRefreshingNews ? '⏳' : '📰' }}</span>
+        <Loader2 v-if="isRefreshingNews" :size="18" :stroke-width="2.5" class="animate-spin" />
+        <Newspaper v-else :size="18" :stroke-width="2.5" />
         <span class="font-handwritten">
           {{ isRefreshingNews ? '刷新中...' : '新闻' }}
         </span>
@@ -165,20 +166,11 @@ onUnmounted(() => {
         class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
         title="刷新新闻（超过30分钟的源会更新）"
       >
-        <svg
-          class="w-5 h-5 transition-transform"
+        <RefreshCw
+          :size="18"
+          :stroke-width="2.5"
           :class="{ 'animate-spin': isRefreshingNews }"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
+        />
       </button>
     </template>
 
