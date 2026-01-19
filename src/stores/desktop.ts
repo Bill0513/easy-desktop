@@ -48,6 +48,9 @@ export const useDesktopStore = defineStore('desktop', () => {
   const searchHistory = ref<string[]>([])
   const searchEngine = ref<string>('google')
 
+  // Background state
+  const backgroundColor = ref<string>('#fdfbf7') // 默认纸张色
+
   // File state
   const files = ref<FileItem[]>([])
   const folders = ref<FolderItem[]>([])
@@ -247,6 +250,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.searchEngine !== undefined) {
           searchEngine.value = cloudData.searchEngine
         }
+        // 加载背景颜色
+        if (cloudData.backgroundColor !== undefined) {
+          backgroundColor.value = cloudData.backgroundColor
+        }
         // 加载思维导图历史记录
         if (cloudData.mindMaps !== undefined) {
           mindMaps.value = cloudData.mindMaps
@@ -272,6 +279,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           enabledSources.value = new Set(localData.enabledNewsSources || [])
           searchHistory.value = localData.searchHistory || []
           searchEngine.value = localData.searchEngine || 'google'
+          backgroundColor.value = localData.backgroundColor || '#fdfbf7'
           mindMaps.value = localData.mindMaps || []
           codeSnippets.value = localData.codeSnippets || []
 
@@ -343,6 +351,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         enabledNewsSources: Array.from(enabledSources.value),
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
+        backgroundColor: backgroundColor.value,
         mindMaps: mindMaps.value,
         codeSnippets: codeSnippets.value,
         version: 1,
@@ -862,6 +871,12 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (saved === 'desktop' || saved === 'news') {
       activeTab.value = saved
     }
+  }
+
+  // Background actions
+  function setBackgroundColor(color: string) {
+    backgroundColor.value = color
+    save()
   }
 
   // News actions
@@ -2133,6 +2148,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     selectedCategory,
     searchHistory,
     searchEngine,
+    backgroundColor,
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
@@ -2199,6 +2215,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     focusWidget,
     setActiveTab,
     loadActiveTab,
+    setBackgroundColor,
     fetchNews,
     fetchNewsBySource,
     toggleNewsSource,

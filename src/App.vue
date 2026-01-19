@@ -88,7 +88,7 @@ const handleUnlock = async () => {
 </script>
 
 <template>
-  <div class="relative w-full h-screen overflow-hidden">
+  <div class="relative w-full h-screen overflow-hidden" :style="{ backgroundColor: store.backgroundColor }">
     <!-- 密码输入页面 -->
     <PasswordInput v-if="!isUnlocked" @unlock="handleUnlock" />
 

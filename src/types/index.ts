@@ -132,6 +132,7 @@ export interface DesktopData {
   enabledNewsSources?: string[]  // 启用的新闻源ID列表
   searchHistory?: string[]  // 搜索历史
   searchEngine?: string  // 搜索引擎偏好
+  backgroundColor?: string  // 背景颜色
   mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
   codeSnippets?: CodeSnippet[]  // 代码片段数据
   version: number

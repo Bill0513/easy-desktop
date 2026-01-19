@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 const emit = defineEmits<{
@@ -11,6 +12,34 @@ const importText = ref('')
 const importStatus = ref<'idle' | 'success' | 'error'>('idle')
 const importMessage = ref('')
 const isComposing = ref(false)
+
+// 背景设置展开状态
+const backgroundExpanded = ref(false)
+// 数据导入展开状态
+const importExpanded = ref(false)
+
+// 预设颜色
+const presetColors = [
+  { name: '纸张色', value: '#fdfbf7' },
+  { name: '浅蓝', value: '#e3f2fd' },
+  { name: '浅绿', value: '#e8f5e9' },
+  { name: '浅粉', value: '#fce4ec' },
+  { name: '浅黄', value: '#fffde7' },
+  { name: '浅紫', value: '#f3e5f5' },
+  { name: '浅灰', value: '#f5f5f5' },
+  { name: '浅橙', value: '#fff3e0' },
+]
+
+const customColor = ref(store.backgroundColor)
+
+const setPresetColor = (color: string) => {
+  store.setBackgroundColor(color)
+  customColor.value = color
+}
+
+const setCustomColor = () => {
+  store.setBackgroundColor(customColor.value)
+}
 
 const formatExample1 = `[
   {
@@ -111,12 +140,85 @@ const handleClose = () => {
 
         <!-- 可滚动内容区域 -->
         <div class="flex-1 overflow-y-auto p-6 pt-4">
+          <!-- 背景设置 -->
+          <div class="mb-4">
+            <button
+              class="w-full border-2 border-pencil/20 rounded-lg p-4 wobbly hover:bg-muted/30 transition-colors flex items-center justify-between"
+              @click="backgroundExpanded = !backgroundExpanded"
+            >
+              <h3 class="font-handwritten text-xl font-semibold text-pencil flex items-center gap-2">
+                🎨 背景设置
+              </h3>
+              <ChevronDown v-if="!backgroundExpanded" :size="20" :stroke-width="2.5" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+            </button>
+
+            <div v-if="backgroundExpanded" class="mt-3 border-2 border-pencil/20 rounded-lg p-4 wobbly space-y-4">
+              <!-- 预设颜色 -->
+              <div>
+                <label class="font-handwritten text-sm font-medium text-pencil mb-2 block">
+                  预设颜色
+                </label>
+                <div class="grid grid-cols-4 gap-2">
+                  <button
+                    v-for="color in presetColors"
+                    :key="color.value"
+                    class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all hover:scale-105"
+                    :class="store.backgroundColor === color.value ? 'border-bluePen bg-bluePen/10' : 'border-pencil/20 hover:border-pencil/40'"
+                    @click="setPresetColor(color.value)"
+                  >
+                    <div
+                      class="w-12 h-12 rounded-lg border-2 border-pencil"
+                      :style="{ backgroundColor: color.value }"
+                    />
+                    <span class="text-xs font-handwritten text-pencil">{{ color.name }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 自定义颜色 -->
+              <div>
+                <label class="font-handwritten text-sm font-medium text-pencil mb-2 block">
+                  自定义颜色
+                </label>
+                <div class="flex gap-2 items-center">
+                  <input
+                    v-model="customColor"
+                    type="color"
+                    class="w-16 h-16 rounded-lg border-2 border-pencil cursor-pointer"
+                    @change="setCustomColor"
+                  />
+                  <div class="flex-1">
+                    <input
+                      v-model="customColor"
+                      type="text"
+                      class="input-hand-drawn w-full px-3 py-2 text-sm font-mono"
+                      placeholder="#fdfbf7"
+                      @blur="setCustomColor"
+                    />
+                    <p class="text-xs text-pencil/60 font-handwritten mt-1">
+                      输入十六进制颜色代码或使用颜色选择器
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 网站导入功能 -->
           <div class="space-y-4">
-            <div class="border-2 border-pencil/20 rounded-lg p-4 wobbly">
-              <h3 class="font-handwritten text-xl font-semibold text-pencil mb-3">
+            <button
+              class="w-full border-2 border-pencil/20 rounded-lg p-4 wobbly hover:bg-muted/30 transition-colors flex items-center justify-between"
+              @click="importExpanded = !importExpanded"
+            >
+              <h3 class="font-handwritten text-xl font-semibold text-pencil flex items-center gap-2">
                 📥 网站导入
               </h3>
+              <ChevronDown v-if="!importExpanded" :size="20" :stroke-width="2.5" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+            </button>
+
+            <div v-if="importExpanded" class="border-2 border-pencil/20 rounded-lg p-4 wobbly">
 
           <p class="font-handwritten text-sm text-pencil/70 mb-4">
             支持两种格式导入：简单数组格式或 navConfig 格式（带分类）。
