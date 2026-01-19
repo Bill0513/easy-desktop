@@ -153,9 +153,15 @@ const spin = () => {
   const sliceAngle = 360 / options.length
   // 目标选项的中心角度（从顶部开始，顺时针）
   const targetAngle = resultIndex * sliceAngle + sliceAngle / 2
+
+  // 归一化当前角度到 0-360 范围
+  const normalizedCurrent = currentRotation.value % 360
+
   // 旋转多圈后停在目标位置
-  const extraRotations = 5 + Math.floor(Math.random() * 3) // 5-7圈
-  const totalRotation = extraRotations * 360 + (360 - targetAngle)
+  // 增加随机性：8-15圈，并且在目标角度附近随机偏移
+  const extraRotations = 8 + Math.floor(Math.random() * 8)
+  const angleOffset = (Math.random() - 0.5) * (sliceAngle * 0.3) // 在扇形范围内随机偏移
+  const totalRotation = extraRotations * 360 + (360 - normalizedCurrent) + (360 - targetAngle) + angleOffset
 
   const startRotation = currentRotation.value
   const duration = 4000 // 4秒
