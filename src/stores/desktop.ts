@@ -2,9 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode } from '@/types'
+import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
+const DESKTOP_DATA_KEY = 'desktop-data' // IndexedDB 中的主数据键
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -61,12 +63,14 @@ export const useDesktopStore = defineStore('desktop', () => {
   const lastSyncTime = ref<number | null>(null)
   const syncErrorMessage = ref<string>('')
   const isCloudInitialized = ref(false) // 标记是否已从云端成功加载过数据
+  const hasDirtyData = ref(false) // 标记是否有未同步到云端的数据
 
   // File sync state
   const fileSyncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
   const lastFileSyncTime = ref<number | null>(null)
   const fileSyncErrorMessage = ref<string>('')
   const isFileCloudInitialized = ref(false) // 标记文件是否已从云端成功加载过数据
+  const hasFileDirtyData = ref(false) // 标记文件是否有未同步到云端的数据
 
   // Mind map state
   const mindMaps = ref<MindMapFile[]>([])
@@ -205,7 +209,12 @@ export const useDesktopStore = defineStore('desktop', () => {
   async function init() {
     isLoading.value = true
     try {
+      // 初始化 IndexedDB
+      await idb.init()
+
+      // 优先从云端加载数据
       const cloudData = await loadFromCloud()
+
       // 如果云端有数据（即使 widgets 为空数组），优先使用云端数据
       if (cloudData && cloudData.widgets !== undefined) {
         widgets.value = cloudData.widgets
@@ -233,21 +242,53 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.mindMaps !== undefined) {
           mindMaps.value = cloudData.mindMaps
         }
+
         // 标记已从云端成功加载
         isCloudInitialized.value = true
+
+        // 保存到 IndexedDB 作为本地缓存（标记为干净数据）
+        await saveToLocal(false)
       } else {
-        // 云端无数据，初始化为空
-        widgets.value = []
-        maxZIndex.value = 100
-        // 新用户，没有任何数据，标记为已初始化
-        isCloudInitialized.value = true
+        // 云端无数据，尝试从 IndexedDB 加载
+        const localData = await idb.get(DESKTOP_DATA_KEY)
+        if (localData) {
+          widgets.value = localData.widgets || []
+          maxZIndex.value = localData.maxZIndex || 100
+          navigationSites.value = localData.navigationSites || []
+          navigationCategories.value = localData.categories || ['工作', '学习', '其他']
+          enabledSources.value = new Set(localData.enabledNewsSources || [])
+          searchHistory.value = localData.searchHistory || []
+          searchEngine.value = localData.searchEngine || 'google'
+          mindMaps.value = localData.mindMaps || []
+
+          // 如果本地有数据，标记为已初始化（允许后续同步到云端）
+          isCloudInitialized.value = true
+        } else {
+          // 本地也无数据，使用默认值
+          widgets.value = []
+          maxZIndex.value = 100
+          navigationSites.value = []
+          navigationCategories.value = ['工作', '学习', '其他']
+          enabledSources.value = new Set([
+            'github', 'baidu', 'zhihu', 'douyin', 'hupu', 'tieba',
+            'toutiao', 'thepaper', 'chongbuluo', 'tencent', 'wallstreetcn',
+            'zaobao', 'sputniknewscn', 'coolapk', 'ithome', 'juejin',
+            'sspai', 'solidot'
+          ])
+          searchHistory.value = []
+          searchEngine.value = 'google'
+          mindMaps.value = []
+
+          // 标记为已初始化
+          isCloudInitialized.value = true
+        }
       }
+
+      // 检查是否有脏数据
+      hasDirtyData.value = await idb.hasDirtyData()
     } catch (error) {
-      console.error('Failed to load data from server:', error)
-      // 服务器不可用时，初始化为空数据
-      widgets.value = []
-      maxZIndex.value = 100
-      // 不标记为已初始化，防止空数据覆盖服务器数据
+      console.error('Failed to init:', error)
+      // 初始化失败，不标记为已初始化
       isCloudInitialized.value = false
     } finally {
       isLoading.value = false
@@ -341,24 +382,48 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
-  // 已移除 localStorage 依赖，所有数据通过 API 持久化
-  function saveToLocal() {
-    // 不再使用 localStorage 存储数据
+  // 保存数据到 IndexedDB（本地缓存）
+  async function saveToLocal(isDirty: boolean = true) {
+    try {
+      const data: DesktopData = {
+        widgets: widgets.value,
+        maxZIndex: maxZIndex.value,
+        navigationSites: navigationSites.value,
+        categories: navigationCategories.value,
+        enabledNewsSources: Array.from(enabledSources.value),
+        searchHistory: searchHistory.value,
+        searchEngine: searchEngine.value,
+        mindMaps: mindMaps.value,
+        version: 1,
+        updatedAt: Date.now()
+      }
+
+      await idb.set(DESKTOP_DATA_KEY, data, isDirty)
+
+      // 更新脏数据标记
+      if (isDirty) {
+        hasDirtyData.value = true
+      } else {
+        hasDirtyData.value = await idb.hasDirtyData()
+      }
+    } catch (error) {
+      console.error('Failed to save to IndexedDB:', error)
+    }
   }
 
   // 防抖定时器
   let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
-  // 保存数据到服务器（使用防抖，避免频繁请求）
+  // 保存数据（只写 IndexedDB，不触发云同步）
   function save() {
     // 清除之前的定时器
     if (saveDebounceTimer) {
       clearTimeout(saveDebounceTimer)
     }
 
-    // 设置新的定时器，500ms 后执行同步
-    saveDebounceTimer = setTimeout(() => {
-      syncToCloud()
+    // 设置新的定时器，500ms 后执行本地保存
+    saveDebounceTimer = setTimeout(async () => {
+      await saveToLocal(true) // 标记为脏数据
       saveDebounceTimer = null
     }, 500)
   }
@@ -382,6 +447,12 @@ export const useDesktopStore = defineStore('desktop', () => {
       return
     }
 
+    // 如果没有脏数据，跳过同步
+    if (!hasDirtyData.value) {
+      console.log('没有需要同步的数据')
+      return
+    }
+
     syncStatus.value = 'syncing'
     syncErrorMessage.value = ''
 
@@ -389,6 +460,10 @@ export const useDesktopStore = defineStore('desktop', () => {
       await saveToCloud()
       syncStatus.value = 'success'
       lastSyncTime.value = Date.now()
+
+      // 同步成功后，标记数据为干净
+      await idb.markClean(DESKTOP_DATA_KEY)
+      hasDirtyData.value = false
 
       // 3秒后重置状态
       setTimeout(() => {
@@ -1907,10 +1982,12 @@ export const useDesktopStore = defineStore('desktop', () => {
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
+    hasDirtyData,
     // File sync state
     fileSyncStatus,
     lastFileSyncTime,
     fileSyncErrorMessage,
+    hasFileDirtyData,
     // File state
     files,
     folders,

@@ -60,6 +60,10 @@ const currentLastSyncText = computed(() => {
   return store.activeTab === 'file' ? lastFileSyncText.value : lastSyncText.value
 })
 
+const currentHasDirtyData = computed(() => {
+  return store.activeTab === 'file' ? store.hasFileDirtyData : store.hasDirtyData
+})
+
 // 下次同步倒计时
 const nextSyncCountdown = computed(() => {
   const lastTime = currentLastSyncTime.value
@@ -80,7 +84,8 @@ const statusIcon = computed(() => {
     case 'error':
       return '✗'
     default:
-      return '☁'
+      // 如果有脏数据，显示待同步图标
+      return currentHasDirtyData.value ? '⚠' : '☁'
   }
 })
 
@@ -93,7 +98,8 @@ const statusColor = computed(() => {
     case 'error':
       return 'text-red-600'
     default:
-      return 'text-gray-600'
+      // 如果有脏数据，显示橙色警告
+      return currentHasDirtyData.value ? 'text-orange-600' : 'text-gray-600'
   }
 })
 
@@ -185,6 +191,9 @@ onUnmounted(() => {
           <span class="text-base">{{ statusIcon }}</span>
           <span class="font-handwritten" v-if="currentSyncStatus === 'syncing'">同步中...</span>
           <span class="font-handwritten" v-else-if="currentSyncStatus === 'error'">{{ currentSyncErrorMessage || '同步失败' }}</span>
+          <span class="font-handwritten" v-else-if="currentHasDirtyData">
+            有未同步数据
+          </span>
           <span class="font-handwritten" v-else>
             下次同步: {{ nextSyncCountdown }}
           </span>
