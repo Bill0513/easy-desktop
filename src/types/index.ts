@@ -332,3 +332,25 @@ export interface AIAnalysisState {
   insights: InvestmentInsight[]
   error: string | null
 }
+
+// AI 生成的投资洞察
+export interface AIInsights {
+  marketSummary: string
+  hotSectors: string[]
+  potentialSectors: string[]
+  riskAlerts: string[]
+}
+
+// 板块趋势数据点
+export interface SectorTrendPoint {
+  date: string
+  hotScore: number
+  sentiment: string
+}
+
+// 市场情绪历史数据点
+export interface MarketSentimentPoint {
+  date: string
+  sentimentIndex: number
+  totalNews: number
+}

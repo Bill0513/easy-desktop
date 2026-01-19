@@ -33,6 +33,46 @@ async function initDatabase(env: Env): Promise<Response> {
       CREATE INDEX IF NOT EXISTS idx_importance ON news_analysis(importance DESC)
     `).run()
 
+    // 创建板块历史表
+    await NEWS_CACHE_DB?.prepare(`
+      CREATE TABLE IF NOT EXISTS sector_history (
+        id TEXT PRIMARY KEY,
+        sector TEXT NOT NULL,
+        date TEXT NOT NULL,
+        hot_score INTEGER NOT NULL,
+        mention_count INTEGER NOT NULL,
+        positive_ratio REAL NOT NULL,
+        sentiment TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    `).run()
+
+    await NEWS_CACHE_DB?.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_sector_date ON sector_history(sector, date DESC)
+    `).run()
+
+    await NEWS_CACHE_DB?.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_date ON sector_history(date DESC)
+    `).run()
+
+    // 创建市场情绪历史表
+    await NEWS_CACHE_DB?.prepare(`
+      CREATE TABLE IF NOT EXISTS market_sentiment_history (
+        date TEXT PRIMARY KEY,
+        sentiment_index REAL NOT NULL,
+        total_news INTEGER NOT NULL,
+        positive_count INTEGER NOT NULL,
+        negative_count INTEGER NOT NULL,
+        neutral_count INTEGER NOT NULL,
+        avg_importance REAL NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    `).run()
+
+    await NEWS_CACHE_DB?.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_sentiment_date ON market_sentiment_history(date DESC)
+    `).run()
+
     return new Response(JSON.stringify({
       status: 'success',
       message: 'AI analysis database initialized'

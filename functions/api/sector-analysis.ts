@@ -122,6 +122,70 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     // 按热度排序
     sectorAnalyses.sort((a, b) => b.hotScore - a.hotScore)
 
+    // 自动保存历史数据
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const now = Date.now()
+
+      // 计算市场情绪指数
+      const totalNews = analyses.results.length
+      let positiveCount = 0
+      let negativeCount = 0
+      let neutralCount = 0
+      let totalImportance = 0
+
+      for (const row of analyses.results) {
+        const sentiment = row.sentiment as string
+        const importance = row.importance as number
+        totalImportance += importance
+        if (sentiment === 'positive') positiveCount++
+        else if (sentiment === 'negative') negativeCount++
+        else neutralCount++
+      }
+
+      const avgImportance = totalImportance / totalNews
+      const sentimentIndex = Math.max(0, Math.min(100,
+        50 + ((positiveCount - negativeCount) / totalNews * 30) + (avgImportance / 10 * 20)
+      ))
+
+      // 保存板块历史（前10个热门板块）
+      for (const sector of sectorAnalyses.slice(0, 10)) {
+        const id = `${sector.sector}-${today}`
+        await NEWS_CACHE_DB?.prepare(`
+          INSERT OR REPLACE INTO sector_history
+          (id, sector, date, hot_score, mention_count, positive_ratio, sentiment, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          id,
+          sector.sector,
+          today,
+          sector.hotScore,
+          sector.mentionCount,
+          sector.positiveRatio,
+          sector.sentiment,
+          now
+        ).run()
+      }
+
+      // 保存市场情绪
+      await NEWS_CACHE_DB?.prepare(`
+        INSERT OR REPLACE INTO market_sentiment_history
+        (date, sentiment_index, total_news, positive_count, negative_count, neutral_count, avg_importance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        today,
+        sentimentIndex,
+        totalNews,
+        positiveCount,
+        negativeCount,
+        neutralCount,
+        avgImportance,
+        now
+      ).run()
+    } catch (historyError) {
+      console.error('Failed to save history:', historyError)
+    }
+
     return new Response(JSON.stringify({
       status: 'success',
       totalSectors: sectorAnalyses.length,

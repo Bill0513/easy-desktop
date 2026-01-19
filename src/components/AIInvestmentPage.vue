@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { TrendingUp, Sparkles, AlertCircle, CheckCircle, XCircle } from 'lucide-vue-next'
+import { useDesktopStore } from '@/stores/desktop'
+import { generateLinePath, sectorTrendsToPoints, getSentimentLabel, getSentimentColor } from '@/utils/chartHelpers'
 
+const store = useDesktopStore()
 const isAnalyzing = ref(false)
 const analysisResult = ref<any>(null)
 const error = ref<string | null>(null)
 const isCached = ref(false)
 const sectorAnalysis = ref<any>(null)
+const selectedSectorForTrend = ref<string | null>(null)
+const sourceStats = ref<any[]>([])
 
 const handleAnalyze = async () => {
   isAnalyzing.value = true
@@ -14,6 +19,7 @@ const handleAnalyze = async () => {
   analysisResult.value = null
   isCached.value = false
   sectorAnalysis.value = null
+  sourceStats.value = []
 
   try {
     const response = await fetch('/api/ai-analysis', {
@@ -26,6 +32,7 @@ const handleAnalyze = async () => {
     if (data.status === 'success') {
       analysisResult.value = data
       isCached.value = data.cached || false
+      sourceStats.value = data.sourceStats || []
 
       // 获取板块分析
       const sectorResponse = await fetch('/api/sector-analysis', {
@@ -46,11 +53,44 @@ const handleAnalyze = async () => {
   }
 }
 
-const getSentimentColor = (sentiment: string) => {
-  if (sentiment === 'positive') return 'text-green-600'
-  if (sentiment === 'negative') return 'text-red-600'
-  return 'text-gray-600'
+const getSourceName = (sourceId: string) => {
+  const names: Record<string, string> = {
+    xueqiu: '雪球',
+    jin10: '金十数据',
+    gelonghui: '格隆汇',
+    fastbull: '快讯',
+    mktnews: '市场新闻',
+    wallstreetcn: '华尔街见闻',
+    '36kr': '36氪'
+  }
+  return names[sourceId] || sourceId
 }
+
+const handleGenerateInsights = async () => {
+  await store.fetchInsights()
+  await store.fetchSentimentHistory(30)
+}
+
+const handleShowSectorTrend = async (sector: string) => {
+  selectedSectorForTrend.value = sector
+  await store.fetchSectorTrends(sector, 7)
+}
+
+const sectorTrendPath = computed(() => {
+  if (!selectedSectorForTrend.value) return ''
+  const trends = store.sectorTrends.get(selectedSectorForTrend.value)
+  if (!trends || trends.length === 0) return ''
+  const points = sectorTrendsToPoints(trends)
+  return generateLinePath(points, 400, 200, 40)
+})
+
+const sentimentBars = computed(() => {
+  return store.sentimentHistory.map((point: any) => ({
+    date: point.date.slice(5),
+    height: point.sentimentIndex,
+    color: point.sentimentIndex >= 70 ? '#22c55e' : point.sentimentIndex >= 30 ? '#6b7280' : '#ef4444'
+  }))
+})
 
 const getSentimentText = (sentiment: string) => {
   if (sentiment === 'positive') return '利好'
@@ -182,6 +222,33 @@ const getSentimentText = (sentiment: string) => {
           </div>
         </div>
 
+        <!-- 新闻源状态 -->
+        <div v-if="sourceStats.length > 0" class="card-hand-drawn p-6" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <h3 class="font-handwritten text-xl font-bold text-pencil mb-4">📡 新闻源状态</h3>
+          <div class="flex flex-wrap gap-3">
+            <div
+              v-for="stat in sourceStats"
+              :key="stat.source"
+              class="card-hand-drawn px-4 py-2 flex items-center gap-2"
+              :class="{
+                'bg-green-50': stat.status === 'success',
+                'bg-red-50': stat.status === 'failed'
+              }"
+              style="box-shadow: 2px 2px 0px #2d2d2d;"
+            >
+              <span v-if="stat.status === 'success'" class="text-green-600 text-lg">✓</span>
+              <span v-else class="text-red-600 text-lg">✗</span>
+              <div>
+                <div class="font-handwritten text-sm font-bold text-pencil">{{ getSourceName(stat.source) }}</div>
+                <div class="font-handwritten text-xs text-pencil/60">
+                  <span v-if="stat.status === 'success'">{{ stat.count }} 条</span>
+                  <span v-else class="text-red-600">{{ stat.error }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 新闻列表 -->
         <div class="card-hand-drawn p-6" style="box-shadow: 4px 4px 0px #2d2d2d;">
           <h3 class="font-handwritten text-xl font-bold text-pencil mb-4">📰 新闻分析结果</h3>
@@ -245,6 +312,7 @@ const getSentimentText = (sentiment: string) => {
                 'bg-gray-50': sector.sentiment === 'neutral'
               }"
               style="box-shadow: 2px 2px 0px #2d2d2d;"
+              @click="handleShowSectorTrend(sector.sector)"
             >
               <div class="text-center">
                 <div class="font-handwritten text-lg font-bold text-pencil mb-1">{{ sector.sector }}</div>
@@ -260,6 +328,147 @@ const getSentimentText = (sentiment: string) => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Generate Insights Button -->
+        <div v-if="sectorAnalysis" class="flex justify-center">
+          <button
+            class="btn-hand-drawn px-8 py-4 font-handwritten text-lg font-bold"
+            :disabled="store.isGeneratingInsights"
+            @click="handleGenerateInsights"
+          >
+            <span v-if="!store.isGeneratingInsights">✨ 生成投资洞察</span>
+            <span v-else>⏳ 生成中...</span>
+          </button>
+        </div>
+
+        <!-- Investment Insights Cards -->
+        <div v-if="store.aiInsights" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Market Summary -->
+          <div class="card-hand-drawn p-6 bg-blue-50" style="box-shadow: 4px 4px 0px #2d2d2d;">
+            <h3 class="font-handwritten text-xl font-bold text-pencil mb-3 flex items-center gap-2">
+              📰 市场要闻
+            </h3>
+            <p class="font-handwritten text-base text-pencil/80">{{ store.aiInsights.marketSummary }}</p>
+          </div>
+
+          <!-- Hot Sectors -->
+          <div class="card-hand-drawn p-6 bg-red-50" style="box-shadow: 4px 4px 0px #2d2d2d;">
+            <h3 class="font-handwritten text-xl font-bold text-pencil mb-3 flex items-center gap-2">
+              🔥 热门板块
+            </h3>
+            <ul class="space-y-2">
+              <li v-for="(item, i) in store.aiInsights.hotSectors" :key="i" class="font-handwritten text-sm text-pencil/80 flex items-start gap-2">
+                <span class="text-accent">•</span>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Potential Sectors -->
+          <div class="card-hand-drawn p-6 bg-green-50" style="box-shadow: 4px 4px 0px #2d2d2d;">
+            <h3 class="font-handwritten text-xl font-bold text-pencil mb-3 flex items-center gap-2">
+              💎 潜力板块
+            </h3>
+            <ul class="space-y-2">
+              <li v-for="(item, i) in store.aiInsights.potentialSectors" :key="i" class="font-handwritten text-sm text-pencil/80 flex items-start gap-2">
+                <span class="text-accent">•</span>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Risk Alerts -->
+          <div class="card-hand-drawn p-6 bg-yellow-50" style="box-shadow: 4px 4px 0px #2d2d2d;">
+            <h3 class="font-handwritten text-xl font-bold text-pencil mb-3 flex items-center gap-2">
+              ⚠️ 风险提示
+            </h3>
+            <ul class="space-y-2">
+              <li v-for="(item, i) in store.aiInsights.riskAlerts" :key="i" class="font-handwritten text-sm text-pencil/80 flex items-start gap-2">
+                <span class="text-accent">•</span>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Market Sentiment Gauge -->
+        <div v-if="store.aiInsights" class="card-hand-drawn p-6" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <h3 class="font-handwritten text-xl font-bold text-pencil mb-6">📊 市场情绪指数</h3>
+
+          <div class="max-w-md mx-auto">
+            <!-- Gauge Bar -->
+            <div class="relative h-12 mb-8">
+              <div class="h-8 rounded-full overflow-hidden border-[3px] border-pencil"
+                   style="background: linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;">
+              </div>
+
+              <!-- Pointer -->
+              <div class="absolute top-0 h-12 w-1 bg-pencil transition-all duration-500"
+                   :style="{ left: `${store.marketSentiment}%`, transform: 'translateX(-50%)' }">
+                <div class="w-4 h-4 bg-pencil rounded-full -mt-2 -ml-1.5"></div>
+              </div>
+            </div>
+
+            <!-- Value and Label -->
+            <div class="text-center">
+              <div class="font-handwritten text-5xl font-bold text-pencil mb-2">{{ store.marketSentiment }}</div>
+              <div class="font-handwritten text-lg" :class="getSentimentColor(store.marketSentiment)">
+                {{ getSentimentLabel(store.marketSentiment) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sector Trend Chart -->
+        <div v-if="selectedSectorForTrend && store.sectorTrends.get(selectedSectorForTrend)" class="card-hand-drawn p-6" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <h3 class="font-handwritten text-xl font-bold text-pencil mb-4">📈 {{ selectedSectorForTrend }} 热度趋势（7天）</h3>
+
+          <svg viewBox="0 0 400 200" class="w-full h-48 border-2 border-pencil" style="border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;">
+            <!-- Grid lines -->
+            <line x1="40" y1="180" x2="380" y2="180" stroke="#2d2d2d" stroke-width="2" stroke-dasharray="5,5"/>
+            <line x1="40" y1="20" x2="40" y2="180" stroke="#2d2d2d" stroke-width="2" stroke-dasharray="5,5"/>
+
+            <!-- Data line -->
+            <path
+              v-if="sectorTrendPath"
+              :d="sectorTrendPath"
+              stroke="#ff4d4d"
+              stroke-width="3"
+              fill="none"
+            />
+
+            <!-- Data points -->
+            <template v-if="selectedSectorForTrend && store.sectorTrends.get(selectedSectorForTrend)">
+              <circle
+                v-for="(point, i) in sectorTrendsToPoints(store.sectorTrends.get(selectedSectorForTrend) || [])"
+                :key="i"
+                :cx="40 + (i / ((store.sectorTrends.get(selectedSectorForTrend)?.length || 1) - 1 || 1)) * 340"
+                :cy="40 + (1 - point.y) * 140"
+                r="6"
+                fill="#ff4d4d"
+              />
+            </template>
+          </svg>
+        </div>
+
+        <!-- Market Sentiment History -->
+        <div v-if="store.sentimentHistory.length > 0" class="card-hand-drawn p-6" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <h3 class="font-handwritten text-xl font-bold text-pencil mb-4">📊 市场情绪趋势（30天）</h3>
+
+          <div class="flex items-end justify-between gap-1 h-48 border-2 border-pencil p-4" style="border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;">
+            <div
+              v-for="bar in sentimentBars"
+              :key="bar.date"
+              class="flex-1 border-2 border-pencil transition-all hover:opacity-80"
+              :style="{
+                height: `${bar.height}%`,
+                backgroundColor: bar.color,
+                borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px'
+              }"
+              :title="`${bar.date}: ${bar.height}`"
+            />
           </div>
         </div>
       </div>

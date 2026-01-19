@@ -89,6 +89,13 @@ export const useDesktopStore = defineStore('desktop', () => {
   const snippetSearchQuery = ref('')
   const selectedLanguage = ref<string>('all')
 
+  // AI Investment state
+  const aiInsights = ref<any>(null)
+  const marketSentiment = ref<number>(50)
+  const sectorTrends = ref<Map<string, any[]>>(new Map())
+  const sentimentHistory = ref<any[]>([])
+  const isGeneratingInsights = ref(false)
+
   // Getters
   const getWidgetById = computed(() => {
     return (id: string): Widget | undefined => {
@@ -2116,6 +2123,52 @@ export const useDesktopStore = defineStore('desktop', () => {
     return Array.from(tags).sort()
   })
 
+  // AI Investment actions
+  async function fetchInsights() {
+    try {
+      isGeneratingInsights.value = true
+      const response = await fetch('/api/generate-insights', { method: 'POST' })
+      const data = await response.json()
+
+      if (data.status === 'success') {
+        aiInsights.value = data.insights
+        marketSentiment.value = data.marketSentiment
+      } else {
+        console.error('Failed to fetch insights:', data.error)
+      }
+    } catch (error) {
+      console.error('Fetch insights error:', error)
+    } finally {
+      isGeneratingInsights.value = false
+    }
+  }
+
+  async function fetchSectorTrends(sector: string, days = 7) {
+    try {
+      const response = await fetch(`/api/sector-trends?sector=${encodeURIComponent(sector)}&days=${days}`)
+      const data = await response.json()
+
+      if (data.status === 'success') {
+        sectorTrends.value.set(sector, data.trends)
+      }
+    } catch (error) {
+      console.error('Fetch sector trends error:', error)
+    }
+  }
+
+  async function fetchSentimentHistory(days = 30) {
+    try {
+      const response = await fetch(`/api/market-sentiment?days=${days}`)
+      const data = await response.json()
+
+      if (data.status === 'success') {
+        sentimentHistory.value = data.history
+      }
+    } catch (error) {
+      console.error('Fetch sentiment history error:', error)
+    }
+  }
+
   // Toast 相关方法
   function setToastContainer(container: any) {
     toastContainerRef = container
@@ -2272,6 +2325,16 @@ export const useDesktopStore = defineStore('desktop', () => {
     updateCodeSnippet,
     deleteCodeSnippet,
     selectSnippet,
+    // AI Investment state
+    aiInsights,
+    marketSentiment,
+    sectorTrends,
+    sentimentHistory,
+    isGeneratingInsights,
+    // AI Investment actions
+    fetchInsights,
+    fetchSectorTrends,
+    fetchSentimentHistory,
     // Toast actions
     setToastContainer,
     showToast,
