@@ -191,11 +191,9 @@ onUnmounted(() => {
           <span class="text-base">{{ statusIcon }}</span>
           <span class="font-handwritten" v-if="currentSyncStatus === 'syncing'">同步中...</span>
           <span class="font-handwritten" v-else-if="currentSyncStatus === 'error'">{{ currentSyncErrorMessage || '同步失败' }}</span>
-          <span class="font-handwritten" v-else-if="currentHasDirtyData">
-            有未同步数据
-          </span>
-          <span class="font-handwritten" v-else>
-            下次同步: {{ nextSyncCountdown }}
+          <span class="font-handwritten flex items-center gap-1" v-else>
+            <span>下次同步: {{ nextSyncCountdown }}</span>
+            <span v-if="currentHasDirtyData" class="text-orange-500" title="有未同步的数据">●</span>
           </span>
         </div>
         <div class="text-xs text-gray-500 font-handwritten" v-if="currentLastSyncTime">
