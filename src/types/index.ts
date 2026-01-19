@@ -116,6 +116,7 @@ export interface DesktopData {
   searchHistory?: string[]  // 搜索历史
   searchEngine?: string  // 搜索引擎偏好
   mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
+  codeSnippets?: CodeSnippet[]  // 代码片段数据
   version: number
   updatedAt: number
 }
@@ -250,4 +251,16 @@ export interface MindMapData {
   root: SimpleMindMapNode
   theme?: string
   layout?: string
+}
+
+// 代码片段
+export interface CodeSnippet {
+  id: string
+  title: string
+  code: string
+  language: string      // javascript, python, sql, html, css, etc.
+  description?: string
+  tags: string[]
+  createdAt: number
+  updatedAt: number
 }

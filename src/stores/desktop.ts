@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -76,6 +76,12 @@ export const useDesktopStore = defineStore('desktop', () => {
   const mindMaps = ref<MindMapFile[]>([])
   const currentMindMapId = ref<string | null>(null)
   const isLoadingMindMap = ref(false)
+
+  // Code snippets state
+  const codeSnippets = ref<CodeSnippet[]>([])
+  const selectedSnippetId = ref<string | null>(null)
+  const snippetSearchQuery = ref('')
+  const selectedLanguage = ref<string>('all')
 
   // Getters
   const getWidgetById = computed(() => {
@@ -242,6 +248,10 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.mindMaps !== undefined) {
           mindMaps.value = cloudData.mindMaps
         }
+        // 加载代码片段
+        if (cloudData.codeSnippets !== undefined) {
+          codeSnippets.value = cloudData.codeSnippets
+        }
 
         // 标记已从云端成功加载
         isCloudInitialized.value = true
@@ -260,6 +270,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           searchHistory.value = localData.searchHistory || []
           searchEngine.value = localData.searchEngine || 'google'
           mindMaps.value = localData.mindMaps || []
+          codeSnippets.value = localData.codeSnippets || []
 
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           isCloudInitialized.value = true
@@ -278,6 +289,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           searchHistory.value = []
           searchEngine.value = 'google'
           mindMaps.value = []
+          codeSnippets.value = []
 
           // 标记为已初始化
           isCloudInitialized.value = true
@@ -324,6 +336,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
         mindMaps: mindMaps.value,
+        codeSnippets: codeSnippets.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -394,6 +407,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
         mindMaps: mindMaps.value,
+        codeSnippets: codeSnippets.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -501,6 +515,7 @@ export const useDesktopStore = defineStore('desktop', () => {
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
       mindMaps: mindMaps.value,
+      codeSnippets: codeSnippets.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1958,6 +1973,93 @@ export const useDesktopStore = defineStore('desktop', () => {
     }
   }
 
+  // Code Snippets Actions
+
+  // 创建代码片段
+  function createCodeSnippet(params: {
+    title: string
+    code: string
+    language: string
+    description?: string
+    tags?: string[]
+  }): CodeSnippet {
+    const snippet: CodeSnippet = {
+      id: uuidv4(),
+      title: params.title,
+      code: params.code,
+      language: params.language,
+      description: params.description || '',
+      tags: params.tags || [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }
+
+    codeSnippets.value.unshift(snippet)
+    save()
+    return snippet
+  }
+
+  // 更新代码片段
+  function updateCodeSnippet(id: string, updates: Partial<CodeSnippet>) {
+    const snippet = codeSnippets.value.find(s => s.id === id)
+    if (snippet) {
+      Object.assign(snippet, updates, { updatedAt: Date.now() })
+      save()
+    }
+  }
+
+  // 删除代码片段
+  function deleteCodeSnippet(id: string) {
+    const index = codeSnippets.value.findIndex(s => s.id === id)
+    if (index !== -1) {
+      codeSnippets.value.splice(index, 1)
+      save()
+    }
+  }
+
+  // 选择代码片段
+  function selectSnippet(id: string | null) {
+    selectedSnippetId.value = id
+  }
+
+  // 过滤后的代码片段列表
+  const filteredCodeSnippets = computed(() => {
+    let filtered = codeSnippets.value
+
+    // 按语言筛选
+    if (selectedLanguage.value !== 'all') {
+      filtered = filtered.filter(s => s.language === selectedLanguage.value)
+    }
+
+    // 按搜索关键词筛选
+    if (snippetSearchQuery.value.trim()) {
+      const query = snippetSearchQuery.value.toLowerCase()
+      filtered = filtered.filter(s =>
+        s.title.toLowerCase().includes(query) ||
+        s.code.toLowerCase().includes(query) ||
+        s.description?.toLowerCase().includes(query) ||
+        s.tags.some(tag => tag.toLowerCase().includes(query))
+      )
+    }
+
+    return filtered
+  })
+
+  // 获取所有使用的语言列表
+  const usedLanguages = computed(() => {
+    const languages = new Set(codeSnippets.value.map(s => s.language))
+    return Array.from(languages).sort()
+  })
+
+  // 获取所有使用的标签列表
+  const usedTags = computed(() => {
+    const tags = new Set<string>()
+    codeSnippets.value.forEach(s => {
+      s.tags.forEach(tag => tags.add(tag))
+    })
+    return Array.from(tags).sort()
+  })
+
   return {
     // State
     widgets,
@@ -2087,5 +2189,19 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveMindMap,
     renameMindMap,
     deleteMindMap,
+    // Code snippets state
+    codeSnippets,
+    selectedSnippetId,
+    snippetSearchQuery,
+    selectedLanguage,
+    // Code snippets getters
+    filteredCodeSnippets,
+    usedLanguages,
+    usedTags,
+    // Code snippets actions
+    createCodeSnippet,
+    updateCodeSnippet,
+    deleteCodeSnippet,
+    selectSnippet,
   }
 })
