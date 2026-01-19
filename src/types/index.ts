@@ -1,11 +1,18 @@
 // 组件类型
-export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown' | 'random-picker'
+export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown' | 'random-picker' | 'check-in'
 
 // 待办事项项
 export interface TodoItem {
   id: string
   text: string
   completed: boolean
+}
+
+// 打卡记录
+export interface CheckInRecord {
+  date: string // YYYY-MM-DD 格式
+  timestamp: number // 打卡时间戳
+  note?: string // 打卡备注
 }
 
 // 组件基础接口
@@ -75,8 +82,16 @@ export interface RandomPickerWidget extends BaseWidget {
   lastResult?: string    // 上次抽取结果
 }
 
+// 打卡组件
+export interface CheckInWidget extends BaseWidget {
+  type: 'check-in'
+  checkInRecords: CheckInRecord[]  // 打卡记录
+  goal?: number  // 目标天数（可选）
+  category?: string  // 分类（可选）
+}
+
 // 联合类型
-export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget | CountdownWidget | RandomPickerWidget
+export type Widget = NoteWidget | TodoWidget | TextWidget | ImageWidget | MarkdownWidget | CountdownWidget | RandomPickerWidget | CheckInWidget
 
 // 组件创建参数
 export interface CreateWidgetParams {
@@ -94,6 +109,8 @@ export interface CreateWidgetParams {
   targetDate?: string  // 倒计时目标日期
   description?: string  // 倒计时描述
   options?: string[]   // 随机决策器选项
+  goal?: number        // 打卡目标天数
+  category?: string    // 打卡分类
 }
 
 // 拖拽状态

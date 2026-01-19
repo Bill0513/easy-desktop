@@ -19,6 +19,7 @@ import 'prismjs/components/prism-css'
 import 'prismjs/components/prism-typescript'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-json'
+import HandDrawnDialog from './HandDrawnDialog.vue'
 
 const store = useDesktopStore()
 
@@ -167,13 +168,36 @@ function cancelEdit() {
   editingSnippet.value = null
 }
 
+// 删除确认对话框状态
+const showDeleteConfirm = ref(false)
+const deletingSnippetId = ref<string | null>(null)
+const deletingSnippetTitle = ref('')
+
 function deleteSnippet(id: string) {
-  if (confirm('确定要删除这个代码片段吗？')) {
-    store.deleteCodeSnippet(id)
-    if (store.selectedSnippetId === id) {
+  const snippet = store.codeSnippets.find(s => s.id === id)
+  if (snippet) {
+    deletingSnippetId.value = id
+    deletingSnippetTitle.value = snippet.title
+    showDeleteConfirm.value = true
+  }
+}
+
+function confirmDelete() {
+  if (deletingSnippetId.value) {
+    store.deleteCodeSnippet(deletingSnippetId.value)
+    if (store.selectedSnippetId === deletingSnippetId.value) {
       store.selectSnippet(null)
     }
   }
+  showDeleteConfirm.value = false
+  deletingSnippetId.value = null
+  deletingSnippetTitle.value = ''
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  deletingSnippetId.value = null
+  deletingSnippetTitle.value = ''
 }
 
 function copyCode(code: string) {
@@ -225,17 +249,9 @@ onUnmounted(() => {
       >
         + 新建片段
       </button>
-
-      <input
-        v-model="store.snippetSearchQuery"
-        type="text"
-        placeholder="搜索片段..."
-        class="input-hand-drawn flex-1 px-3 py-2 bg-white"
-      />
-
       <select
         v-model="store.selectedLanguage"
-        class="input-hand-drawn px-3 py-2 bg-white"
+        class="input-hand-drawn px-3 py-2 bg-white w-[150px]"
       >
         <option value="all">全部语言</option>
         <option
@@ -246,6 +262,12 @@ onUnmounted(() => {
           {{ lang }}
         </option>
       </select>
+      <input
+        v-model="store.snippetSearchQuery"
+        type="text"
+        placeholder="搜索片段..."
+        class="input-hand-drawn flex-1 px-3 py-2 bg-white w-[200px]"
+      />
     </div>
 
     <!-- 主内容区 -->
@@ -467,6 +489,19 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 删除确认对话框 -->
+    <HandDrawnDialog
+      :show="showDeleteConfirm"
+      type="confirm"
+      title="确认删除"
+      :message="`确定要删除代码片段「${deletingSnippetTitle}」吗？删除后将无法恢复。`"
+      confirm-text="删除"
+      cancel-text="取消"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+      @close="cancelDelete"
+    />
   </div>
 </template>
 

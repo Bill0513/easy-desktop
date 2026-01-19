@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -301,6 +301,11 @@ export const useDesktopStore = defineStore('desktop', () => {
 
       // 检查是否有脏数据
       hasDirtyData.value = await idb.hasDirtyData()
+
+      // 设置初始的最后同步时间（表示数据已加载）
+      if (!lastSyncTime.value) {
+        lastSyncTime.value = Date.now()
+      }
     } catch (error) {
       console.error('Failed to init:', error)
       // 初始化失败，不标记为已初始化
@@ -464,9 +469,11 @@ export const useDesktopStore = defineStore('desktop', () => {
       return
     }
 
-    // 如果没有脏数据，跳过同步
+    // 如果没有脏数据，更新检查时间后直接返回
     if (!hasDirtyData.value) {
-      showToast('没有需要同步的数据', 'info')
+      // 更新最后同步时间（表示已检查过）
+      lastSyncTime.value = Date.now()
+      // 不显示 toast，因为这是自动检查
       return
     }
 
@@ -642,6 +649,21 @@ export const useDesktopStore = defineStore('desktop', () => {
         }
         widgets.value.push(randomPicker)
         return randomPicker
+      }
+
+      case 'check-in': {
+        const checkIn: CheckInWidget = {
+          ...base,
+          type: 'check-in',
+          title: params.title ?? `打卡-${randomSuffix}`,
+          checkInRecords: [],
+          goal: params.goal,
+          category: params.category,
+          width: params.width ?? 360,
+          height: params.height ?? 600,
+        }
+        widgets.value.push(checkIn)
+        return checkIn
       }
 
       default:
@@ -1677,6 +1699,14 @@ export const useDesktopStore = defineStore('desktop', () => {
       return
     }
 
+    // 如果没有脏数据，更新检查时间后直接返回
+    if (!hasFileDirtyData.value) {
+      // 更新最后同步时间（表示已检查过）
+      lastFileSyncTime.value = Date.now()
+      // 不显示 toast，因为这是自动检查
+      return
+    }
+
     fileSyncStatus.value = 'syncing'
     fileSyncErrorMessage.value = ''
 
@@ -1684,6 +1714,9 @@ export const useDesktopStore = defineStore('desktop', () => {
       await saveFilesToCloud()
       fileSyncStatus.value = 'success'
       lastFileSyncTime.value = Date.now()
+
+      // 同步成功后，标记数据为干净
+      hasFileDirtyData.value = false
 
       // 3秒后重置状态
       setTimeout(() => {
@@ -1770,6 +1803,11 @@ export const useDesktopStore = defineStore('desktop', () => {
       }
     } finally {
       isLoadingFiles.value = false
+    }
+
+    // 设置初始的最后同步时间（表示数据已加载）
+    if (!lastFileSyncTime.value && isFileCloudInitialized.value) {
+      lastFileSyncTime.value = Date.now()
     }
   }
 

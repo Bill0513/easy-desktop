@@ -8,7 +8,8 @@ import {
   FileCode,
   Image,
   Timer,
-  Dices
+  Dices,
+  CalendarCheck
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -20,7 +21,7 @@ const addWidget = (type: string) => {
 </script>
 
 <template>
-  <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+  <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999]">
     <div class="card-hand-drawn px-4 py-2 flex items-center gap-2">
       <!-- 便签 -->
       <button
@@ -90,6 +91,16 @@ const addWidget = (type: string) => {
       >
         <Dices :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-pencil/60">决策器</span>
+      </button>
+
+      <!-- 打卡 -->
+      <button
+        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
+        title="添加打卡"
+        @click="addWidget('check-in')"
+      >
+        <CalendarCheck :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <span class="text-[10px] font-handwritten text-pencil/60">打卡</span>
       </button>
 
       <!-- 分隔线 -->

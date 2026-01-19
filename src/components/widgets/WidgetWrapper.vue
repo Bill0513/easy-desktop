@@ -9,6 +9,7 @@ import ImageWidget from './ImageWidget.vue'
 import MarkdownWidgetNotion from './MarkdownWidgetNotion.vue'
 import CountdownWidget from './CountdownWidget.vue'
 import RandomPickerWidget from './RandomPickerWidget.vue'
+import CheckInWidget from './CheckInWidget.vue'
 import HandDrawnDialog from '../HandDrawnDialog.vue'
 
 const props = defineProps<{
@@ -32,6 +33,7 @@ const titleInput = ref<HTMLInputElement | null>(null)
 const editedTitle = ref('')
 const isSavingTitle = ref(false)
 const widgetContentRef = ref<any>(null)
+const isComposingTitle = ref(false) // IME 输入状态
 
 // 尺寸调整状态
 const isResizing = ref(false)
@@ -69,7 +71,7 @@ const saveTitle = () => {
 
 // 按回车保存
 const handleTitleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter' && !isComposingTitle.value) {
     e.preventDefault()
     saveTitle()
   } else if (e.key === 'Escape') {
@@ -110,6 +112,7 @@ const widgetComponent = computed(() => {
     case 'markdown': return MarkdownWidgetNotion
     case 'countdown': return CountdownWidget
     case 'random-picker': return RandomPickerWidget
+    case 'check-in': return CheckInWidget
     default: return null
   }
 })
@@ -146,6 +149,9 @@ const hasUserData = computed(() => {
     case 'random-picker':
       // 随机决策器：检查是否有选项
       return (props.widget as any).options?.length > 0
+    case 'check-in':
+      // 打卡：检查是否有打卡记录
+      return (props.widget as any).checkInRecords?.length > 0
     default:
       return false
   }
@@ -201,9 +207,9 @@ const handleDownloadImage = () => {
   }
 }
 
-// 是否显示尺寸调整手柄（仅 note、text、markdown、todo、countdown、random-picker 组件）
+// 是否显示尺寸调整手柄（仅 note、text、markdown、todo、countdown、random-picker、check-in 组件）
 const showResizeHandle = computed(() => {
-  return ['note', 'text', 'markdown', 'todo', 'countdown', 'random-picker'].includes(props.widget.type) && !props.widget.isMaximized
+  return ['note', 'text', 'markdown', 'todo', 'countdown', 'random-picker', 'check-in'].includes(props.widget.type) && !props.widget.isMaximized
 })
 
 // 开始调整尺寸
@@ -284,6 +290,8 @@ const stopResize = () => {
           style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px 0px #2d2d2d;"
           @blur="saveTitle"
           @keydown="handleTitleKeydown"
+          @compositionstart="isComposingTitle = true"
+          @compositionend="isComposingTitle = false"
           @mousedown.stop
         />
         <span

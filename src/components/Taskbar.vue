@@ -85,7 +85,7 @@ const restoreWidget = (id: string) => {
 <template>
   <div
     v-if="Object.keys(groupedMinimizedWidgets).length > 0"
-    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40"
+    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]"
   >
     <div class="card-hand-drawn px-4 py-2 flex items-center gap-2">
       <!-- 任务栏标题 -->
@@ -124,7 +124,7 @@ const restoreWidget = (id: string) => {
         >
           <div
             v-if="popupVisible === type && widgets.length >= 1"
-            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[160px]"
+            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[160px] z-[10000]"
             :style="{ left: '50%', transform: 'translateX(-50%)' }"
           >
             <div class="px-3 py-1 border-b border-pencil/20">
