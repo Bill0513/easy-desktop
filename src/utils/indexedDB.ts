@@ -59,9 +59,12 @@ class IndexedDBHelper {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite')
       const objectStore = transaction.objectStore(STORE_NAME)
 
+      // 深度克隆数据以确保可序列化（处理 Set、Map 等）
+      const clonedValue = JSON.parse(JSON.stringify(value))
+
       const data: StoredData = {
         key,
-        value,
+        value: clonedValue,
         isDirty,
         updatedAt: Date.now()
       }
@@ -165,11 +168,20 @@ class IndexedDBHelper {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readonly')
       const objectStore = transaction.objectStore(STORE_NAME)
-      const index = objectStore.index('isDirty')
-      const request = index.count(IDBKeyRange.only(true))
+      const request = objectStore.openCursor()
 
       request.onsuccess = () => {
-        resolve(request.result > 0)
+        const cursor = request.result
+        if (cursor) {
+          const data = cursor.value as StoredData
+          if (data.isDirty) {
+            resolve(true)
+            return
+          }
+          cursor.continue()
+        } else {
+          resolve(false)
+        }
       }
 
       request.onerror = () => {
@@ -190,15 +202,17 @@ class IndexedDBHelper {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readonly')
       const objectStore = transaction.objectStore(STORE_NAME)
-      const index = objectStore.index('isDirty')
-      const request = index.openCursor(IDBKeyRange.only(true))
+      const request = objectStore.openCursor()
 
       const keys: string[] = []
 
       request.onsuccess = () => {
         const cursor = request.result
         if (cursor) {
-          keys.push((cursor.value as StoredData).key)
+          const data = cursor.value as StoredData
+          if (data.isDirty) {
+            keys.push(data.key)
+          }
           cursor.continue()
         } else {
           resolve(keys)
