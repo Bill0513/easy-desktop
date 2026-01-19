@@ -6,6 +6,7 @@ import FilePreviewDialog from './FilePreviewDialog.vue'
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 import { getFileIcon } from '@/utils/fileIcons'
+import { FolderOpen } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -554,10 +555,11 @@ const getItemIcon = (item: FileItem | FolderItem) => {
     <!-- 面包屑导航 -->
     <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-pencil/10">
       <button
-        class="font-handwritten text-sm hover:text-accent transition-colors"
+        class="font-handwritten text-sm hover:text-accent transition-colors flex items-center gap-1"
         @click="store.currentFolderId = null"
       >
-        📁 根目录
+        <FolderOpen :size="16" :stroke-width="2.5" />
+        <span>根目录</span>
       </button>
       <template v-for="folder in store.breadcrumbPath" :key="folder.id">
         <span class="text-pencil/40">/</span>
