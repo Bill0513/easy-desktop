@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import { RefreshCw } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -208,7 +209,11 @@ onUnmounted(() => {
         class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
         :title="store.activeTab === 'file' ? '手动同步文件到云端' : '手动同步到云端'"
       >
-        <span class="text-base">🔄</span>
+        <RefreshCw
+          :size="18"
+          :stroke-width="2.5"
+          :class="{ 'animate-spin': currentSyncStatus === 'syncing' }"
+        />
       </button>
     </template>
   </div>
