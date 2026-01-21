@@ -135,6 +135,7 @@ export interface DesktopData {
   backgroundColor?: string  // 背景颜色
   mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
   codeSnippets?: CodeSnippet[]  // 代码片段数据
+  webClips?: WebClip[]  // 网站剪藏数据
   version: number
   updatedAt: number
 }
@@ -281,6 +282,29 @@ export interface CodeSnippet {
   tags: string[]
   createdAt: number
   updatedAt: number
+}
+
+// 网站剪藏
+export interface WebClip {
+  id: string
+  url: string
+  title: string
+  description?: string      // 用户填写的摘要
+  favicon?: string          // 网站图标
+  screenshot?: string       // 截图 URL (R2)
+  screenshotKey?: string    // R2 存储的 key
+  category?: string         // 分类
+  tags: string[]            // 标签
+  createdAt: number
+  updatedAt: number
+}
+
+// 截图配额
+export interface ScreenshotQuota {
+  used: number              // 已使用秒数
+  limit: number             // 限制秒数 (600 = 10分钟)
+  remaining: number         // 剩余秒数
+  resetAt?: string          // 重置时间 (ISO string)
 }
 
 // AI 投资助手相关类型
