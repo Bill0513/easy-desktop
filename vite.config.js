@@ -8,6 +8,11 @@ export default defineConfig({
             '@': resolve(__dirname, 'src')
         }
     },
+    build: {
+        rollupOptions: {
+            external: ['@cloudflare/puppeteer']
+        }
+    },
     server: {
         port: 3000,
         host: true,
