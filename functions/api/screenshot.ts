@@ -2,8 +2,6 @@
 // 路径: /api/screenshot
 // 使用 Cloudflare Browser Rendering 进行网页截图
 
-import puppeteer from '@cloudflare/puppeteer'
-
 export const onRequest = async (context) => {
   const { request, env } = context
 
@@ -49,8 +47,11 @@ export const onRequest = async (context) => {
 
       const startTime = Date.now()
 
+      // 动态导入 puppeteer (避免构建时解析错误)
+      const puppeteer = await import('@cloudflare/puppeteer')
+
       // 启动浏览器并截图
-      const browser = await puppeteer.launch(env.MYBROWSER)
+      const browser = await puppeteer.default.launch(env.MYBROWSER)
       const page = await browser.newPage()
       await page.setViewport({ width: 1280, height: 800 })
 
