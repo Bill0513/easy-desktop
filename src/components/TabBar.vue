@@ -12,8 +12,7 @@ import {
   Brain,
   Settings,
   Code,
-  Bookmark,
-  TrendingUp
+  Bookmark
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -24,7 +23,6 @@ const tabs: { id: TabType; name: string; icon: Component; description: string }[
   { id: 'desktop', name: '记录', icon: StickyNote, description: '便签、待办、文本' },
   { id: 'navigation', name: '导航', icon: Globe, description: '网页导航站' },
   { id: 'news', name: '热点', icon: Flame, description: '新闻热搜' },
-  { id: 'ai-investment', name: 'AI投资', icon: TrendingUp, description: 'AI投资助手' },
   { id: 'resource-search', name: '资源', icon: Search, description: '资源搜索' },
   { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' },
   { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' },

@@ -13,7 +13,6 @@ import FilePage from '@/components/FilePage.vue'
 import MindMapPage from '@/components/MindMapPage.vue'
 import CodeSnippetsPage from '@/components/CodeSnippetsPage.vue'
 import WebClipperPage from '@/components/WebClipperPage.vue'
-import AIInvestmentPage from '@/components/AIInvestmentPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 
@@ -151,11 +150,6 @@ const handleUnlock = async () => {
       <!-- 网页剪藏 Tab -->
       <div v-show="store.activeTab === 'web-clipper'" class="w-full h-full">
         <WebClipperPage />
-      </div>
-
-      <!-- AI 投资助手 Tab -->
-      <div v-show="store.activeTab === 'ai-investment'" class="w-full h-full">
-        <AIInvestmentPage />
       </div>
     </template>
   </div>

@@ -27,7 +27,8 @@
       "WebFetch(domain:www.npmjs.com)",
       "Bash(npm uninstall:*)",
       "Bash(cat:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(rm:*)"
     ]
   }
 }
