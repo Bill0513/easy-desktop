@@ -12,7 +12,6 @@ import ResourceSearchPage from '@/components/ResourceSearchPage.vue'
 import FilePage from '@/components/FilePage.vue'
 import MindMapPage from '@/components/MindMapPage.vue'
 import CodeSnippetsPage from '@/components/CodeSnippetsPage.vue'
-import WebClipperPage from '@/components/WebClipperPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 
@@ -145,11 +144,6 @@ const handleUnlock = async () => {
       <!-- 代码片段 Tab -->
       <div v-show="store.activeTab === 'code-snippets'" class="w-full h-full">
         <CodeSnippetsPage />
-      </div>
-
-      <!-- 网页剪藏 Tab -->
-      <div v-show="store.activeTab === 'web-clipper'" class="w-full h-full">
-        <WebClipperPage />
       </div>
     </template>
   </div>

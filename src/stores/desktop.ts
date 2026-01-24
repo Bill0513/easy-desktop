@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet, WebClip, ScreenshotQuota } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -88,16 +88,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   const selectedSnippetId = ref<string | null>(null)
   const snippetSearchQuery = ref('')
   const selectedLanguage = ref<string>('all')
-
-  // Web clipper state
-  const webClips = ref<WebClip[]>([])
-  const selectedClipCategory = ref<string>('全部')
-  const clipSearchQuery = ref('')
-  const screenshotQuota = ref<ScreenshotQuota>({
-    used: 0,
-    limit: 600,
-    remaining: 600
-  })
 
   // Getters
   const getWidgetById = computed(() => {
@@ -272,10 +262,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.codeSnippets !== undefined) {
           codeSnippets.value = cloudData.codeSnippets
         }
-        // 加载网站剪藏
-        if (cloudData.webClips !== undefined) {
-          webClips.value = cloudData.webClips
-        }
 
         // 标记已从云端成功加载
         isCloudInitialized.value = true
@@ -296,7 +282,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           backgroundColor.value = localData.backgroundColor || '#fdfbf7'
           mindMaps.value = localData.mindMaps || []
           codeSnippets.value = localData.codeSnippets || []
-          webClips.value = localData.webClips || []
 
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           isCloudInitialized.value = true
@@ -440,7 +425,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         searchEngine: searchEngine.value,
         mindMaps: mindMaps.value,
         codeSnippets: codeSnippets.value,
-        webClips: webClips.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -2132,180 +2116,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     return Array.from(tags).sort()
   })
 
-  // Web clipper getters
-  const filteredWebClips = computed(() => {
-    let filtered = webClips.value
-
-    // 按分类筛选
-    if (selectedClipCategory.value !== '全部') {
-      filtered = filtered.filter(c => c.category === selectedClipCategory.value)
-    }
-
-    // 按搜索关键词筛选
-    if (clipSearchQuery.value.trim()) {
-      const query = clipSearchQuery.value.toLowerCase()
-      filtered = filtered.filter(c =>
-        c.title.toLowerCase().includes(query) ||
-        c.url.toLowerCase().includes(query) ||
-        c.description?.toLowerCase().includes(query) ||
-        c.tags.some(tag => tag.toLowerCase().includes(query))
-      )
-    }
-
-    return filtered.sort((a, b) => b.createdAt - a.createdAt)
-  })
-
-  const usedClipTags = computed(() => {
-    const tags = new Set<string>()
-    webClips.value.forEach(c => {
-      c.tags.forEach(tag => tags.add(tag))
-    })
-    return Array.from(tags).sort()
-  })
-
-  // Web clipper actions
-  async function fetchScreenshotQuota() {
-    try {
-      const response = await fetch('/api/screenshot-quota')
-      if (response.ok) {
-        const data = await response.json()
-        screenshotQuota.value = data
-      }
-    } catch (error) {
-      console.error('获取截图配额失败:', error)
-    }
-  }
-
-  async function fetchMetadata(url: string): Promise<{ title: string; favicon?: string }> {
-    try {
-      const response = await fetch(url)
-      const html = await response.text()
-
-      // 提取标题
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-      const title = titleMatch ? titleMatch[1].trim() : new URL(url).hostname
-
-      // 提取 favicon
-      const faviconMatch = html.match(/<link[^>]*rel=["'](?:icon|shortcut icon)["'][^>]*href=["']([^"']+)["']/i)
-      let favicon = faviconMatch ? faviconMatch[1] : '/favicon.ico'
-
-      // 处理相对路径
-      if (favicon && !favicon.startsWith('http')) {
-        const urlObj = new URL(url)
-        favicon = favicon.startsWith('/')
-          ? `${urlObj.origin}${favicon}`
-          : `${urlObj.origin}/${favicon}`
-      }
-
-      return { title, favicon }
-    } catch (error) {
-      console.error('获取网页元数据失败:', error)
-      return { title: new URL(url).hostname }
-    }
-  }
-
-  function createWebClip(params: {
-    url: string
-    title: string
-    description?: string
-    favicon?: string
-    category?: string
-    tags?: string[]
-  }): WebClip {
-    const clip: WebClip = {
-      id: uuidv4(),
-      url: params.url,
-      title: params.title,
-      description: params.description || '',
-      favicon: params.favicon,
-      category: params.category,
-      tags: params.tags || [],
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-
-    webClips.value.push(clip)
-    saveToLocal()
-    return clip
-  }
-
-  function updateWebClip(id: string, updates: Partial<WebClip>) {
-    const clip = webClips.value.find(c => c.id === id)
-    if (clip) {
-      Object.assign(clip, updates, { updatedAt: Date.now() })
-      saveToLocal()
-    }
-  }
-
-  async function deleteWebClip(id: string) {
-    const clip = webClips.value.find(c => c.id === id)
-    if (clip) {
-      // 删除截图文件
-      if (clip.screenshotKey) {
-        try {
-          await fetch('/api/image', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: clip.screenshotKey })
-          })
-        } catch (error) {
-          console.error('删除截图失败:', error)
-        }
-      }
-
-      webClips.value = webClips.value.filter(c => c.id !== id)
-      saveToLocal()
-    }
-  }
-
-  async function captureScreenshot(clipId: string) {
-    const clip = webClips.value.find(c => c.id === clipId)
-    if (!clip) return
-
-    try {
-      const response = await fetch('/api/screenshot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: clip.url })
-      })
-
-      if (response.status === 429) {
-        const data = await response.json()
-        throw new Error(data.error)
-      }
-
-      if (!response.ok) {
-        throw new Error('截图失败')
-      }
-
-      const data = await response.json()
-
-      // 更新剪藏
-      clip.screenshot = data.url
-      clip.screenshotKey = data.key
-      clip.updatedAt = Date.now()
-
-      // 更新配额
-      screenshotQuota.value = {
-        used: data.used,
-        limit: data.limit,
-        remaining: data.remaining
-      }
-
-      await saveToLocal()
-
-      if (toastContainerRef) {
-        toastContainerRef.showToast('截图成功', 'success')
-      }
-    } catch (error) {
-      console.error('截图失败:', error)
-      if (toastContainerRef) {
-        toastContainerRef.showToast(error instanceof Error ? error.message : '截图失败', 'error')
-      }
-      throw error
-    }
-  }
-
   // Toast 相关方法
   function setToastContainer(container: any) {
     toastContainerRef = container
@@ -2462,21 +2272,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     updateCodeSnippet,
     deleteCodeSnippet,
     selectSnippet,
-    // Web clipper state
-    webClips,
-    selectedClipCategory,
-    clipSearchQuery,
-    screenshotQuota,
-    // Web clipper getters
-    filteredWebClips,
-    usedClipTags,
-    // Web clipper actions
-    fetchScreenshotQuota,
-    fetchMetadata,
-    createWebClip,
-    updateWebClip,
-    deleteWebClip,
-    captureScreenshot,
     // Toast actions
     setToastContainer,
     showToast,
