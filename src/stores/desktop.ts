@@ -89,6 +89,9 @@ export const useDesktopStore = defineStore('desktop', () => {
   const snippetSearchQuery = ref('')
   const selectedLanguage = ref<string>('all')
 
+  // Canvas scale state (30% - 150%)
+  const canvasScale = ref<number>(100)
+
   // Getters
   const getWidgetById = computed(() => {
     return (id: string): Widget | undefined => {
@@ -678,7 +681,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           goal: params.goal,
           category: params.category,
           width: params.width ?? 360,
-          height: params.height ?? 600,
+          height: params.height ?? 480,
         }
         widgets.value.push(checkIn)
         return checkIn
@@ -845,6 +848,54 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   function selectWidget(id: string | null) {
     selectedWidgetId.value = id
+  }
+
+  // 一键整理：重新排列非最小化的组件，避免重叠
+  function arrangeWidgets() {
+    const PADDING = 20
+    const TOP_TOOLBAR_HEIGHT = 80 // 顶部工具栏高度
+    const BOTTOM_TASKBAR_HEIGHT = 80 // 底部最小化栏高度
+    const visibleWidgets = widgets.value.filter(w => !w.isMinimized && !w.isMaximized)
+
+    if (visibleWidgets.length === 0) return
+
+    // 按就近原则排列：从左上角开始，按行排列
+    let currentX = PADDING
+    let currentY = TOP_TOOLBAR_HEIGHT + PADDING
+    let rowHeight = 0
+    const maxWidth = window.innerWidth - PADDING
+    const maxHeight = window.innerHeight - BOTTOM_TASKBAR_HEIGHT - PADDING
+
+    visibleWidgets.forEach(widget => {
+      // 如果当前行放不下，换行
+      if (currentX + widget.width > maxWidth && currentX > PADDING) {
+        currentX = PADDING
+        currentY += rowHeight + PADDING
+        rowHeight = 0
+      }
+
+      // 检查是否超出底部边界
+      if (currentY + widget.height > maxHeight) {
+        // 如果超出，回到顶部重新开始（可能需要缩小组件或调整布局）
+        currentY = TOP_TOOLBAR_HEIGHT + PADDING
+      }
+
+      // 更新组件位置
+      widget.x = currentX
+      widget.y = currentY
+      widget.updatedAt = Date.now()
+
+      // 更新当前位置和行高
+      currentX += widget.width + PADDING
+      rowHeight = Math.max(rowHeight, widget.height)
+    })
+
+    save()
+  }
+
+  // 设置缩放比 (30% - 150%)
+  function setCanvasScale(scale: number) {
+    canvasScale.value = Math.max(30, Math.min(150, scale))
   }
 
   async function deleteImageWidget(id: string) {
@@ -2205,6 +2256,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     mindMaps,
     currentMindMapId,
     isLoadingMindMap,
+    // Canvas scale state
+    canvasScale,
     // Getters
     getWidgetById,
     sortedWidgets,
@@ -2240,6 +2293,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     reorderTodoItems,
     toggleTodoPriority,
     selectWidget,
+    arrangeWidgets,
+    setCanvasScale,
     deleteImageWidget,
     openSearch,
     closeSearch,

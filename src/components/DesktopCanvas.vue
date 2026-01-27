@@ -80,16 +80,20 @@ const updateDragPosition = () => {
   const dx = dragState.value.currentX - dragState.value.startX
   const dy = dragState.value.currentY - dragState.value.startY
 
-  let newX = dragState.value.initialX + dx
-  let newY = dragState.value.initialY + dy
+  // 考虑缩放比例：鼠标移动距离需要除以缩放比例
+  const scale = store.canvasScale / 100
+  let newX = dragState.value.initialX + dx / scale
+  let newY = dragState.value.initialY + dy / scale
 
   // 网格吸附
   newX = Math.round(newX / GRID_SIZE) * GRID_SIZE
   newY = Math.round(newY / GRID_SIZE) * GRID_SIZE
 
-  // 边界限制
-  newX = Math.max(0, Math.min(newX, window.innerWidth - 200))
-  newY = Math.max(0, Math.min(newY, window.innerHeight - 100))
+  // 边界限制（考虑缩放后的实际可用空间）
+  const maxX = (window.innerWidth / scale) - 200
+  const maxY = (window.innerHeight / scale) - 100
+  newX = Math.max(0, Math.min(newX, maxX))
+  newY = Math.max(0, Math.min(newY, maxY))
 
   // 使用不保存的方法更新位置，避免拖动时频繁保存导致的卡顿
   store.updatePositionNoSave(dragState.value.widgetId, newX, newY)
@@ -266,52 +270,139 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="w-full h-full relative desktop-canvas"
+    class="w-full h-full relative desktop-canvas overflow-hidden"
     @click="handleDesktopClick"
   >
-    <!-- 背景装饰 -->
-    <div class="absolute inset-0 pointer-events-none opacity-5">
-      <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#2d2d2d" stroke-width="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
+    <!-- 缩放容器 -->
+    <div
+      class="w-full h-full origin-top-left transition-transform duration-200"
+      :style="{
+        transform: `scale(${store.canvasScale / 100})`
+      }"
+    >
+      <!-- 背景装饰 -->
+      <div class="absolute inset-0 pointer-events-none opacity-5">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#2d2d2d" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
+      <!-- 组件列表 -->
+      <WidgetWrapper
+        v-for="widget in visibleWidgets"
+        :key="widget.id"
+        :widget="widget"
+        @drag-start="startDrag"
+      />
+
+      <!-- 空状态提示 -->
+      <div
+        v-if="visibleWidgets.length === 0 && !store.isLoading && store.minimizedWidgets.length === 0"
+        class="absolute inset-0 flex items-center justify-center"
+      >
+        <div class="text-center text-pencil/50">
+          <div class="text-6xl mb-4">📋</div>
+          <p class="text-2xl font-handwritten">点击上方工具栏添加组件</p>
+        </div>
+      </div>
+
+      <!-- 加载状态 -->
+      <div
+        v-if="store.isLoading"
+        class="absolute inset-0 flex items-center justify-center bg-paper/80"
+      >
+        <div class="card-hand-drawn p-8 text-center">
+          <div class="text-4xl animate-bounce-slow mb-4">📂</div>
+          <p class="text-xl font-handwritten">加载中...</p>
+        </div>
+      </div>
     </div>
 
-    <!-- 组件列表 -->
-    <WidgetWrapper
-      v-for="widget in visibleWidgets"
-      :key="widget.id"
-      :widget="widget"
-      @drag-start="startDrag"
-    />
-
-    <!-- 任务栏（显示最小化的组件） -->
+    <!-- 任务栏（显示最小化的组件）- 不受缩放影响 -->
     <Taskbar />
 
-    <!-- 空状态提示 -->
-    <div
-      v-if="visibleWidgets.length === 0 && !store.isLoading && store.minimizedWidgets.length === 0"
-      class="absolute inset-0 flex items-center justify-center"
-    >
-      <div class="text-center text-pencil/50">
-        <div class="text-6xl mb-4">📋</div>
-        <p class="text-2xl font-handwritten">点击上方工具栏添加组件</p>
-      </div>
-    </div>
-
-    <!-- 加载状态 -->
-    <div
-      v-if="store.isLoading"
-      class="absolute inset-0 flex items-center justify-center bg-paper/80"
-    >
-      <div class="card-hand-drawn p-8 text-center">
-        <div class="text-4xl animate-bounce-slow mb-4">📂</div>
-        <p class="text-xl font-handwritten">加载中...</p>
-      </div>
+    <!-- 缩放控制 - 右下角 -->
+    <div class="fixed bottom-4 right-4 z-[9999] card-hand-drawn px-4 py-3 flex items-center gap-3">
+      <span class="font-handwritten text-sm text-pencil/60">缩放</span>
+      <input
+        type="range"
+        min="30"
+        max="150"
+        step="10"
+        :value="store.canvasScale"
+        @input="(e) => store.setCanvasScale(Number((e.target as HTMLInputElement).value))"
+        class="scale-slider"
+      />
+      <span class="font-handwritten text-sm font-bold text-pencil min-w-[3rem] text-right">{{ store.canvasScale }}%</span>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 自定义滑块样式 */
+.scale-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 128px;
+  height: 8px;
+  background: #e5e0d8;
+  border-radius: 4px;
+  border: 2px solid #2d2d2d;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.scale-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #2d2d2d;
+  border: 2px solid #fdfbf7;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px rgba(45, 45, 45, 0.3);
+  transition: all 0.2s;
+  margin-top: -6px;
+}
+
+.scale-slider::-webkit-slider-thumb:hover {
+  background: #1a1a1a;
+  transform: scale(1.15);
+}
+
+.scale-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #2d2d2d;
+  border: 2px solid #fdfbf7;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px rgba(45, 45, 45, 0.3);
+  transition: all 0.2s;
+  border: none;
+}
+
+.scale-slider::-moz-range-thumb:hover {
+  background: #1a1a1a;
+  transform: scale(1.15);
+}
+
+.scale-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  background: #e5e0d8;
+  border-radius: 4px;
+}
+
+.scale-slider::-moz-range-track {
+  height: 8px;
+  background: #e5e0d8;
+  border-radius: 4px;
+}
+</style>

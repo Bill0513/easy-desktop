@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { CheckInWidget, CheckInRecord } from '@/types'
-import { BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Flame, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Trophy } from 'lucide-vue-next'
 
 const props = defineProps<{
   widget: CheckInWidget
@@ -13,10 +13,6 @@ const store = useDesktopStore()
 // 当前查看的年月
 const currentYear = ref(new Date().getFullYear())
 const currentMonth = ref(new Date().getMonth()) // 0-11
-
-// 备注编辑状态
-const editingNote = ref(false)
-const noteText = ref('')
 
 // 获取今天的日期字符串 YYYY-MM-DD
 const getTodayString = () => {
@@ -32,22 +28,28 @@ const todayRecord = computed(() => {
 
 const isTodayCheckedIn = computed(() => !!todayRecord.value)
 
-// 打卡
-const checkIn = () => {
+// 点击日期打卡
+const handleDayClick = (day: number | null) => {
+  if (!day) return
+
+  const year = currentYear.value
+  const month = currentMonth.value
+  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+  // 只允许打卡今天
+  const today = getTodayString()
+  if (dateStr !== today) return
+
+  // 如果今天已打卡，不重复打卡
   if (isTodayCheckedIn.value) return
 
-  const today = getTodayString()
   const newRecord: CheckInRecord = {
-    date: today,
-    timestamp: Date.now(),
-    note: noteText.value.trim() || undefined
+    date: dateStr,
+    timestamp: Date.now()
   }
 
   const updatedRecords = [...props.widget.checkInRecords, newRecord]
   store.updateWidget(props.widget.id, { checkInRecords: updatedRecords })
-
-  noteText.value = ''
-  editingNote.value = false
 }
 
 // 计算连续打卡天数
@@ -104,12 +106,14 @@ const calendarDays = computed(() => {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
   // 生成日历数组
-  const days: Array<{ day: number | null; isCheckedIn: boolean; record?: CheckInRecord }> = []
+  const days: Array<{ day: number | null; isCheckedIn: boolean; record?: CheckInRecord; isToday: boolean }> = []
 
   // 填充前面的空白
   for (let i = 0; i < firstDay; i++) {
-    days.push({ day: null, isCheckedIn: false })
+    days.push({ day: null, isCheckedIn: false, isToday: false })
   }
+
+  const today = getTodayString()
 
   // 填充当月日期
   for (let day = 1; day <= daysInMonth; day++) {
@@ -118,7 +122,8 @@ const calendarDays = computed(() => {
     days.push({
       day,
       isCheckedIn: !!record,
-      record
+      record,
+      isToday: dateStr === today
     })
   }
 
@@ -156,108 +161,33 @@ const progressPercent = computed(() => {
   if (!props.widget.goal) return 0
   return Math.min(100, Math.round((streakDays.value / props.widget.goal) * 100))
 })
-
-// 显示日期的备注
-const showingNote = ref<CheckInRecord | null>(null)
-
-const showNote = (record?: CheckInRecord) => {
-  if (record?.note) {
-    showingNote.value = record
-  }
-}
-
-const hideNote = () => {
-  showingNote.value = null
-}
 </script>
 
 <template>
   <div class="h-full flex flex-col gap-3 overflow-y-auto">
-    <!-- 今日打卡区域 -->
-    <div class="card-hand-drawn p-4 bg-blue-50">
-      <div class="flex items-center justify-between mb-2">
-        <span class="font-handwritten text-sm text-pencil/60">
-          今天：{{ getTodayString() }}
-        </span>
-        <span v-if="isTodayCheckedIn" class="text-2xl">✓</span>
-      </div>
-
-      <div v-if="isTodayCheckedIn" class="text-center">
-        <div class="text-green-600 font-handwritten text-lg mb-1">已打卡</div>
-        <div class="text-xs text-gray-500 font-handwritten">
-          {{ new Date(todayRecord!.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }}
-        </div>
-        <div v-if="todayRecord!.note" class="mt-2 text-sm text-gray-600 font-handwritten italic">
-          "{{ todayRecord!.note }}"
-        </div>
-      </div>
-
-      <div v-else>
-        <button
-          @click="editingNote = !editingNote"
-          class="btn-hand-drawn w-full py-2 bg-green-100 text-pencil mb-2"
-        >
-          {{ editingNote ? '取消' : '✓ 打卡' }}
-        </button>
-
-        <div v-if="editingNote" class="space-y-2">
-          <textarea
-            v-model="noteText"
-            placeholder="添加今日备注（可选）"
-            class="input-hand-drawn w-full px-3 py-2 bg-white text-sm"
-            rows="2"
-          ></textarea>
-          <button
-            @click="checkIn"
-            class="btn-hand-drawn w-full py-2 bg-blue-100 text-pencil"
-          >
-            确认打卡
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 统计信息 -->
-    <div class="card-hand-drawn p-4 bg-yellow-50">
-      <div class="flex items-center gap-2 text-sm font-handwritten text-pencil/80 mb-2">
-        <BarChart3 :size="18" :stroke-width="2.5" />
-        <span>统计</span>
-      </div>
-      <div class="space-y-1 text-sm font-handwritten">
-        <div class="flex justify-between">
-          <span>连续打卡：</span>
-          <span class="font-bold text-orange-600">{{ streakDays }} 天</span>
-        </div>
-        <div class="flex justify-between">
-          <span>总计打卡：</span>
-          <span class="font-bold text-blue-600">{{ totalDays }} 天</span>
-        </div>
-        <div class="flex justify-between">
-          <span>本月打卡：</span>
-          <span class="font-bold text-green-600">{{ currentMonthDays }} 天</span>
-        </div>
-      </div>
-
-      <!-- 目标进度条 -->
-      <div v-if="widget.goal" class="mt-3">
-        <div class="flex justify-between text-xs font-handwritten text-pencil/60 mb-1">
-          <span>目标进度</span>
-          <span>{{ streakDays }} / {{ widget.goal }} 天</span>
-        </div>
-        <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden border-2 border-pencil">
-          <div
-            class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500"
-            :style="{ width: `${progressPercent}%` }"
-          ></div>
-        </div>
-        <div class="text-center text-xs font-handwritten text-pencil/60 mt-1">
-          {{ progressPercent }}%
-        </div>
-      </div>
-    </div>
-
     <!-- 日历 -->
     <div class="card-hand-drawn p-4 bg-white">
+      <!-- 统计信息 - 平铺成一行 -->
+      <div class="flex items-center justify-around mb-4 pb-3 border-b-2 border-pencil/10">
+        <!-- 连续打卡 -->
+        <div class="flex flex-col items-center gap-1">
+          <Flame :size="20" :stroke-width="2.5" class="text-orange-600" />
+          <span class="font-handwritten text-lg font-bold text-orange-600">{{ streakDays }}</span>
+        </div>
+
+        <!-- 总计打卡 -->
+        <div class="flex flex-col items-center gap-1">
+          <Trophy :size="20" :stroke-width="2.5" class="text-blue-600" />
+          <span class="font-handwritten text-lg font-bold text-blue-600">{{ totalDays }}</span>
+        </div>
+
+        <!-- 本月打卡 -->
+        <div class="flex flex-col items-center gap-1">
+          <CalendarIcon :size="20" :stroke-width="2.5" class="text-green-600" />
+          <span class="font-handwritten text-lg font-bold text-green-600">{{ currentMonthDays }}</span>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between mb-3">
         <button
           @click="prevMonth"
@@ -266,7 +196,7 @@ const hideNote = () => {
           <ChevronLeft :size="16" :stroke-width="2.5" />
         </button>
         <div class="flex items-center gap-2 font-handwritten font-bold text-pencil">
-          <Calendar :size="18" :stroke-width="2.5" />
+          <CalendarIcon :size="18" :stroke-width="2.5" />
           <span>{{ currentYear }} 年 {{ monthName }}</span>
         </div>
         <button
@@ -296,25 +226,35 @@ const hideNote = () => {
           class="aspect-square flex items-center justify-center text-sm font-handwritten relative"
           :class="[
             item.day ? 'cursor-pointer hover:bg-gray-100' : '',
-            item.isCheckedIn ? 'bg-green-100 border-2 border-green-500 rounded-lg' : 'border border-gray-300 rounded-lg'
+            item.isCheckedIn ? 'bg-green-100 border-2 border-green-500 rounded-lg' : 'border border-gray-300 rounded-lg',
+            item.isToday && !item.isCheckedIn ? 'hover:bg-yellow-100' : ''
           ]"
-          @mouseenter="showNote(item.record)"
-          @mouseleave="hideNote"
+          @click="handleDayClick(item.day)"
         >
           <span v-if="item.day" :class="item.isCheckedIn ? 'font-bold text-green-700' : 'text-gray-700'">
             {{ item.day }}
           </span>
           <span v-if="item.isCheckedIn" class="absolute top-0 right-0 text-xs">✓</span>
+          <!-- 今天未打卡显示红色小圆点 -->
+          <span v-if="item.isToday && !item.isCheckedIn" class="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full"></span>
         </div>
       </div>
 
-      <!-- 备注提示 -->
-      <div
-        v-if="showingNote"
-        class="mt-3 p-2 bg-yellow-50 border-2 border-yellow-300 rounded-lg text-sm font-handwritten text-gray-700"
-      >
-        <div class="font-bold mb-1">{{ showingNote.date }}</div>
-        <div class="italic">"{{ showingNote.note }}"</div>
+      <!-- 目标进度条 -->
+      <div v-if="widget.goal" class="mt-4 pt-3 border-t-2 border-pencil/10">
+        <div class="flex justify-between text-xs font-handwritten text-pencil/60 mb-1">
+          <span>目标进度</span>
+          <span>{{ streakDays }} / {{ widget.goal }} 天</span>
+        </div>
+        <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden border-2 border-pencil">
+          <div
+            class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500"
+            :style="{ width: `${progressPercent}%` }"
+          ></div>
+        </div>
+        <div class="text-center text-xs font-handwritten text-pencil/60 mt-1">
+          {{ progressPercent }}%
+        </div>
       </div>
     </div>
   </div>

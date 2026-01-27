@@ -20,6 +20,30 @@ const transformedData = ref<any>(null)
 const backgroundExpanded = ref(false)
 // 数据导入展开状态
 const importExpanded = ref(false)
+// 新闻源设置展开状态
+const newsSourceExpanded = ref(false)
+
+// 新闻源列表
+const allSources = [
+  { id: 'baidu', name: '百度热搜', icon: '🔥' },
+  { id: 'github', name: 'GitHub Trending', icon: '🐙' },
+  { id: 'zhihu', name: '知乎热榜', icon: '💡' },
+  { id: 'douyin', name: '抖音热搜', icon: '🎵' },
+  { id: 'hupu', name: '虎扑', icon: '🏀' },
+  { id: 'tieba', name: '百度贴吧', icon: '💬' },
+  { id: 'toutiao', name: '今日头条', icon: '📰' },
+  { id: 'thepaper', name: '澎湃新闻', icon: '📄' },
+  { id: 'chongbuluo', name: '虫部落', icon: '🐛' },
+  { id: 'tencent', name: '腾讯新闻', icon: '🐧' },
+  { id: 'wallstreetcn', name: '华尔街见闻', icon: '💰' },
+  { id: 'zaobao', name: '联合早报', icon: '📰' },
+  { id: 'sputniknewscn', name: '卫星通讯社', icon: '🛰️' },
+  { id: 'coolapk', name: '酷安', icon: '📱' },
+  { id: 'ithome', name: 'IT之家', icon: '💻' },
+  { id: 'juejin', name: '稀土掘金', icon: '⛏️' },
+  { id: 'sspai', name: '少数派', icon: '✨' },
+  { id: 'solidot', name: 'Solidot', icon: '🔧' }
+]
 
 // 预设颜色
 const presetColors = [
@@ -291,6 +315,50 @@ const handleClose = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 新闻源设置 -->
+          <div class="mb-4">
+            <button
+              class="w-full border-2 border-pencil/20 rounded-lg p-4 wobbly hover:bg-muted/30 transition-colors flex items-center justify-between"
+              @click="newsSourceExpanded = !newsSourceExpanded"
+            >
+              <h3 class="font-handwritten text-xl font-semibold text-pencil flex items-center gap-2">
+                🔥 新闻源设置
+              </h3>
+              <ChevronDown v-if="!newsSourceExpanded" :size="20" :stroke-width="2.5" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+            </button>
+
+            <div v-if="newsSourceExpanded" class="mt-3 border-2 border-pencil/20 rounded-lg p-4 wobbly space-y-3">
+              <p class="font-handwritten text-sm text-pencil/70">
+                选择要显示的新闻源，点击按钮启用或禁用
+              </p>
+
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <button
+                  v-for="source in allSources"
+                  :key="source.id"
+                  class="card-hand-drawn px-3 py-2 flex items-center gap-2 transition-all hover:scale-105"
+                  :style="{
+                    background: store.enabledSources.has(source.id) ? '#ff4d4d' : '#e8e8e8',
+                    color: store.enabledSources.has(source.id) ? '#fdfbf7' : '#2d2d2d',
+                    boxShadow: '2px 2px 0px #2d2d2d'
+                  }"
+                  @click="store.toggleNewsSource(source.id)"
+                >
+                  <span class="text-base">{{ source.icon }}</span>
+                  <span class="font-handwritten text-sm font-medium flex-1 text-left">{{ source.name }}</span>
+                  <span v-if="store.enabledSources.has(source.id)" class="text-sm">✓</span>
+                </button>
+              </div>
+
+              <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 wobbly-sm">
+                <p class="font-handwritten text-xs text-pencil/70">
+                  已启用 {{ store.enabledSources.size }} / {{ allSources.length }} 个新闻源
+                </p>
               </div>
             </div>
           </div>

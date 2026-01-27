@@ -23,7 +23,7 @@ const handleRefresh = async () => {
 
 <template>
   <div
-    class="card-hand-drawn flex flex-col overflow-hidden"
+    class="card-hand-drawn flex flex-col overflow-hidden bg-white"
     style="
       box-shadow: 3px 3px 0px #2d2d2d;
       border: 2px solid #2d2d2d;
@@ -33,18 +33,11 @@ const handleRefresh = async () => {
   >
     <!-- 新闻源标题 -->
     <div
-      class="px-3 py-2 flex items-center gap-2 flex-shrink-0"
-      style="
-        background: linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%);
-        border-bottom: 2px solid #2d2d2d;
-      "
+      class="px-4 py-3 flex items-center gap-2 flex-shrink-0 border-b-2 border-pencil"
     >
-      <span class="text-xl">{{ source.icon }}</span>
+      <span class="text-2xl">{{ source.icon }}</span>
       <div class="flex-1 min-w-0">
-        <h3 class="font-handwritten text-sm font-bold text-pencil truncate">{{ source.name }}</h3>
-        <p class="font-handwritten text-[10px] text-pencil/60 truncate">
-          {{ source.lastUpdated ? `更新于 ${new Date(source.lastUpdated).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : '暂无更新' }}
-        </p>
+        <h3 class="font-handwritten text-lg font-bold text-pencil">{{ source.name }}</h3>
       </div>
 
       <!-- 刷新按钮 -->
@@ -87,49 +80,30 @@ const handleRefresh = async () => {
     </div>
 
     <!-- 新闻列表 -->
-    <div v-else class="flex-1 overflow-y-auto space-y-1.5 p-2.5">
+    <div v-else class="flex-1 overflow-y-auto">
       <button
         v-for="(item, index) in source.items"
         :key="item.id"
-        class="w-full text-left group relative"
+        class="w-full text-left group px-4 py-3 border-b border-pencil/10 hover:bg-yellow-50 transition-colors flex items-center gap-3"
         @click="openLink(item.url)"
       >
-        <!-- 新闻卡片 -->
-        <div
-          class="px-2 py-1.5 transition-all duration-200 hover:scale-[1.02]"
-          style="
-            box-shadow: 2px 2px 0px #2d2d2d;
-            border: 1.5px solid #2d2d2d;
-            background: #fdfbf7;
-          "
-          :style="{
-            borderRadius: index % 3 === 0
-              ? '225px 15px 255px 15px / 15px 255px 15px 225px'
-              : index % 3 === 1
-              ? '15px 255px 15px 225px / 255px 15px 225px 15px'
-              : '255px 15px 225px 15px / 15px 225px 15px 255px'
-          }"
+        <!-- 序号 -->
+        <span
+          class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full font-handwritten text-xs font-bold"
+          :class="[
+            index < 3 ? 'bg-accent text-paper' : 'bg-muted text-pencil'
+          ]"
         >
-          <!-- 序号 -->
-          <div class="flex items-center gap-1.5">
-            <span
-              class="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full font-handwritten text-[10px] font-bold"
-              :class="[
-                index < 3 ? 'bg-accent text-paper' : 'bg-muted text-pencil'
-              ]"
-            >
-              {{ index + 1 }}
-            </span>
+          {{ index + 1 }}
+        </span>
 
-            <!-- 内容 -->
-            <p
-              class="font-handwritten text-base text-pencil group-hover:text-accent transition-colors truncate"
-              :title="item.title"
-            >
-              {{ item.title }}
-            </p>
-          </div>
-        </div>
+        <!-- 标题 -->
+        <p
+          class="font-handwritten text-base text-pencil group-hover:text-accent transition-colors flex-1 line-clamp-2"
+          :title="item.title"
+        >
+          {{ item.title }}
+        </p>
       </button>
     </div>
   </div>
@@ -159,5 +133,6 @@ const handleRefresh = async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

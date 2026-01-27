@@ -10,7 +10,8 @@ import {
   Timer,
   Dices,
   CalendarCheck,
-  Minimize2
+  Minimize2,
+  LayoutGrid
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -92,6 +93,11 @@ const minimizeAll = () => {
     store.toggleMinimize(widget.id)
   })
 }
+
+// 一键整理
+const arrangeAll = () => {
+  store.arrangeWidgets()
+}
 </script>
 
 <template>
@@ -100,6 +106,16 @@ const minimizeAll = () => {
     class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]"
   >
     <div class="card-hand-drawn px-4 py-2 flex items-center gap-2">
+      <!-- 一键整理按钮 -->
+      <button
+        v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
+        @click="arrangeAll"
+        class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
+        title="一键整理"
+      >
+        <LayoutGrid :stroke-width="2.5" class="w-5 h-5 text-pencil" />
+      </button>
+
       <!-- 一键最小化按钮 -->
       <button
         v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
