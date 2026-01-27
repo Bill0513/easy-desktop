@@ -772,6 +772,7 @@ export const useDesktopStore = defineStore('desktop', () => {
         id: uuidv4(),
         text,
         completed: false,
+        priority: undefined  // 默认无优先级
       }
       widget.items.unshift(item)
       widget.updatedAt = Date.now()
@@ -818,6 +819,27 @@ export const useDesktopStore = defineStore('desktop', () => {
       widget.items = newItems
       widget.updatedAt = Date.now()
       save()
+    }
+  }
+
+  function toggleTodoPriority(widgetId: string, itemId: string) {
+    const widget = getWidgetById.value(widgetId)
+    if (widget?.type === 'todo') {
+      const item = widget.items.find(i => i.id === itemId)
+      if (item) {
+        // 循环切换优先级: undefined -> 1 -> 2 -> 3 -> undefined
+        if (item.priority === undefined) {
+          item.priority = 1
+        } else if (item.priority === 1) {
+          item.priority = 2
+        } else if (item.priority === 2) {
+          item.priority = 3
+        } else {
+          item.priority = undefined
+        }
+        widget.updatedAt = Date.now()
+        save()
+      }
     }
   }
 
@@ -2216,6 +2238,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     updateTodoItem,
     deleteTodoItem,
     reorderTodoItems,
+    toggleTodoPriority,
     selectWidget,
     deleteImageWidget,
     openSearch,

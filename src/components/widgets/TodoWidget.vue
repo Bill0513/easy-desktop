@@ -104,6 +104,23 @@ const handleEditCompositionStart = () => {
 const handleEditCompositionEnd = () => {
   isEditComposing.value = false
 }
+
+// 获取优先级颜色
+const getPriorityColor = (priority?: number) => {
+  if (!priority) return ''
+  switch (priority) {
+    case 1: return 'bg-red-100 border-red-400 text-red-700'  // 高优先级 - 红色
+    case 2: return 'bg-yellow-100 border-yellow-400 text-yellow-700'  // 中优先级 - 黄色
+    case 3: return 'bg-blue-100 border-blue-400 text-blue-700'  // 低优先级 - 蓝色
+    default: return ''
+  }
+}
+
+// 获取优先级文本
+const getPriorityText = (priority?: number) => {
+  if (!priority) return ''
+  return priority.toString()
+}
 </script>
 
 <template>
@@ -131,6 +148,27 @@ const handleEditCompositionEnd = () => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
               </svg>
             </div>
+
+            <!-- 优先级按钮 -->
+            <button
+              v-if="item.priority"
+              class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all flex-shrink-0"
+              :class="getPriorityColor(item.priority)"
+              @click="store.toggleTodoPriority(widget.id, item.id)"
+              :title="`优先级: ${item.priority}`"
+            >
+              {{ getPriorityText(item.priority) }}
+            </button>
+            <button
+              v-else
+              class="w-6 h-6 rounded-full border-2 border-dashed border-pencil/30 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 hover:border-pencil/60"
+              @click="store.toggleTodoPriority(widget.id, item.id)"
+              title="设置优先级"
+            >
+              <svg class="w-3 h-3 text-pencil/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
 
             <!-- 复选框 -->
             <button

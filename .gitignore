@@ -63,4 +63,6 @@ server/storage/
 *.db
 *.db-shm
 *.db-wal
-error-image
+
+# Error screenshots
+error-image/

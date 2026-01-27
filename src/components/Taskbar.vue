@@ -9,7 +9,8 @@ import {
   FileCode,
   Timer,
   Dices,
-  CalendarCheck
+  CalendarCheck,
+  Minimize2
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -83,21 +84,42 @@ const restoreWidget = (id: string) => {
   store.selectWidget(id)
   hidePopup()
 }
+
+// 一键最小化所有组件
+const minimizeAll = () => {
+  const visibleWidgets = store.widgets.filter(w => !w.isMinimized && !w.isMaximized)
+  visibleWidgets.forEach(widget => {
+    store.toggleMinimize(widget.id)
+  })
+}
 </script>
 
 <template>
   <div
-    v-if="Object.keys(groupedMinimizedWidgets).length > 0"
+    v-if="Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
     class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]"
   >
     <div class="card-hand-drawn px-4 py-2 flex items-center gap-2">
+      <!-- 一键最小化按钮 -->
+      <button
+        v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
+        @click="minimizeAll"
+        class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
+        title="最小化全部"
+      >
+        <Minimize2 :stroke-width="2.5" class="w-5 h-5 text-pencil" />
+      </button>
+
+      <!-- 分隔线 -->
+      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0 && store.widgets.some(w => !w.isMinimized && !w.isMaximized)" class="w-px h-6 bg-pencil/20"></div>
+
       <!-- 任务栏标题 -->
-      <span class="text-sm font-handwritten text-pencil/40 px-2">
+      <span v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="text-sm font-handwritten text-pencil/40 px-2">
         已最小化
       </span>
 
       <!-- 分隔线 -->
-      <div class="w-px h-6 bg-pencil/20"></div>
+      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="w-px h-6 bg-pencil/20"></div>
 
       <!-- 按类型分组的组件按钮 -->
       <div

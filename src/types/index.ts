@@ -6,6 +6,7 @@ export interface TodoItem {
   id: string
   text: string
   completed: boolean
+  priority?: number  // 优先级 1-3 (1=高, 2=中, 3=低)
 }
 
 // 打卡记录

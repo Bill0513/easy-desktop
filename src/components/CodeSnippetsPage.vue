@@ -262,12 +262,24 @@ const selectedSnippet = computed(() => {
   return store.codeSnippets.find(s => s.id === store.selectedSnippetId)
 })
 
+// 高亮后的代码
+const highlightedCode = ref('')
+
 async function highlightCode(code: string, language: string) {
   // 动态加载Prism语言包
   await loadPrismLanguage(language)
   const grammar = Prism.languages[language] || Prism.languages.javascript
   return Prism.highlight(code, grammar, language)
 }
+
+// 当选中的代码片段变化时,重新高亮代码
+watch(selectedSnippet, async (newSnippet) => {
+  if (newSnippet) {
+    highlightedCode.value = await highlightCode(newSnippet.code, newSnippet.language)
+  } else {
+    highlightedCode.value = ''
+  }
+}, { immediate: true })
 
 const tagInput = ref('')
 
@@ -531,7 +543,7 @@ onUnmounted(() => {
 
           <div class="card-hand-drawn p-4 bg-gray-900 overflow-x-auto">
             <pre class="text-sm"><code
-              v-html="highlightCode(selectedSnippet.code, selectedSnippet.language)"
+              v-html="highlightedCode"
             ></code></pre>
           </div>
         </div>
