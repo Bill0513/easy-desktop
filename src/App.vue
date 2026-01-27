@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import DesktopCanvas from '@/components/DesktopCanvas.vue'
 import Toolbar from '@/components/Toolbar.vue'
@@ -7,27 +7,25 @@ import PasswordInput from '@/components/PasswordInput.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import TabBar from '@/components/TabBar.vue'
 import NavigationPage from '@/components/NavigationPage.vue'
-import NewsPage from '@/components/NewsPage.vue'
-import ResourceSearchPage from '@/components/ResourceSearchPage.vue'
-import FilePage from '@/components/FilePage.vue'
-import MindMapPage from '@/components/MindMapPage.vue'
-import CodeSnippetsPage from '@/components/CodeSnippetsPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+
+// 异步加载其他tab组件
+const NewsPage = defineAsyncComponent(() => import('@/components/NewsPage.vue'))
+const FilePage = defineAsyncComponent(() => import('@/components/FilePage.vue'))
+const MindMapPage = defineAsyncComponent(() => import('@/components/MindMapPage.vue'))
+const CodeSnippetsPage = defineAsyncComponent(() => import('@/components/CodeSnippetsPage.vue'))
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
 const toastContainer = ref<InstanceType<typeof ToastContainer> | null>(null)
 let syncInterval: number | null = null
 
-// Ctrl+F 快捷键打开搜索（仅在桌面Tab和导航Tab下生效）
+// Ctrl+F 快捷键打开搜索（在所有Tab下生效）
 const handleKeydown = (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    // 只在桌面Tab和导航Tab下触发搜索
-    if (store.activeTab === 'desktop' || store.activeTab === 'navigation') {
-      e.preventDefault()
-      store.openSearch()
-    }
+    e.preventDefault()
+    store.openSearch()
   }
 }
 
@@ -102,6 +100,9 @@ const handleUnlock = async () => {
       <!-- Tab 栏 -->
       <TabBar />
 
+      <!-- 全局搜索（在所有tab都生效） -->
+      <GlobalSearch />
+
       <!-- 桌面 Tab -->
       <div v-show="store.activeTab === 'desktop'" class="w-full h-full">
         <!-- 工具栏 -->
@@ -109,26 +110,16 @@ const handleUnlock = async () => {
 
         <!-- 桌面画布 -->
         <DesktopCanvas />
-
-        <!-- 全局搜索 -->
-        <GlobalSearch />
       </div>
 
       <!-- 导航 Tab -->
       <div v-show="store.activeTab === 'navigation'" class="w-full h-full">
         <NavigationPage />
-        <!-- 全局搜索 -->
-        <GlobalSearch />
       </div>
 
       <!-- 新闻 Tab -->
       <div v-show="store.activeTab === 'news'" class="w-full h-full">
         <NewsPage />
-      </div>
-
-      <!-- 资源搜索 Tab -->
-      <div v-show="store.activeTab === 'resource-search'" class="w-full h-full">
-        <ResourceSearchPage />
       </div>
 
       <!-- 文件 Tab -->

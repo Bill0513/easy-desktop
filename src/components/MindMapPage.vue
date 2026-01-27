@@ -322,6 +322,17 @@ watch(() => store.activeTab, async (newTab) => {
   }
 })
 
+// Watch for currentMindMapId changes (from global search)
+watch(() => store.currentMindMapId, async (newId, oldId) => {
+  // 只在ID真正变化且新ID存在时才打开
+  if (newId && newId !== oldId && store.activeTab === 'mindmap') {
+    const mindMapFile = store.mindMaps.find(m => m.id === newId)
+    if (mindMapFile) {
+      await handleOpen(mindMapFile)
+    }
+  }
+})
+
 onUnmounted(() => {
   if (autoSaveTimer) {
     clearTimeout(autoSaveTimer)
@@ -549,7 +560,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 <template>
   <div class="w-full h-full flex">
     <!-- Left sidebar with tools -->
-    <div class="w-20 flex-shrink-0 border-r-2 border-pencil/20 flex flex-col items-center gap-2 py-4 bg-paper">
+    <div class="w-20 flex-shrink-0 border-r-2 border-pencil/20 flex flex-col items-center gap-2 py-4" :style="{ backgroundColor: store.backgroundColor }">
       <!-- 新建 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"

@@ -11,8 +11,24 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['@cloudflare/puppeteer']
-    }
+      external: ['@cloudflare/puppeteer'],
+      output: {
+        manualChunks: {
+          // Vue核心库
+          'vue-vendor': ['vue', 'pinia'],
+          // 编辑器库
+          'editor-vendor': ['codemirror', '@codemirror/state', '@codemirror/view'],
+          // Office预览库（最大的依赖）
+          'office-vendor': ['@vue-office/docx', '@vue-office/excel', '@vue-office/pdf'],
+          // 思维导图库
+          'mindmap-vendor': ['simple-mind-map'],
+          // 工具库
+          'utils-vendor': ['uuid', 'marked', 'lucide-vue-next']
+        }
+      }
+    },
+    // 增加chunk大小警告限制
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 3000,

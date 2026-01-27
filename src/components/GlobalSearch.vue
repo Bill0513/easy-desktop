@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import type { Widget, NavigationSite, FileItem, FolderItem } from '@/types'
+import type { Widget, NavigationSite, FileItem, FolderItem, MindMapFile, CodeSnippet } from '@/types'
 
 const store = useDesktopStore()
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -19,64 +19,84 @@ const typeNames: Record<string, string> = {
   image: '图片',
   markdown: 'Markdown',
   file: '文件',
+  mindmap: '思维导图',
+  codesnippet: '代码片段',
 }
 
 // 类型守卫
-const isWidget = (item: Widget | NavigationSite | FileItem | FolderItem): item is Widget => {
-  return 'type' in item && 'title' in item
+const isWidget = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is Widget => {
+  return 'type' in item && 'title' in item && !('mimeType' in item) && !('data' in item) && !('code' in item)
 }
 
-const isNavigationSite = (item: Widget | NavigationSite | FileItem | FolderItem): item is NavigationSite => {
+const isNavigationSite = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is NavigationSite => {
   return 'name' in item && 'url' in item && 'description' in item
 }
 
-const isFileItem = (item: Widget | NavigationSite | FileItem | FolderItem): item is FileItem => {
+const isFileItem = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is FileItem => {
   return 'type' in item && item.type === 'file' && 'mimeType' in item
 }
 
-const isFolderItem = (item: Widget | NavigationSite | FileItem | FolderItem): item is FolderItem => {
+const isFolderItem = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is FolderItem => {
   return 'type' in item && item.type === 'folder' && !('mimeType' in item)
 }
 
+const isMindMapFile = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is MindMapFile => {
+  return 'name' in item && 'data' in item && 'lastOpened' in item
+}
+
+const isCodeSnippet = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): item is CodeSnippet => {
+  return 'title' in item && 'code' in item && 'language' in item
+}
+
 // 获取显示标题
-const getItemTitle = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
+const getItemTitle = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): string => {
   if (isWidget(item)) return item.title
   if (isNavigationSite(item)) return item.name
   if (isFileItem(item) || isFolderItem(item)) return item.name
+  if (isMindMapFile(item)) return item.name
+  if (isCodeSnippet(item)) return item.title
   return ''
 }
 
 // 获取显示类型
-const getItemType = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
+const getItemType = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): string => {
   if (isWidget(item)) return typeNames[item.type] || item.type
   if (isNavigationSite(item)) return '网站'
   if (isFolderItem(item)) return '文件夹'
   if (isFileItem(item)) return '文件'
+  if (isMindMapFile(item)) return '思维导图'
+  if (isCodeSnippet(item)) return '代码片段'
   return ''
 }
 
 // 获取显示状态
-const getItemStatus = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
+const getItemStatus = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): string => {
   if (isWidget(item)) return item.isMinimized ? '已最小化' : '在桌面'
   if (isNavigationSite(item)) return item.url
   if (isFileItem(item)) return `${Math.round(item.size / 1024)} KB`
   if (isFolderItem(item)) return '文件夹'
+  if (isMindMapFile(item)) return new Date(item.lastOpened).toLocaleDateString()
+  if (isCodeSnippet(item)) return item.language
   return ''
 }
 
 // 获取显示颜色
-const getItemColor = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
+const getItemColor = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): string => {
   if (isWidget(item) && 'color' in item) return (item as any).color
   if (isNavigationSite(item)) return item.color
+  if (isMindMapFile(item)) return '#c8e6c9'
+  if (isCodeSnippet(item)) return '#ffe0b2'
   return '#bbdefb'
 }
 
 // 获取类型首字母
-const getItemTypeInitial = (item: Widget | NavigationSite | FileItem | FolderItem): string => {
+const getItemTypeInitial = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet): string => {
   if (isWidget(item)) return typeNames[item.type]?.charAt(0) || item.type.charAt(0).toUpperCase()
   if (isNavigationSite(item)) return item.name.charAt(0).toUpperCase()
   if (isFolderItem(item)) return '📁'
   if (isFileItem(item)) return '📄'
+  if (isMindMapFile(item)) return '🧠'
+  if (isCodeSnippet(item)) return '💻'
   return '?'
 }
 
@@ -150,7 +170,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 }
 
 // 点击结果
-const handleResultClick = (item: Widget | NavigationSite | FileItem | FolderItem) => {
+const handleResultClick = (item: Widget | NavigationSite | FileItem | FolderItem | MindMapFile | CodeSnippet) => {
   if (isWidget(item)) {
     store.focusWidget(item.id)
   } else if (isNavigationSite(item)) {
@@ -172,6 +192,16 @@ const handleResultClick = (item: Widget | NavigationSite | FileItem | FolderItem
     store.setActiveTab('file')
     store.currentFolderId = item.parentId
     // TODO: 打开文件预览
+    store.closeSearch()
+  } else if (isMindMapFile(item)) {
+    // 切换到思维导图tab并设置要打开的思维导图ID
+    store.setActiveTab('mindmap')
+    store.currentMindMapId = item.id
+    store.closeSearch()
+  } else if (isCodeSnippet(item)) {
+    // 切换到代码片段tab并选中该代码片段
+    store.setActiveTab('code-snippets')
+    store.selectedSnippetId = item.id
     store.closeSearch()
   }
 }

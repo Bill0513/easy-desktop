@@ -113,7 +113,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (!searchQuery.value.trim()) return []
     const query = searchQuery.value.toLowerCase()
 
-    // 全局搜索：同时搜索桌面组件、导航网站和文件
+    // 全局搜索：同时搜索桌面组件、导航网站、文件、思维导图和代码片段
     const widgetResults = widgets.value.filter(widget => {
       if (widget.title.toLowerCase().includes(query)) return true
 
@@ -143,8 +143,17 @@ export const useDesktopStore = defineStore('desktop', () => {
       folder.name.toLowerCase().includes(query)
     )
 
-    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹最后
-    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults]
+    const mindMapResults = mindMaps.value.filter(mindMap =>
+      mindMap.name.toLowerCase().includes(query)
+    )
+
+    const codeSnippetResults = codeSnippets.value.filter(snippet =>
+      snippet.title.toLowerCase().includes(query) ||
+      snippet.code.toLowerCase().includes(query)
+    )
+
+    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹、思维导图、代码片段最后
+    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults, ...mindMapResults, ...codeSnippetResults]
   })
 
   // 当前文件夹下的项目（文件+文件夹）

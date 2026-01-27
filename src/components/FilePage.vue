@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
-import FilePreviewDialog from './FilePreviewDialog.vue'
+// 异步加载文件预览对话框，减少主bundle大小
+const FilePreviewDialog = defineAsyncComponent(() => import('./FilePreviewDialog.vue'))
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 import { getFileIcon } from '@/utils/fileIcons'

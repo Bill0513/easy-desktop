@@ -12,7 +12,7 @@ const store = useDesktopStore()
 const newItemText = ref('')
 const editingItemId = ref<string | null>(null)
 const editingText = ref('')
-const editInput = ref<HTMLInputElement | null>(null)
+const editInput = ref<HTMLTextAreaElement | null>(null)
 
 // 输入法组合状态
 const isComposing = ref(false)
@@ -63,7 +63,16 @@ const startEditItem = (itemId: string, currentText: string) => {
   nextTick(() => {
     editInput.value?.focus()
     editInput.value?.select()
+    autoResizeTextarea()
   })
+}
+
+// 自动调整textarea高度
+const autoResizeTextarea = () => {
+  if (editInput.value) {
+    editInput.value.style.height = 'auto'
+    editInput.value.style.height = editInput.value.scrollHeight + 'px'
+  }
 }
 
 // 保存编辑
@@ -135,15 +144,17 @@ const handleEditCompositionEnd = () => {
             </button>
 
             <!-- 文本 -->
-            <input
+            <textarea
               v-if="editingItemId === item.id"
               ref="editInput"
               v-model="editingText"
-              class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none"
+              class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none resize-none"
+              rows="1"
               @blur="saveEdit"
               @keydown="handleEditKeydown"
               @compositionstart="handleEditCompositionStart"
               @compositionend="handleEditCompositionEnd"
+              @input="autoResizeTextarea"
             />
             <span
               v-else

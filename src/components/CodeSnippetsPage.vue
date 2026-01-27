@@ -3,22 +3,9 @@ import { ref, computed, onUnmounted, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
-import { javascript } from '@codemirror/lang-javascript'
-import { python } from '@codemirror/lang-python'
-import { sql } from '@codemirror/lang-sql'
-import { html } from '@codemirror/lang-html'
-import { css } from '@codemirror/lang-css'
 import { oneDark } from '@codemirror/theme-one-dark'
 import Prism from 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-python'
-import 'prismjs/components/prism-sql'
-import 'prismjs/components/prism-markup'
-import 'prismjs/components/prism-css'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-json'
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import { Pencil, Trash2, Plus } from 'lucide-vue-next'
 
@@ -38,17 +25,69 @@ const editingSnippet = ref<{
 // 编辑器实例
 const editorContainer = ref<HTMLElement | null>(null)
 let editorView: EditorView | null = null
+let isInitializing = false  // 防止重复初始化
 
-// 语言映射
-const languageExtensions: Record<string, any> = {
-  javascript: javascript(),
-  typescript: javascript({ typescript: true }),
-  python: python(),
-  sql: sql(),
-  html: html(),
-  css: css(),
-  bash: javascript(),
-  json: javascript(),
+// 动态加载语言扩展
+const loadLanguageExtension = async (language: string) => {
+  switch (language) {
+    case 'javascript':
+    case 'typescript':
+      const { javascript } = await import('@codemirror/lang-javascript')
+      return language === 'typescript' ? javascript({ typescript: true }) : javascript()
+    case 'python':
+      const { python } = await import('@codemirror/lang-python')
+      return python()
+    case 'sql':
+      const { sql } = await import('@codemirror/lang-sql')
+      return sql()
+    case 'html':
+      const { html } = await import('@codemirror/lang-html')
+      return html()
+    case 'css':
+      const { css } = await import('@codemirror/lang-css')
+      return css()
+    default:
+      const { javascript: js } = await import('@codemirror/lang-javascript')
+      return js()
+  }
+}
+
+// 动态加载Prism语言包
+const loadPrismLanguage = async (language: string) => {
+  switch (language) {
+    case 'javascript':
+      // @ts-ignore
+      await import('prismjs/components/prism-javascript')
+      break
+    case 'typescript':
+      // @ts-ignore
+      await import('prismjs/components/prism-typescript')
+      break
+    case 'python':
+      // @ts-ignore
+      await import('prismjs/components/prism-python')
+      break
+    case 'sql':
+      // @ts-ignore
+      await import('prismjs/components/prism-sql')
+      break
+    case 'html':
+      // @ts-ignore
+      await import('prismjs/components/prism-markup')
+      break
+    case 'css':
+      // @ts-ignore
+      await import('prismjs/components/prism-css')
+      break
+    case 'bash':
+      // @ts-ignore
+      await import('prismjs/components/prism-bash')
+      break
+    case 'json':
+      // @ts-ignore
+      await import('prismjs/components/prism-json')
+      break
+  }
 }
 
 // 语言选项
@@ -64,20 +103,25 @@ const languageOptions = [
 ]
 
 // 初始化编辑器
-function initEditor() {
+async function initEditor() {
   if (!editorContainer.value || !editingSnippet.value) return
+
+  // 防止重复初始化
+  if (isInitializing) return
+  isInitializing = true
 
   if (editorView) {
     editorView.destroy()
   }
 
-  const language = languageExtensions[editingSnippet.value.language] || javascript()
+  // 动态加载语言扩展
+  const languageExtension = await loadLanguageExtension(editingSnippet.value.language)
 
   const state = EditorState.create({
     doc: editingSnippet.value.code,
     extensions: [
       basicSetup,
-      language,
+      languageExtension,
       oneDark,
       EditorView.updateListener.of((update) => {
         if (update.docChanged && editingSnippet.value) {
@@ -91,19 +135,25 @@ function initEditor() {
     state,
     parent: editorContainer.value,
   })
+
+  isInitializing = false
 }
 
 watch(() => isEditing.value, (newVal) => {
   if (newVal) {
     setTimeout(() => initEditor(), 100)
-  } else if (editorView) {
-    editorView.destroy()
-    editorView = null
+  } else {
+    if (editorView) {
+      editorView.destroy()
+      editorView = null
+    }
+    isInitializing = false  // 重置标志
   }
 })
 
-watch(() => editingSnippet.value?.language, () => {
-  if (isEditing.value) {
+watch(() => editingSnippet.value?.language, (newLang, oldLang) => {
+  // 只在语言真正变化时重新初始化（避免首次设置时重复初始化）
+  if (isEditing.value && oldLang !== undefined && newLang !== oldLang) {
     setTimeout(() => initEditor(), 100)
   }
 })
@@ -212,7 +262,9 @@ const selectedSnippet = computed(() => {
   return store.codeSnippets.find(s => s.id === store.selectedSnippetId)
 })
 
-function highlightCode(code: string, language: string) {
+async function highlightCode(code: string, language: string) {
+  // 动态加载Prism语言包
+  await loadPrismLanguage(language)
   const grammar = Prism.languages[language] || Prism.languages.javascript
   return Prism.highlight(code, grammar, language)
 }
