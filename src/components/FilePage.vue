@@ -8,6 +8,7 @@ import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 import { getFileIcon } from '@/utils/fileIcons'
 import { FolderOpen } from 'lucide-vue-next'
+import CustomSelect from './CustomSelect.vue'
 
 const store = useDesktopStore()
 
@@ -576,14 +577,15 @@ const getItemIcon = (item: FileItem | FolderItem) => {
 
       <!-- 排序选项 -->
       <div class="flex items-center gap-2">
-        <select
+        <CustomSelect
           v-model="store.fileSortBy"
-          class="input-hand-drawn px-3 py-1 text-sm"
-        >
-          <option value="name">按名称</option>
-          <option value="size">按大小</option>
-          <option value="date">按日期</option>
-        </select>
+          :options="[
+            { label: '按名称', value: 'name' },
+            { label: '按大小', value: 'size' },
+            { label: '按日期', value: 'date' }
+          ]"
+          width="120px"
+        />
         <button
           class="btn-hand-drawn p-3"
           @click="store.fileSortOrder = store.fileSortOrder === 'asc' ? 'desc' : 'asc'"

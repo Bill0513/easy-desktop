@@ -146,11 +146,11 @@ const arrangeAll = () => {
         @mouseleave="hidePopup"
       >
         <button
-          class="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
+          class="flex items-center gap-1.5 px-2 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group relative"
         >
           <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-5 h-5" />
-          <span class="font-handwritten text-sm">
-            {{ `${typeNames[type]} (${widgets.length})` }}
+          <span class="font-handwritten text-xs font-bold">
+            {{ widgets.length }}
           </span>
         </button>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import CustomSelect from '../CustomSelect.vue'
 import type { NavigationSite } from '@/types'
 
 const props = defineProps<{
@@ -279,14 +280,11 @@ const handleClose = () => {
             <!-- 分类 -->
             <div>
               <label class="block font-handwritten text-sm mb-1">分类</label>
-              <select
+              <CustomSelect
                 v-model="formData.category"
-                class="input-hand-drawn w-full"
-              >
-                <option v-for="category in store.navigationCategories" :key="category" :value="category">
-                  {{ category }}
-                </option>
-              </select>
+                :options="store.navigationCategories.map(cat => ({ label: cat, value: cat }))"
+                width="100%"
+              />
             </div>
           </div>
 

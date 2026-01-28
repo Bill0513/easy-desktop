@@ -7,6 +7,7 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import Prism from 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
 import HandDrawnDialog from './HandDrawnDialog.vue'
+import CustomSelect from './CustomSelect.vue'
 import { Pencil, Trash2, Plus } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -315,20 +316,14 @@ onUnmounted(() => {
         <Plus :size="18" :stroke-width="2.5" />
         <span>新建片段</span>
       </button>
-      <select
+      <CustomSelect
         v-model="store.selectedLanguage"
-        class="input-hand-drawn px-3 py-2 bg-white"
-        style="width:150px"
-      >
-        <option value="all">全部语言</option>
-        <option
-          v-for="lang in store.usedLanguages"
-          :key="lang"
-          :value="lang"
-        >
-          {{ lang }}
-        </option>
-      </select>
+        :options="[
+          { label: '全部语言', value: 'all' },
+          ...store.usedLanguages.map(lang => ({ label: lang, value: lang }))
+        ]"
+        width="150px"
+      />
       <input
         v-model="store.snippetSearchQuery"
         type="text"
@@ -417,18 +412,11 @@ onUnmounted(() => {
 
           <div>
             <label class="block text-sm font-handwritten text-pencil mb-1">语言</label>
-            <select
+            <CustomSelect
               v-model="editingSnippet.language"
-              class="input-hand-drawn px-3 py-2 bg-white"
-            >
-              <option
-                v-for="lang in languageOptions"
-                :key="lang.value"
-                :value="lang.value"
-              >
-                {{ lang.label }}
-              </option>
-            </select>
+              :options="languageOptions"
+              width="100%"
+            />
           </div>
 
           <div>

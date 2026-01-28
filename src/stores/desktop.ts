@@ -1260,16 +1260,35 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   function reorderNavigationSites(fromIndex: number, toIndex: number) {
-    const sites = [...navigationSites.value]
-    const [removed] = sites.splice(fromIndex, 1)
-    sites.splice(toIndex, 0, removed)
+    // 获取当前过滤后的网站列表
+    const filtered = filteredNavigationSites.value
+    if (fromIndex < 0 || fromIndex >= filtered.length || toIndex < 0 || toIndex >= filtered.length) {
+      return
+    }
+
+    // 获取要移动的网站
+    const movedSite = filtered[fromIndex]
+    const targetSite = filtered[toIndex]
+
+    // 在完整列表中找到这两个网站的实际索引
+    const allSites = [...navigationSites.value].sort((a, b) => a.order - b.order)
+    const actualFromIndex = allSites.findIndex(s => s.id === movedSite.id)
+    const actualToIndex = allSites.findIndex(s => s.id === targetSite.id)
+
+    if (actualFromIndex === -1 || actualToIndex === -1) {
+      return
+    }
+
+    // 移动网站
+    const [removed] = allSites.splice(actualFromIndex, 1)
+    allSites.splice(actualToIndex, 0, removed)
 
     // 更新 order
-    sites.forEach((site, idx) => {
+    allSites.forEach((site, idx) => {
       site.order = idx
     })
 
-    navigationSites.value = sites
+    navigationSites.value = allSites
     saveNavigationData()
   }
 
