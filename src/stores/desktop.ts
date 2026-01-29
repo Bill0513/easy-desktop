@@ -91,6 +91,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // Canvas scale state (30% - 150%)
   const canvasScale = ref<number>(100)
+  const lastArrangedScale = ref<number | null>(null) // 记录一键整理后的最佳缩放比例
 
   // Getters
   const getWidgetById = computed(() => {
@@ -110,6 +111,19 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   const minimizedWidgets = computed(() => {
     return widgets.value.filter(w => w.isMinimized)
+  })
+
+  // 超出可视范围的组件
+  const outOfViewWidgets = computed(() => {
+    const scaleFactor = canvasScale.value / 100
+    const viewportWidth = window.innerWidth / scaleFactor
+    const viewportHeight = window.innerHeight / scaleFactor
+
+    return widgets.value.filter(w =>
+      !w.isMinimized &&
+      !w.isMaximized &&
+      (w.x + w.width > viewportWidth || w.y + w.height > viewportHeight)
+    )
   })
 
   const searchResults = computed(() => {
@@ -739,6 +753,12 @@ export const useDesktopStore = defineStore('desktop', () => {
     const widget = getWidgetById.value(id)
     if (widget) {
       widget.isMinimized = !widget.isMinimized
+
+      // 最小化时，将缩放重置为 100%
+      if (widget.isMinimized) {
+        setCanvasScale(100)
+      }
+
       save()
     }
   }
@@ -850,52 +870,242 @@ export const useDesktopStore = defineStore('desktop', () => {
     selectedWidgetId.value = id
   }
 
-  // 一键整理：重新排列非最小化的组件，避免重叠
+  // 一键整理：重新排列非最小化的组件，避免重叠，并智能调整缩放
+  // 使用改进的 Shelf Packing 算法（按高度排序）
   function arrangeWidgets() {
     const PADDING = 20
-    const TOP_TOOLBAR_HEIGHT = 80 // 顶部工具栏高度
-    const BOTTOM_TASKBAR_HEIGHT = 80 // 底部最小化栏高度
+    const TOP_TOOLBAR_HEIGHT = 80 // 顶部工具栏高度（视口坐标）
+    const BOTTOM_TASKBAR_HEIGHT = 80 // 底部最小化栏高度（视口坐标）
     const visibleWidgets = widgets.value.filter(w => !w.isMinimized && !w.isMaximized)
 
     if (visibleWidgets.length === 0) return
 
-    // 按就近原则排列：从左上角开始，按行排列
-    let currentX = PADDING
-    let currentY = TOP_TOOLBAR_HEIGHT + PADDING
-    let rowHeight = 0
-    const maxWidth = window.innerWidth - PADDING
-    const maxHeight = window.innerHeight - BOTTOM_TASKBAR_HEIGHT - PADDING
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
 
-    visibleWidgets.forEach(widget => {
-      // 如果当前行放不下，换行
-      if (currentX + widget.width > maxWidth && currentX > PADDING) {
-        currentX = PADDING
-        currentY += rowHeight + PADDING
-        rowHeight = 0
+    // 智能缩放算法：找到能放下最多组件的最佳缩放比例
+    const bestScale = findOptimalScale(visibleWidgets, viewportWidth, viewportHeight, TOP_TOOLBAR_HEIGHT, BOTTOM_TASKBAR_HEIGHT, PADDING)
+
+    // 记录最佳缩放比例
+    lastArrangedScale.value = bestScale
+
+    // 应用最佳缩放比例
+    if (bestScale !== canvasScale.value) {
+      setCanvasScale(bestScale)
+    }
+
+    // 使用最佳缩放比例重新计算可用空间
+    const finalScale = bestScale / 100
+
+    // 计算画布坐标系中的起始位置和可用空间
+    // 工具栏和任务栏是固定定位，不受缩放影响，所以需要转换到画布坐标系
+    const startY = TOP_TOOLBAR_HEIGHT / finalScale + PADDING
+    const availableWidth = viewportWidth / finalScale - PADDING * 2
+    const availableHeight = (viewportHeight - TOP_TOOLBAR_HEIGHT - BOTTOM_TASKBAR_HEIGHT) / finalScale - PADDING * 2
+
+    // 使用 Shelf Packing 算法排列组件
+    packWidgetsWithShelfAlgorithm(visibleWidgets, PADDING, startY, availableWidth, availableHeight, PADDING)
+
+    save()
+  }
+
+  // Shelf Packing 算法：按高度排序，优化空间利用率
+  function packWidgetsWithShelfAlgorithm(
+    widgets: Widget[],
+    startX: number,
+    startY: number,
+    availableWidth: number,
+    availableHeight: number,
+    padding: number
+  ) {
+    // 1. 按高度降序排序（高的组件优先放置）
+    const sortedWidgets = [...widgets].sort((a, b) => b.height - a.height)
+
+    // 2. 使用 Shelf 算法排列
+    let currentX = startX
+    let currentY = startY
+    let currentShelfHeight = 0
+
+    for (const widget of sortedWidgets) {
+      // 如果当前行放不下，换行（创建新的 shelf）
+      if (currentX + widget.width > startX + availableWidth && currentX > startX) {
+        // 移动到下一行
+        currentX = startX
+        currentY += currentShelfHeight + padding
+        currentShelfHeight = 0
       }
 
       // 检查是否超出底部边界
-      if (currentY + widget.height > maxHeight) {
-        // 如果超出，回到顶部重新开始（可能需要缩小组件或调整布局）
-        currentY = TOP_TOOLBAR_HEIGHT + PADDING
+      if (currentY + widget.height > startY + availableHeight) {
+        // 超出边界，停止放置（理论上不应该发生，因为已经计算了最佳缩放）
+        console.warn('Widget exceeds available height:', widget.id)
+        break
       }
 
-      // 更新组件位置
+      // 放置组件
       widget.x = currentX
       widget.y = currentY
       widget.updatedAt = Date.now()
 
       // 更新当前位置和行高
-      currentX += widget.width + PADDING
-      rowHeight = Math.max(rowHeight, widget.height)
-    })
+      currentX += widget.width + padding
+      currentShelfHeight = Math.max(currentShelfHeight, widget.height)
+    }
+  }
+
+  // 智能缩放算法：找到能放下最多组件的最佳缩放比例
+  function findOptimalScale(
+    widgets: Widget[],
+    viewportWidth: number,
+    viewportHeight: number,
+    topHeight: number,
+    bottomHeight: number,
+    padding: number
+  ): number {
+    // 可选的缩放比例（从 100% 到 30%，步长 10%）
+    const scaleOptions = [100, 90, 80, 70, 60, 50, 40, 30]
+
+    // 按高度降序排序（与实际排列算法一致）
+    const sortedWidgets = [...widgets].sort((a, b) => b.height - a.height)
+
+    let bestScale = 100
+    let maxFittedWidgets = 0
+
+    for (const scale of scaleOptions) {
+      const scaleFactor = scale / 100
+
+      // 计算在该缩放比例下的可用空间（画布坐标系）
+      const startX = padding
+      const startY = topHeight / scaleFactor + padding
+      const availableWidth = viewportWidth / scaleFactor - padding * 2
+      const availableHeight = (viewportHeight - topHeight - bottomHeight) / scaleFactor - padding * 2
+
+      // 模拟 Shelf Packing 排列，计算能放下多少组件
+      let currentX = startX
+      let currentY = startY
+      let currentShelfHeight = 0
+      let fittedCount = 0
+
+      for (const widget of sortedWidgets) {
+        // 如果当前行放不下，换行
+        if (currentX + widget.width > startX + availableWidth && currentX > startX) {
+          currentX = startX
+          currentY += currentShelfHeight + padding
+          currentShelfHeight = 0
+        }
+
+        // 检查是否超出底部边界
+        if (currentY + widget.height > startY + availableHeight) {
+          // 超出边界，停止计数
+          break
+        }
+
+        // 该组件可以放下
+        fittedCount++
+        currentX += widget.width + padding
+        currentShelfHeight = Math.max(currentShelfHeight, widget.height)
+      }
+
+      // 如果这个缩放比例能放下更多组件，更新最佳缩放
+      if (fittedCount > maxFittedWidgets) {
+        maxFittedWidgets = fittedCount
+        bestScale = scale
+      }
+
+      // 如果能放下所有组件，优先选择较大的缩放比例
+      if (fittedCount === widgets.length) {
+        return scale
+      }
+    }
+
+    return bestScale
+  }
+
+  // 适应窗口：调整缩放以适应所有可见组件
+  function fitToWindow() {
+    const PADDING = 20
+    const TOP_TOOLBAR_HEIGHT = 80
+    const BOTTOM_TASKBAR_HEIGHT = 80
+    const visibleWidgets = widgets.value.filter(w => !w.isMinimized && !w.isMaximized)
+
+    if (visibleWidgets.length === 0) {
+      showToast('没有可见的组件', 'info')
+      return
+    }
+
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    // 计算最佳缩放比例
+    const bestScale = findOptimalScale(
+      visibleWidgets,
+      viewportWidth,
+      viewportHeight,
+      TOP_TOOLBAR_HEIGHT,
+      BOTTOM_TASKBAR_HEIGHT,
+      PADDING
+    )
+
+    setCanvasScale(bestScale)
+    showToast(`已调整到最佳缩放比例 ${bestScale}%`, 'success', 2000)
+  }
+
+  // 重置组件位置到可视范围内
+  function resetWidgetPosition(id: string) {
+    const widget = getWidgetById.value(id)
+    if (!widget) return
+
+    const PADDING = 20
+    const TOP_TOOLBAR_HEIGHT = 80
+    const scaleFactor = canvasScale.value / 100
+    const viewportWidth = window.innerWidth / scaleFactor
+    const viewportHeight = window.innerHeight / scaleFactor
+
+    // 计算安全的起始位置（避开工具栏）
+    const startY = TOP_TOOLBAR_HEIGHT / scaleFactor + PADDING
+
+    // 将组件放置在可视范围内的中心位置
+    const centerX = (viewportWidth - widget.width) / 2
+    const centerY = startY + (viewportHeight - startY - widget.height) / 2
+
+    // 确保不超出边界
+    widget.x = Math.max(PADDING, Math.min(centerX, viewportWidth - widget.width - PADDING))
+    widget.y = Math.max(startY, Math.min(centerY, viewportHeight - widget.height - PADDING))
+    widget.updatedAt = Date.now()
+
+    // 提升到最前面
+    widget.zIndex = ++maxZIndex.value
 
     save()
+    showToast(`已将"${widget.title}"移动到可视范围`, 'success', 2000)
   }
 
   // 设置缩放比 (30% - 150%)
   function setCanvasScale(scale: number) {
+    const oldScale = canvasScale.value
     canvasScale.value = Math.max(30, Math.min(150, scale))
+
+    // 如果放大且有组件超出范围，显示提示
+    if (scale > oldScale && scale > (lastArrangedScale.value || 100)) {
+      // 检查是否有组件超出可视范围
+      const scaleFactor = scale / 100
+      const viewportWidth = window.innerWidth / scaleFactor
+      const viewportHeight = window.innerHeight / scaleFactor
+
+      const outOfViewWidgets = widgets.value.filter(w =>
+        !w.isMinimized &&
+        !w.isMaximized &&
+        (w.x + w.width > viewportWidth || w.y + w.height > viewportHeight)
+      )
+
+      if (outOfViewWidgets.length > 0) {
+        showToast(
+          `${outOfViewWidgets.length} 个组件超出可视范围，查看底部警告图标或点击"适应"按钮`,
+          'warning',
+          5000
+        )
+      }
+    }
   }
 
   async function deleteImageWidget(id: string) {
@@ -2277,11 +2487,13 @@ export const useDesktopStore = defineStore('desktop', () => {
     isLoadingMindMap,
     // Canvas scale state
     canvasScale,
+    lastArrangedScale,
     // Getters
     getWidgetById,
     sortedWidgets,
     topWidget,
     minimizedWidgets,
+    outOfViewWidgets,
     searchResults,
     sortedNavigationSites,
     allCategories,
@@ -2314,6 +2526,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     selectWidget,
     arrangeWidgets,
     setCanvasScale,
+    fitToWindow,
+    resetWidgetPosition,
     deleteImageWidget,
     openSearch,
     closeSearch,

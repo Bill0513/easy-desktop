@@ -4,6 +4,7 @@ import { useDesktopStore } from '@/stores/desktop'
 import WidgetWrapper from './widgets/WidgetWrapper.vue'
 import Taskbar from './Taskbar.vue'
 import type { Widget } from '@/types'
+import { Maximize2 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -328,6 +329,18 @@ onUnmounted(() => {
 
     <!-- 缩放控制 - 右下角 -->
     <div class="fixed bottom-4 right-4 z-[9999] card-hand-drawn px-4 py-3 flex items-center gap-3">
+      <!-- 适应窗口按钮 -->
+      <button
+        @click="store.fitToWindow"
+        class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
+        title="适应窗口 - 调整到最佳缩放比例"
+      >
+        <Maximize2 :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+      </button>
+
+      <!-- 分隔线 -->
+      <div class="w-px h-6 bg-pencil/20"></div>
+
       <span class="font-handwritten text-sm text-pencil/60">缩放</span>
       <input
         type="range"

@@ -11,7 +11,8 @@ import {
   Dices,
   CalendarCheck,
   Minimize2,
-  LayoutGrid
+  LayoutGrid,
+  AlertTriangle
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
@@ -59,6 +60,9 @@ const getWidgetIcon = (type: string): Component => {
 const popupVisible = ref<string | null>(null)
 const popupPosition = ref({ x: 0, y: 0 })
 
+// 超出范围组件弹窗状态
+const outOfViewPopupVisible = ref(false)
+
 // 悬浮显示弹窗
 const showPopup = (type: string, e: MouseEvent) => {
   const widgets = groupedMinimizedWidgets.value[type]
@@ -73,9 +77,19 @@ const showPopup = (type: string, e: MouseEvent) => {
   }
 }
 
+// 显示超出范围组件弹窗
+const showOutOfViewPopup = () => {
+  outOfViewPopupVisible.value = true
+}
+
 // 隐藏弹窗
 const hidePopup = () => {
   popupVisible.value = null
+}
+
+// 隐藏超出范围组件弹窗
+const hideOutOfViewPopup = () => {
+  outOfViewPopupVisible.value = false
 }
 
 // 恢复组件
@@ -84,6 +98,12 @@ const restoreWidget = (id: string) => {
   store.bringToFront(id)
   store.selectWidget(id)
   hidePopup()
+}
+
+// 重置组件位置
+const resetWidget = (id: string) => {
+  store.resetWidgetPosition(id)
+  hideOutOfViewPopup()
 }
 
 // 一键最小化所有组件
@@ -102,10 +122,61 @@ const arrangeAll = () => {
 
 <template>
   <div
-    v-if="Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
+    v-if="Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized) || store.outOfViewWidgets.length > 0"
     class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]"
   >
     <div class="card-hand-drawn px-4 py-2 flex items-center gap-2">
+      <!-- 超出范围组件提示 -->
+      <div
+        v-if="store.outOfViewWidgets.length > 0"
+        class="relative"
+        @mouseenter="showOutOfViewPopup"
+        @mouseleave="hideOutOfViewPopup"
+      >
+        <button
+          class="flex items-center gap-1.5 px-2 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group relative animate-pulse-slow"
+          title="有组件超出可视范围"
+        >
+          <AlertTriangle :stroke-width="2.5" class="w-5 h-5 text-red-500 animate-breathe" />
+          <span class="font-handwritten text-xs font-bold text-red-500">
+            {{ store.outOfViewWidgets.length }}
+          </span>
+        </button>
+
+        <!-- 超出范围组件列表弹窗 -->
+        <Transition
+          enter-active-class="transition duration-150 ease-out"
+          enter-from-class="transform opacity-0 translate-y-2"
+          enter-to-class="transform opacity-100 translate-y-0"
+          leave-active-class="transition duration-100 ease-in"
+          leave-from-class="transform opacity-100 translate-y-0"
+          leave-to-class="transform opacity-0 translate-y-2"
+        >
+          <div
+            v-if="outOfViewPopupVisible && store.outOfViewWidgets.length > 0"
+            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[200px] z-[10000]"
+          >
+            <div class="px-3 py-1 border-b border-pencil/20">
+              <span class="font-handwritten text-sm text-pencil/60">
+                超出可视范围 ({{ store.outOfViewWidgets.length }})
+              </span>
+            </div>
+            <button
+              v-for="widget in store.outOfViewWidgets"
+              :key="widget.id"
+              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
+              @click="resetWidget(widget.id)"
+            >
+              <component :is="getWidgetIcon(widget.type)" :stroke-width="2.5" class="w-4 h-4" />
+              <span class="flex-1 truncate">{{ widget.title }}</span>
+            </button>
+          </div>
+        </Transition>
+      </div>
+
+      <!-- 分隔线 -->
+      <div v-if="store.outOfViewWidgets.length > 0 && (Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized))" class="w-px h-6 bg-pencil/20"></div>
+
       <!-- 一键整理按钮 -->
       <button
         v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
