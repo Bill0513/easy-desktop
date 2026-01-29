@@ -4,7 +4,7 @@ import { useDesktopStore } from '@/stores/desktop'
 import WidgetWrapper from './widgets/WidgetWrapper.vue'
 import Taskbar from './Taskbar.vue'
 import type { Widget } from '@/types'
-import { Maximize2 } from 'lucide-vue-next'
+import { Focus } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
@@ -335,7 +335,7 @@ onUnmounted(() => {
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
         title="适应窗口 - 调整到最佳缩放比例"
       >
-        <Maximize2 :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <Focus :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
       </button>
 
       <!-- 分隔线 -->

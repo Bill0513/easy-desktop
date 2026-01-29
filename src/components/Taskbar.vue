@@ -63,6 +63,12 @@ const popupPosition = ref({ x: 0, y: 0 })
 // 超出范围组件弹窗状态
 const outOfViewPopupVisible = ref(false)
 
+// 预览状态
+const previewWidget = ref<typeof store.widgets[0] | null>(null)
+const previewPosition = ref<'left' | 'right'>('right')
+const previewPopupRef = ref<HTMLElement | null>(null)
+const outOfViewPopupRef = ref<HTMLElement | null>(null)
+
 // 悬浮显示弹窗
 const showPopup = (type: string, e: MouseEvent) => {
   const widgets = groupedMinimizedWidgets.value[type]
@@ -90,6 +96,32 @@ const hidePopup = () => {
 // 隐藏超出范围组件弹窗
 const hideOutOfViewPopup = () => {
   outOfViewPopupVisible.value = false
+}
+
+// 显示组件预览
+const showPreview = (widget: typeof store.widgets[0], _e: MouseEvent, popupRef?: HTMLElement | null) => {
+  previewWidget.value = widget
+
+  // 计算预览框应该显示在左侧还是右侧
+  const targetPopup = popupRef || previewPopupRef.value
+  if (targetPopup) {
+    const popupRect = targetPopup.getBoundingClientRect()
+    const screenWidth = window.innerWidth
+    const previewWidth = 300 // 预览框宽度
+    const gap = 16 // 间距
+
+    // 如果右侧空间足够，优先放右侧
+    if (popupRect.right + previewWidth + gap < screenWidth) {
+      previewPosition.value = 'right'
+    } else {
+      previewPosition.value = 'left'
+    }
+  }
+}
+
+// 隐藏组件预览
+const hidePreview = () => {
+  previewWidget.value = null
 }
 
 // 恢复组件
@@ -154,6 +186,7 @@ const arrangeAll = () => {
         >
           <div
             v-if="outOfViewPopupVisible && store.outOfViewWidgets.length > 0"
+            ref="outOfViewPopupRef"
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[200px] z-[10000]"
           >
             <div class="px-3 py-1 border-b border-pencil/20">
@@ -161,15 +194,97 @@ const arrangeAll = () => {
                 超出可视范围 ({{ store.outOfViewWidgets.length }})
               </span>
             </div>
-            <button
-              v-for="widget in store.outOfViewWidgets"
-              :key="widget.id"
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
-              @click="resetWidget(widget.id)"
+            <!-- 添加滚动容器，最多显示10个组件 -->
+            <div
+              class="overflow-y-auto"
+              :style="{ maxHeight: store.outOfViewWidgets.length > 10 ? '400px' : 'none' }"
             >
-              <component :is="getWidgetIcon(widget.type)" :stroke-width="2.5" class="w-4 h-4" />
-              <span class="flex-1 truncate">{{ widget.title }}</span>
-            </button>
+              <button
+                v-for="widget in store.outOfViewWidgets"
+                :key="widget.id"
+                class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
+                @click="resetWidget(widget.id)"
+                @mouseenter="showPreview(widget, $event, outOfViewPopupRef)"
+                @mouseleave="hidePreview"
+              >
+                <component :is="getWidgetIcon(widget.type)" :stroke-width="2.5" class="w-4 h-4" />
+                <span class="flex-1 truncate">{{ widget.title }}</span>
+              </button>
+            </div>
+
+            <!-- 预览框 -->
+            <Transition
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition duration-100 ease-in"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div
+                v-if="previewWidget && outOfViewPopupVisible"
+                class="absolute top-0 card-hand-drawn p-4 w-[300px] z-[10001] pointer-events-none"
+                :style="{
+                  [previewPosition === 'right' ? 'left' : 'right']: '100%',
+                  [previewPosition === 'right' ? 'marginLeft' : 'marginRight']: '16px'
+                }"
+              >
+                <div class="font-handwritten text-sm font-bold mb-2 text-pencil">
+                  {{ previewWidget.title }}
+                </div>
+                <div class="text-xs text-pencil/60 space-y-1">
+                  <div>类型: {{ typeNames[previewWidget.type] }}</div>
+                  <div v-if="previewWidget.type === 'note' || previewWidget.type === 'text'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto">
+                      {{ (previewWidget as any).content || '(空)' }}
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'todo'">
+                    <div class="mt-2 space-y-1">
+                      <div
+                        v-for="(item, idx) in (previewWidget as any).items?.slice(0, 5) || []"
+                        :key="idx"
+                        class="flex items-center gap-2 text-xs"
+                      >
+                        <span>{{ item.checked ? '☑' : '☐' }}</span>
+                        <span :class="{ 'line-through text-pencil/40': item.checked }">
+                          {{ item.text }}
+                        </span>
+                      </div>
+                      <div v-if="(previewWidget as any).items?.length > 5" class="text-pencil/40">
+                        ...还有 {{ (previewWidget as any).items.length - 5 }} 项
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'image'">
+                    <div class="mt-2">
+                      <img
+                        v-if="(previewWidget as any).src"
+                        :src="`/api/image?filename=${(previewWidget as any).src}`"
+                        class="w-full h-auto max-h-[200px] object-contain rounded"
+                        alt="预览"
+                      />
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'markdown'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto text-xs">
+                      {{ (previewWidget as any).content?.slice(0, 200) || '(空)' }}
+                      <span v-if="(previewWidget as any).content?.length > 200">...</span>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'countdown'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded">
+                      <div class="text-xs">目标时间: {{ (previewWidget as any).targetDate }}</div>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'check-in'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded">
+                      <div class="text-xs">已打卡: {{ (previewWidget as any).checkedDates?.length || 0 }} 天</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Transition>
           </div>
         </Transition>
       </div>
@@ -236,6 +351,7 @@ const arrangeAll = () => {
         >
           <div
             v-if="popupVisible === type && widgets.length >= 1"
+            ref="previewPopupRef"
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[160px] z-[10000]"
             :style="{ left: '50%', transform: 'translateX(-50%)' }"
           >
@@ -244,15 +360,97 @@ const arrangeAll = () => {
                 {{ `${typeNames[type]} (${widgets.length})` }}
               </span>
             </div>
-            <button
-              v-for="widget in widgets"
-              :key="widget.id"
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
-              @click="restoreWidget(widget.id)"
+            <!-- 添加滚动容器，最多显示10个组件 -->
+            <div
+              class="overflow-y-auto"
+              :style="{ maxHeight: widgets.length > 10 ? '400px' : 'none' }"
             >
-              <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-4 h-4" />
-              <span class="flex-1 truncate">{{ widget.title }}</span>
-            </button>
+              <button
+                v-for="widget in widgets"
+                :key="widget.id"
+                class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
+                @click="restoreWidget(widget.id)"
+                @mouseenter="showPreview(widget, $event)"
+                @mouseleave="hidePreview"
+              >
+                <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-4 h-4" />
+                <span class="flex-1 truncate">{{ widget.title }}</span>
+              </button>
+            </div>
+
+            <!-- 预览框 -->
+            <Transition
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition duration-100 ease-in"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div
+                v-if="previewWidget && popupVisible === type"
+                class="absolute top-0 card-hand-drawn p-4 w-[300px] z-[10001] pointer-events-none"
+                :style="{
+                  [previewPosition === 'right' ? 'left' : 'right']: '100%',
+                  [previewPosition === 'right' ? 'marginLeft' : 'marginRight']: '16px'
+                }"
+              >
+                <div class="font-handwritten text-sm font-bold mb-2 text-pencil">
+                  {{ previewWidget.title }}
+                </div>
+                <div class="text-xs text-pencil/60 space-y-1">
+                  <div>类型: {{ typeNames[previewWidget.type] }}</div>
+                  <div v-if="previewWidget.type === 'note' || previewWidget.type === 'text'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto">
+                      {{ (previewWidget as any).content || '(空)' }}
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'todo'">
+                    <div class="mt-2 space-y-1">
+                      <div
+                        v-for="(item, idx) in (previewWidget as any).items?.slice(0, 5) || []"
+                        :key="idx"
+                        class="flex items-center gap-2 text-xs"
+                      >
+                        <span>{{ item.checked ? '☑' : '☐' }}</span>
+                        <span :class="{ 'line-through text-pencil/40': item.checked }">
+                          {{ item.text }}
+                        </span>
+                      </div>
+                      <div v-if="(previewWidget as any).items?.length > 5" class="text-pencil/40">
+                        ...还有 {{ (previewWidget as any).items.length - 5 }} 项
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'image'">
+                    <div class="mt-2">
+                      <img
+                        v-if="(previewWidget as any).src"
+                        :src="`/api/image?filename=${(previewWidget as any).src}`"
+                        class="w-full h-auto max-h-[200px] object-contain rounded"
+                        alt="预览"
+                      />
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'markdown'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto text-xs">
+                      {{ (previewWidget as any).content?.slice(0, 200) || '(空)' }}
+                      <span v-if="(previewWidget as any).content?.length > 200">...</span>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'countdown'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded">
+                      <div class="text-xs">目标时间: {{ (previewWidget as any).targetDate }}</div>
+                    </div>
+                  </div>
+                  <div v-else-if="previewWidget.type === 'check-in'">
+                    <div class="mt-2 p-2 bg-muted/30 rounded">
+                      <div class="text-xs">已打卡: {{ (previewWidget as any).checkedDates?.length || 0 }} 天</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Transition>
           </div>
         </Transition>
       </div>
