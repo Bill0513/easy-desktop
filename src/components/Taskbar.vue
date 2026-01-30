@@ -296,7 +296,7 @@ const arrangeAll = () => {
       <button
         v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
         @click="arrangeAll"
-        class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
+        class="p-1.5 hover:bg-muted/50 rounded-lg transition-all hover:scale-110 group"
         title="一键整理"
       >
         <LayoutGrid :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
@@ -306,7 +306,7 @@ const arrangeAll = () => {
       <button
         v-if="store.widgets.some(w => !w.isMinimized && !w.isMaximized)"
         @click="minimizeAll"
-        class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
+        class="p-1.5 hover:bg-muted/50 rounded-lg transition-all hover:scale-110 group"
         title="最小化全部"
       >
         <Minimize2 :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
@@ -332,7 +332,7 @@ const arrangeAll = () => {
         @mouseleave="hidePopup"
       >
         <button
-          class="flex items-center gap-1.5 px-2 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group relative"
+          class="flex items-center gap-1.5 px-2 py-1.5 hover:bg-muted/50 rounded-lg transition-all hover:scale-110 group relative"
         >
           <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
           <span class="font-handwritten text-xs font-bold text-text-primary">

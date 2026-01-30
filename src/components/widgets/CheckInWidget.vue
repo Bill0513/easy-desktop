@@ -193,17 +193,17 @@ const progressPercent = computed(() => {
           @click="prevMonth"
           class="btn-hand-drawn px-2 py-1 bg-gray-100 text-text-primary text-sm flex items-center"
         >
-          <ChevronLeft :size="16" :stroke-width="2.5" />
+          <ChevronLeft :size="16" :stroke-width="2.5" class="text-text-primary" />
         </button>
         <div class="flex items-center gap-2 font-handwritten font-bold text-text-primary">
-          <CalendarIcon :size="18" :stroke-width="2.5" />
+          <CalendarIcon :size="18" :stroke-width="2.5" class="text-text-primary" />
           <span>{{ currentYear }} 年 {{ monthName }}</span>
         </div>
         <button
           @click="nextMonth"
           class="btn-hand-drawn px-2 py-1 bg-gray-100 text-text-primary text-sm flex items-center"
         >
-          <ChevronRight :size="16" :stroke-width="2.5" />
+          <ChevronRight :size="16" :stroke-width="2.5" class="text-text-primary" />
         </button>
       </div>
 
@@ -231,7 +231,11 @@ const progressPercent = computed(() => {
           ]"
           @click="handleDayClick(item.day)"
         >
-          <span v-if="item.day" :class="item.isCheckedIn ? 'font-bold text-green-700' : 'text-text-primary'">
+          <span
+            v-if="item.day"
+            :class="item.isCheckedIn ? 'font-bold text-green-700' : 'text-text-primary'"
+            class="hover-day-text"
+          >
             {{ item.day }}
           </span>
           <span v-if="item.isCheckedIn" class="absolute top-0 right-0 text-xs">✓</span>
@@ -259,3 +263,10 @@ const progressPercent = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 确保hover时文本颜色为黑色 */
+.cursor-pointer:hover .hover-day-text {
+  color: #2d2d2d !important;
+}
+</style>

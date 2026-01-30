@@ -1,7 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
-import { ChevronDown, ChevronUp } from 'lucide-vue-next'
+import {
+  ChevronDown,
+  ChevronUp,
+  Sun,
+  Moon,
+  Monitor,
+  Settings,
+  Palette,
+  Flame,
+  Download,
+  Loader2,
+  Folder,
+  CheckCircle,
+  XCircle,
+  FileText,
+  BookOpen,
+  Copy,
+  Rocket,
+  Keyboard
+} from 'lucide-vue-next'
 
 const store = useDesktopStore()
 const emit = defineEmits<{
@@ -266,7 +285,10 @@ const handleClose = () => {
       >
         <!-- 固定标题栏 -->
         <div class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b-2 border-border-primary/20">
-          <h2 class="font-handwritten text-2xl font-bold text-text-primary">⚙️ 设置</h2>
+          <h2 class="font-handwritten text-2xl font-bold text-text-primary flex items-center gap-2">
+            <Settings :size="24" :stroke-width="2.5" class="text-text-primary" />
+            设置
+          </h2>
           <button
             class="btn-hand-drawn px-3 py-1 text-sm"
             @click="handleClose"
@@ -284,10 +306,11 @@ const handleClose = () => {
               @click="themeExpanded = !themeExpanded"
             >
               <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                🌓 主题设置
+                <Moon :size="20" :stroke-width="2.5" class="text-text-primary" />
+                主题设置
               </h3>
-              <ChevronDown v-if="!themeExpanded" :size="20" :stroke-width="2.5" />
-              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+              <ChevronDown v-if="!themeExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
             </button>
 
             <div v-if="themeExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-4">
@@ -306,7 +329,7 @@ const handleClose = () => {
                     }"
                     @click="store.setThemeMode('light')"
                   >
-                    <span class="text-2xl">☀️</span>
+                    <Sun :size="24" :stroke-width="2.5" />
                     <span class="font-handwritten text-sm font-medium">亮色</span>
                   </button>
                   <button
@@ -318,7 +341,7 @@ const handleClose = () => {
                     }"
                     @click="store.setThemeMode('dark')"
                   >
-                    <span class="text-2xl">🌙</span>
+                    <Moon :size="24" :stroke-width="2.5" />
                     <span class="font-handwritten text-sm font-medium">暗色</span>
                   </button>
                   <button
@@ -330,7 +353,7 @@ const handleClose = () => {
                     }"
                     @click="store.setThemeMode('system')"
                   >
-                    <span class="text-2xl">💻</span>
+                    <Monitor :size="24" :stroke-width="2.5" />
                     <span class="font-handwritten text-sm font-medium">跟随系统</span>
                   </button>
                 </div>
@@ -398,10 +421,11 @@ const handleClose = () => {
               @click="backgroundExpanded = !backgroundExpanded"
             >
               <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                🎨 背景设置
+                <Palette :size="20" :stroke-width="2.5" class="text-text-primary" />
+                背景设置
               </h3>
-              <ChevronDown v-if="!backgroundExpanded" :size="20" :stroke-width="2.5" />
-              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+              <ChevronDown v-if="!backgroundExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
             </button>
 
             <div v-if="backgroundExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-4">
@@ -463,10 +487,11 @@ const handleClose = () => {
               @click="newsSourceExpanded = !newsSourceExpanded"
             >
               <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                🔥 新闻源设置
+                <Flame :size="20" :stroke-width="2.5" class="text-text-primary" />
+                新闻源设置
               </h3>
-              <ChevronDown v-if="!newsSourceExpanded" :size="20" :stroke-width="2.5" />
-              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+              <ChevronDown v-if="!newsSourceExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
             </button>
 
             <div v-if="newsSourceExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-3">
@@ -507,10 +532,11 @@ const handleClose = () => {
               @click="importExpanded = !importExpanded"
             >
               <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                📥 网站导入
+                <Download :size="20" :stroke-width="2.5" class="text-text-primary" />
+                网站导入
               </h3>
-              <ChevronDown v-if="!importExpanded" :size="20" :stroke-width="2.5" />
-              <ChevronUp v-else :size="20" :stroke-width="2.5" />
+              <ChevronDown v-if="!importExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
+              <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
             </button>
 
             <div v-if="importExpanded" class="border-2 border-border-primary/20 rounded-lg p-4 wobbly">
@@ -535,15 +561,20 @@ const handleClose = () => {
               class="btn-hand-drawn px-6 py-3 bg-blue-100 text-text-primary w-full flex items-center justify-center gap-2"
               :disabled="importStatus === 'loading'"
             >
-              <span v-if="importStatus === 'loading'">⏳ AI 正在分析...</span>
-              <span v-else>📁 选择文件上传（支持 JSON/HTML/TXT 等）</span>
+              <Loader2 v-if="importStatus === 'loading'" :size="20" :stroke-width="2.5" class="animate-spin" />
+              <FileText v-else :size="20" :stroke-width="2.5" />
+              <span v-if="importStatus === 'loading'">AI 正在分析...</span>
+              <span v-else>选择文件上传（支持 JSON/HTML/TXT 等）</span>
             </button>
           </div>
 
           <!-- 预览界面 -->
           <div v-if="importStatus === 'preview' && previewData" class="space-y-4">
             <div class="card-hand-drawn p-4 bg-green-50 border-2 border-green-400">
-              <h4 class="font-handwritten font-bold text-text-primary mb-2">✅ AI 转换完成</h4>
+              <h4 class="font-handwritten font-bold text-text-primary mb-2 flex items-center gap-2">
+                <CheckCircle :size="20" :stroke-width="2.5" class="text-green-600" />
+                AI 转换完成
+              </h4>
               <p class="font-handwritten text-sm text-text-primary/80">
                 {{ importMessage }}
               </p>
@@ -561,8 +592,9 @@ const handleClose = () => {
                     :key="idx"
                     class="border-2 border-border-primary/20 rounded-lg p-3 wobbly-sm"
                   >
-                    <div class="font-handwritten font-bold text-text-primary mb-2">
-                      📁 {{ category.name }} ({{ category.children?.length || 0 }} 个网站)
+                    <div class="font-handwritten font-bold text-text-primary mb-2 flex items-center gap-2">
+                      <Folder :size="16" :stroke-width="2.5" />
+                      {{ category.name }} ({{ category.children?.length || 0 }} 个网站)
                     </div>
                     <div class="space-y-1 pl-4">
                       <div
@@ -610,15 +642,17 @@ const handleClose = () => {
             <div class="flex gap-3">
               <button
                 @click="confirmImport"
-                class="btn-hand-drawn flex-1 px-6 py-3 bg-green-100 text-text-primary"
+                class="btn-hand-drawn flex-1 px-6 py-3 bg-green-100 text-text-primary flex items-center justify-center gap-2"
               >
-                ✅ 确认导入
+                <CheckCircle :size="20" :stroke-width="2.5" />
+                确认导入
               </button>
               <button
                 @click="cancelImport"
-                class="btn-hand-drawn flex-1 px-6 py-3 bg-gray-100 text-text-primary"
+                class="btn-hand-drawn flex-1 px-6 py-3 bg-gray-100 text-text-primary flex items-center justify-center gap-2"
               >
-                ❌ 取消
+                <XCircle :size="20" :stroke-width="2.5" />
+                取消
               </button>
             </div>
           </div>
@@ -638,8 +672,9 @@ const handleClose = () => {
 
           <!-- 格式说明（折叠） -->
           <details class="mb-4">
-            <summary class="font-handwritten text-sm font-medium text-text-primary cursor-pointer hover:text-bluePen">
-              📖 查看支持的格式示例
+            <summary class="font-handwritten text-sm font-medium text-text-primary cursor-pointer hover:text-bluePen flex items-center gap-2">
+              <BookOpen :size="16" :stroke-width="2.5" />
+              查看支持的格式示例
             </summary>
           <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div>
@@ -648,10 +683,11 @@ const handleClose = () => {
                   格式1：简单数组
                 </label>
                 <button
-                  class="btn-hand-drawn px-2 py-1 text-xs"
+                  class="btn-hand-drawn px-2 py-1 text-xs flex items-center gap-1"
                   @click="copyFormat(formatExample1)"
                 >
-                  📋 复制
+                  <Copy :size="14" :stroke-width="2.5" />
+                  复制
                 </button>
               </div>
               <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample1 }}</pre>
@@ -662,10 +698,11 @@ const handleClose = () => {
                   格式2：navConfig（带分类）
                 </label>
                 <button
-                  class="btn-hand-drawn px-2 py-1 text-xs"
+                  class="btn-hand-drawn px-2 py-1 text-xs flex items-center gap-1"
                   @click="copyFormat(formatExample2)"
                 >
-                  📋 复制
+                  <Copy :size="14" :stroke-width="2.5" />
+                  复制
                 </button>
               </div>
               <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample2 }}</pre>
@@ -689,8 +726,9 @@ const handleClose = () => {
 
           <!-- 手动输入方式（保留原有功能） -->
           <details v-if="importStatus !== 'preview'">
-            <summary class="font-handwritten text-sm font-medium text-text-primary cursor-pointer hover:text-bluePen mb-2">
-              ⌨️ 或手动粘贴 JSON 数据
+            <summary class="font-handwritten text-sm font-medium text-text-primary cursor-pointer hover:text-bluePen mb-2 flex items-center gap-2">
+              <Keyboard :size="16" :stroke-width="2.5" />
+              或手动粘贴 JSON 数据
             </summary>
           <div class="mb-4 mt-3">
             <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
@@ -720,10 +758,11 @@ const handleClose = () => {
             <!-- 导入按钮 -->
             <div class="flex justify-end">
               <button
-                class="btn-hand-drawn px-6 py-2 bg-accent text-paper hover:bg-accent/90"
+                class="btn-hand-drawn px-6 py-2 bg-accent text-paper hover:bg-accent/90 flex items-center gap-2"
                 @click="handleImport"
               >
-                🚀 开始导入
+                <Rocket :size="18" :stroke-width="2.5" />
+                开始导入
               </button>
             </div>
           </details>

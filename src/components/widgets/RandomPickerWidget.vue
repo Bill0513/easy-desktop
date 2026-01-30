@@ -76,7 +76,9 @@ const drawWheel = () => {
     ctx.fill()
 
     // 手绘风格边框
-    ctx.strokeStyle = '#2d2d2d'
+    ctx.strokeStyle = 'var(--color-border-primary)' in document.documentElement.style
+      ? getComputedStyle(document.documentElement).getPropertyValue('--color-border-primary').trim() || '#2d2d2d'
+      : '#2d2d2d'
     ctx.lineWidth = 2
     ctx.stroke()
 
@@ -89,7 +91,9 @@ const drawWheel = () => {
     const textRadius = radius * 0.65
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillStyle = '#2d2d2d'
+    ctx.fillStyle = 'var(--color-text-primary)' in document.documentElement.style
+      ? getComputedStyle(document.documentElement).getPropertyValue('--color-text-primary').trim() || '#2d2d2d'
+      : '#2d2d2d'
     ctx.font = '14px "Patrick Hand", cursive'
 
     // 截断过长的文字
@@ -105,9 +109,13 @@ const drawWheel = () => {
   // 绘制中心圆
   ctx.beginPath()
   ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI)
-  ctx.fillStyle = '#fdfbf7'
+  ctx.fillStyle = 'var(--color-bg-primary)' in document.documentElement.style
+    ? getComputedStyle(document.documentElement).getPropertyValue('--color-bg-primary').trim() || '#fdfbf7'
+    : '#fdfbf7'
   ctx.fill()
-  ctx.strokeStyle = '#2d2d2d'
+  ctx.strokeStyle = 'var(--color-border-primary)' in document.documentElement.style
+    ? getComputedStyle(document.documentElement).getPropertyValue('--color-border-primary').trim() || '#2d2d2d'
+    : '#2d2d2d'
   ctx.lineWidth = 2
   ctx.stroke()
 
@@ -126,7 +134,9 @@ const drawPointer = (ctx: CanvasRenderingContext2D, centerX: number, topY: numbe
   ctx.closePath()
   ctx.fillStyle = '#ff4d4d'
   ctx.fill()
-  ctx.strokeStyle = '#2d2d2d'
+  ctx.strokeStyle = 'var(--color-border-primary)' in document.documentElement.style
+    ? getComputedStyle(document.documentElement).getPropertyValue('--color-border-primary').trim() || '#2d2d2d'
+    : '#2d2d2d'
   ctx.lineWidth = 2
   ctx.stroke()
 }
@@ -280,7 +290,7 @@ const canSpin = computed(() => {
       v-if="showResult || widget.lastResult"
       class="text-center py-2 px-4 bg-muted/30 rounded-lg mb-2 w-full"
     >
-      <div class="text-xs text-text-secondary font-handwritten">
+      <div class="text-lg text-text-secondary font-handwritten">
         {{ showResult ? '本次结果' : '上次结果' }}
       </div>
       <div class="text-lg font-bold font-handwritten text-bluePen">
@@ -291,7 +301,7 @@ const canSpin = computed(() => {
     <!-- 操作按钮 -->
     <div class="flex gap-2 w-full justify-center">
       <button
-        class="px-4 py-2 font-handwritten rounded border-2 border-border-primary transition-all flex items-center gap-1"
+        class="px-4 py-2 font-handwritten rounded border-2 border-border-primary transition-all flex items-center gap-1 text-text-primary"
         :class="canSpin
           ? 'bg-bluePen text-white hover:bg-bluePen/80 cursor-pointer'
           : 'bg-muted/50 text-text-secondary cursor-not-allowed'"
@@ -305,7 +315,7 @@ const canSpin = computed(() => {
       </button>
 
       <button
-        class="px-3 py-2 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors"
+        class="px-3 py-2 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors text-text-primary"
         @click="openOptionsDialog"
         :disabled="isSpinning"
       >
@@ -323,7 +333,7 @@ const canSpin = computed(() => {
         @click.self="cancelEdit"
       >
         <div class="card-hand-drawn bg-bg-primary p-4 w-80 max-h-[80vh] flex flex-col">
-          <h3 class="font-handwritten text-lg font-bold mb-3 text-center">编辑选项</h3>
+          <h3 class="font-handwritten text-lg font-bold mb-3 text-center text-text-primary">编辑选项</h3>
 
           <!-- 选项列表 -->
           <div class="flex-1 overflow-auto mb-3 max-h-48">
@@ -336,7 +346,7 @@ const canSpin = computed(() => {
                 class="w-4 h-4 rounded-full flex-shrink-0"
                 :style="{ backgroundColor: getColor(index) }"
               />
-              <span class="flex-1 font-handwritten truncate">{{ option }}</span>
+              <span class="flex-1 font-handwritten truncate text-text-primary">{{ option }}</span>
               <button
                 class="text-accent opacity-0 group-hover:opacity-100 transition-opacity"
                 @click="removeOption(index)"
@@ -356,7 +366,7 @@ const canSpin = computed(() => {
             <input
               v-model="newOption"
               type="text"
-              class="flex-1 px-3 py-1.5 border-2 border-border-primary rounded font-handwritten outline-none focus:border-bluePen"
+              class="flex-1 px-3 py-1.5 border-2 border-border-primary rounded font-handwritten outline-none focus:border-bluePen bg-bg-secondary text-text-primary"
               placeholder="输入新选项..."
               @keydown.enter="addOption"
             />
@@ -371,7 +381,7 @@ const canSpin = computed(() => {
           <!-- 操作按钮 -->
           <div class="flex gap-2 justify-end">
             <button
-              class="px-4 py-1.5 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50"
+              class="px-4 py-1.5 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 text-text-primary"
               @click="cancelEdit"
             >
               取消

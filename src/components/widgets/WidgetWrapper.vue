@@ -80,6 +80,38 @@ const handleTitleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// 亮色到暗色的映射（与NoteWidget保持一致）
+const colorToDarkMap: Record<string, string> = {
+  '#fff9c4': '#4a4520', // 黄色 -> 暗黄色
+  '#ffcdd2': '#4a2828', // 红色 -> 暗红色
+  '#c8e6c9': '#2a4a2d', // 绿色 -> 暗绿色
+  '#bbdefb': '#2a3a4a', // 蓝色 -> 暗蓝色
+  '#ffe0b2': '#4a3820', // 橙色 -> 暗橙色
+  '#f3e5f5': '#3a2a4a', // 紫色 -> 暗紫色
+}
+
+// 检测是否为暗色模式
+const isDarkMode = computed(() => {
+  return store.effectiveTheme === 'dark'
+})
+
+// 获取便签的显示颜色（暗色模式下转换）
+const getNoteDisplayColor = () => {
+  if (props.widget.type !== 'note') return undefined
+  const originalColor = (props.widget as any).color || '#fff9c4'
+  if (isDarkMode.value && colorToDarkMap[originalColor]) {
+    return colorToDarkMap[originalColor]
+  }
+  return originalColor
+}
+
+// 判断便签是否使用暗色背景（需要亮色文本）
+const noteUsesLightText = computed(() => {
+  if (props.widget.type !== 'note') return false
+  const originalColor = (props.widget as any).color || '#fff9c4'
+  return isDarkMode.value && colorToDarkMap[originalColor]
+})
+
 // 组件样式
 const wrapperStyle = computed(() => {
   if (props.widget.isMaximized) {
@@ -89,7 +121,7 @@ const wrapperStyle = computed(() => {
       width: 'calc(100% - 40px)',
       height: 'calc(100% - 160px)',
       zIndex: props.widget.zIndex,
-      backgroundColor: props.widget.type === 'note' ? (props.widget as any).color || '#fff9c4' : undefined,
+      backgroundColor: getNoteDisplayColor(),
     }
   }
   return {
@@ -98,7 +130,7 @@ const wrapperStyle = computed(() => {
     width: `${props.widget.width}px`,
     height: `${props.widget.height}px`,
     zIndex: props.widget.zIndex,
-    backgroundColor: props.widget.type === 'note' ? (props.widget as any).color || '#fff9c4' : undefined,
+    backgroundColor: getNoteDisplayColor(),
   }
 })
 
@@ -278,7 +310,7 @@ const stopResize = () => {
         <!-- 图片图标 -->
         <span v-if="widget.type === 'image'" class="text-lg">🖼️</span>
         <!-- 拖拽图标 -->
-        <svg v-else class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-else class="w-4 h-4 flex-shrink-0" :class="noteUsesLightText ? 'text-white/70' : 'text-text-secondary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
         </svg>
         <!-- 标题编辑 -->
@@ -286,7 +318,8 @@ const stopResize = () => {
           v-if="isEditingTitle"
           ref="titleInput"
           v-model="editedTitle"
-          class="flex-1 bg-bg-secondary border-2 border-border-primary px-2 py-1 outline-none font-handwritten text-sm font-medium min-w-0 focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen transition-all text-text-primary"
+          class="flex-1 bg-bg-secondary border-2 border-border-primary px-2 py-1 outline-none font-handwritten text-sm font-medium min-w-0 focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen transition-all"
+          :class="noteUsesLightText ? 'text-white' : 'text-text-primary'"
           style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px 0px var(--color-border-primary);"
           @blur="saveTitle"
           @keydown="handleTitleKeydown"
@@ -296,7 +329,8 @@ const stopResize = () => {
         />
         <span
           v-else
-          class="flex-1 font-handwritten text-sm font-medium truncate cursor-text hover:text-bluePen transition-colors text-text-primary"
+          class="flex-1 font-handwritten text-sm font-medium truncate cursor-text hover:text-bluePen transition-colors"
+          :class="noteUsesLightText ? 'text-white' : 'text-text-primary'"
           @dblclick.stop="startEditTitle"
         >{{ widget.title }}</span>
       </div>
@@ -306,7 +340,8 @@ const stopResize = () => {
         <!-- 下载按钮（仅图片组件） -->
         <button
           v-if="widget.type === 'image'"
-          class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
+          class="w-6 h-6 flex items-center justify-center hover:bg-muted/50 rounded transition-all hover:scale-110"
+          :class="noteUsesLightText ? 'text-white' : 'text-text-primary'"
           @click="handleDownloadImage"
           title="下载图片"
         >
@@ -322,7 +357,8 @@ const stopResize = () => {
 
         <!-- 最小化 -->
         <button
-          class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
+          class="w-6 h-6 flex items-center justify-center hover:bg-muted/50 rounded transition-all hover:scale-110"
+          :class="noteUsesLightText ? 'text-white' : 'text-text-primary'"
           @click="store.toggleMinimize(widget.id)"
           title="最小化"
         >
@@ -333,7 +369,8 @@ const stopResize = () => {
 
         <!-- 最大化 -->
         <button
-          class="w-6 h-6 flex items-center justify-center hover:bg-black/10 rounded transition-colors"
+          class="w-6 h-6 flex items-center justify-center hover:bg-muted/50 rounded transition-all hover:scale-110"
+          :class="noteUsesLightText ? 'text-white' : 'text-text-primary'"
           @click="store.toggleMaximize(widget.id)"
           :title="widget.isMaximized ? '还原' : '最大化'"
         >
@@ -345,7 +382,7 @@ const stopResize = () => {
 
         <!-- 关闭 -->
         <button
-          class="w-6 h-6 flex items-center justify-center hover:bg-accent/20 text-accent rounded transition-colors"
+          class="w-6 h-6 flex items-center justify-center hover:bg-accent/20 text-accent rounded transition-all hover:scale-110"
           @click="handleDeleteClick"
           title="关闭"
         >

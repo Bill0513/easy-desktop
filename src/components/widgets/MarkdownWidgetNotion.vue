@@ -482,12 +482,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .toolbar-btn {
-  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary transition-colors flex items-center justify-center min-w-[32px];
+  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary transition-all flex items-center justify-center min-w-[32px] text-text-primary;
 }
 
 .toolbar-btn:hover {
   background-color: var(--color-muted);
   opacity: 0.5;
+  transform: scale(1.1);
 }
 
 .toolbar-btn.is-active {
