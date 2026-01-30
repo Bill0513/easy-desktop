@@ -323,7 +323,7 @@ watch(() => props.widget.content, (newContent) => {
     <div class="flex justify-end mb-2 relative z-10">
       <!-- 复制按钮 -->
       <button
-        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center gap-1"
+        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors flex items-center gap-1"
         :class="{ 'bg-green-100 border-green-600': copied }"
         @click="copyContent"
         title="复制为 Markdown"
@@ -351,7 +351,7 @@ watch(() => props.widget.content, (newContent) => {
 /* Editor.js 容器样式 */
 .editor-container {
   font-family: 'Patrick Hand', cursive;
-  color: #2d2d2d;
+  color: var(--color-text-primary);
   position: relative;
 }
 

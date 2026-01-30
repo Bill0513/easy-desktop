@@ -166,9 +166,9 @@ const progressPercent = computed(() => {
 <template>
   <div class="h-full flex flex-col gap-3 overflow-y-auto">
     <!-- 日历 -->
-    <div class="card-hand-drawn p-4 bg-white">
+    <div class="card-hand-drawn p-4 bg-bg-secondary">
       <!-- 统计信息 - 平铺成一行 -->
-      <div class="flex items-center justify-around mb-4 pb-3 border-b-2 border-pencil/10">
+      <div class="flex items-center justify-around mb-4 pb-3 border-b-2 border-border-primary/10">
         <!-- 连续打卡 -->
         <div class="flex flex-col items-center gap-1">
           <Flame :size="20" :stroke-width="2.5" class="text-orange-600" />
@@ -191,17 +191,17 @@ const progressPercent = computed(() => {
       <div class="flex items-center justify-between mb-3">
         <button
           @click="prevMonth"
-          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-pencil text-sm flex items-center"
+          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-text-primary text-sm flex items-center"
         >
           <ChevronLeft :size="16" :stroke-width="2.5" />
         </button>
-        <div class="flex items-center gap-2 font-handwritten font-bold text-pencil">
+        <div class="flex items-center gap-2 font-handwritten font-bold text-text-primary">
           <CalendarIcon :size="18" :stroke-width="2.5" />
           <span>{{ currentYear }} 年 {{ monthName }}</span>
         </div>
         <button
           @click="nextMonth"
-          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-pencil text-sm flex items-center"
+          class="btn-hand-drawn px-2 py-1 bg-gray-100 text-text-primary text-sm flex items-center"
         >
           <ChevronRight :size="16" :stroke-width="2.5" />
         </button>
@@ -212,7 +212,7 @@ const progressPercent = computed(() => {
         <div
           v-for="day in ['日', '一', '二', '三', '四', '五', '六']"
           :key="day"
-          class="text-center text-xs font-handwritten text-pencil/60 py-1"
+          class="text-center text-xs font-handwritten text-text-secondary py-1"
         >
           {{ day }}
         </div>
@@ -231,7 +231,7 @@ const progressPercent = computed(() => {
           ]"
           @click="handleDayClick(item.day)"
         >
-          <span v-if="item.day" :class="item.isCheckedIn ? 'font-bold text-green-700' : 'text-gray-700'">
+          <span v-if="item.day" :class="item.isCheckedIn ? 'font-bold text-green-700' : 'text-text-primary'">
             {{ item.day }}
           </span>
           <span v-if="item.isCheckedIn" class="absolute top-0 right-0 text-xs">✓</span>
@@ -241,18 +241,18 @@ const progressPercent = computed(() => {
       </div>
 
       <!-- 目标进度条 -->
-      <div v-if="widget.goal" class="mt-4 pt-3 border-t-2 border-pencil/10">
-        <div class="flex justify-between text-xs font-handwritten text-pencil/60 mb-1">
+      <div v-if="widget.goal" class="mt-4 pt-3 border-t-2 border-border-primary/10">
+        <div class="flex justify-between text-xs font-handwritten text-text-secondary mb-1">
           <span>目标进度</span>
           <span>{{ streakDays }} / {{ widget.goal }} 天</span>
         </div>
-        <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden border-2 border-pencil">
+        <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden border-2 border-border-primary">
           <div
             class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500"
             :style="{ width: `${progressPercent}%` }"
           ></div>
         </div>
-        <div class="text-center text-xs font-handwritten text-pencil/60 mt-1">
+        <div class="text-center text-xs font-handwritten text-text-secondary mt-1">
           {{ progressPercent }}%
         </div>
       </div>

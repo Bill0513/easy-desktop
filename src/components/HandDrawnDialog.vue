@@ -60,20 +60,19 @@ const handleCancel = () => {
     >
       <div
         v-if="show"
-        class="fixed inset-0 z-[10001] flex items-center justify-center bg-pencil/50"
+        class="fixed inset-0 z-[10001] flex items-center justify-center bg-border-primary/50"
         @click.self="handleCancel"
       >
         <div
-          class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-paper"
-          style="box-shadow: 8px 8px 0px #2d2d2d;"
+          class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-bg-primary"
         >
           <!-- 标题 -->
-          <h2 class="font-handwritten text-2xl text-pencil mb-4">
+          <h2 class="font-handwritten text-2xl text-text-primary mb-4">
             {{ title }}
           </h2>
 
           <!-- 消息 -->
-          <p v-if="message" class="font-handwritten text-pencil/80 mb-4">
+          <p v-if="message" class="font-handwritten text-text-secondary mb-4">
             {{ message }}
           </p>
 
@@ -99,7 +98,7 @@ const handleCancel = () => {
             </button>
             <button
               class="btn-hand-drawn flex-1 px-4 py-2"
-              :class="{ 'bg-accent text-paper': type === 'confirm' }"
+              :class="{ 'bg-accent text-bg-primary': type === 'confirm' }"
               @click="handleConfirm"
             >
               {{ confirmText }}

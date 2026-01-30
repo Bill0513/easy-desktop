@@ -260,7 +260,7 @@ const canSpin = computed(() => {
         v-if="widget.options.length === 0"
         class="absolute inset-0 flex items-center justify-center"
       >
-        <div class="text-center text-pencil/50 font-handwritten">
+        <div class="text-center text-text-secondary font-handwritten">
           <p>还没有选项</p>
           <p class="text-sm">点击下方按钮添加</p>
         </div>
@@ -269,7 +269,7 @@ const canSpin = computed(() => {
       <!-- 选项不足提示 -->
       <div
         v-else-if="widget.options.length === 1"
-        class="absolute bottom-2 left-0 right-0 text-center text-xs text-pencil/50 font-handwritten"
+        class="absolute bottom-2 left-0 right-0 text-center text-xs text-text-secondary font-handwritten"
       >
         至少需要2个选项才能开始
       </div>
@@ -280,7 +280,7 @@ const canSpin = computed(() => {
       v-if="showResult || widget.lastResult"
       class="text-center py-2 px-4 bg-muted/30 rounded-lg mb-2 w-full"
     >
-      <div class="text-xs text-pencil/60 font-handwritten">
+      <div class="text-xs text-text-secondary font-handwritten">
         {{ showResult ? '本次结果' : '上次结果' }}
       </div>
       <div class="text-lg font-bold font-handwritten text-bluePen">
@@ -291,10 +291,10 @@ const canSpin = computed(() => {
     <!-- 操作按钮 -->
     <div class="flex gap-2 w-full justify-center">
       <button
-        class="px-4 py-2 font-handwritten rounded border-2 border-pencil transition-all flex items-center gap-1"
+        class="px-4 py-2 font-handwritten rounded border-2 border-border-primary transition-all flex items-center gap-1"
         :class="canSpin
           ? 'bg-bluePen text-white hover:bg-bluePen/80 cursor-pointer'
-          : 'bg-muted/50 text-pencil/50 cursor-not-allowed'"
+          : 'bg-muted/50 text-text-secondary cursor-not-allowed'"
         :disabled="!canSpin"
         @click="spin"
       >
@@ -305,7 +305,7 @@ const canSpin = computed(() => {
       </button>
 
       <button
-        class="px-3 py-2 font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors"
+        class="px-3 py-2 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors"
         @click="openOptionsDialog"
         :disabled="isSpinning"
       >
@@ -322,7 +322,7 @@ const canSpin = computed(() => {
         class="fixed inset-0 bg-black/30 flex items-center justify-center z-[9999]"
         @click.self="cancelEdit"
       >
-        <div class="card-hand-drawn bg-paper p-4 w-80 max-h-[80vh] flex flex-col">
+        <div class="card-hand-drawn bg-bg-primary p-4 w-80 max-h-[80vh] flex flex-col">
           <h3 class="font-handwritten text-lg font-bold mb-3 text-center">编辑选项</h3>
 
           <!-- 选项列表 -->
@@ -346,7 +346,7 @@ const canSpin = computed(() => {
                 </svg>
               </button>
             </div>
-            <div v-if="editingOptions.length === 0" class="text-center text-pencil/50 font-handwritten py-4">
+            <div v-if="editingOptions.length === 0" class="text-center text-text-secondary font-handwritten py-4">
               暂无选项
             </div>
           </div>
@@ -356,12 +356,12 @@ const canSpin = computed(() => {
             <input
               v-model="newOption"
               type="text"
-              class="flex-1 px-3 py-1.5 border-2 border-pencil rounded font-handwritten outline-none focus:border-bluePen"
+              class="flex-1 px-3 py-1.5 border-2 border-border-primary rounded font-handwritten outline-none focus:border-bluePen"
               placeholder="输入新选项..."
               @keydown.enter="addOption"
             />
             <button
-              class="px-3 py-1.5 bg-bluePen text-white font-handwritten rounded border-2 border-pencil hover:bg-bluePen/80"
+              class="px-3 py-1.5 bg-bluePen text-white font-handwritten rounded border-2 border-border-primary hover:bg-bluePen/80"
               @click="addOption"
             >
               添加
@@ -371,13 +371,13 @@ const canSpin = computed(() => {
           <!-- 操作按钮 -->
           <div class="flex gap-2 justify-end">
             <button
-              class="px-4 py-1.5 font-handwritten rounded border-2 border-pencil hover:bg-muted/50"
+              class="px-4 py-1.5 font-handwritten rounded border-2 border-border-primary hover:bg-muted/50"
               @click="cancelEdit"
             >
               取消
             </button>
             <button
-              class="px-4 py-1.5 bg-bluePen text-white font-handwritten rounded border-2 border-pencil hover:bg-bluePen/80"
+              class="px-4 py-1.5 bg-bluePen text-white font-handwritten rounded border-2 border-border-primary hover:bg-bluePen/80"
               @click="saveOptions"
             >
               保存

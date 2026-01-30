@@ -2,10 +2,10 @@
   <div class="h-screen w-full flex flex-col">
     <!-- 顶部标题栏 -->
     <div class="flex-shrink-0 px-6 py-4">
-      <h1 class="font-handwritten text-2xl font-bold text-pencil mb-1">
+      <h1 class="font-handwritten text-2xl font-bold text-text-primary mb-1">
         🔥 热点新闻
       </h1>
-      <p class="font-handwritten text-xs text-pencil/60">
+      <p class="font-handwritten text-xs text-text-secondary">
         实时追踪热门话题和趋势
       </p>
     </div>
@@ -15,21 +15,21 @@
       <!-- 暂无新闻状态 -->
       <div v-if="store.enabledSources.size === 0" class="h-full flex items-center justify-center">
         <div class="text-center">
-          <div class="w-32 h-32 mx-auto mb-4 bg-white rounded-full border-2 border-pencil flex items-center justify-center" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <div class="w-32 h-32 mx-auto mb-4 bg-bg-secondary rounded-full border-2 border-border-primary flex items-center justify-center" style="box-shadow: 4px 4px 0px var(--color-border-primary);">
             <span class="text-5xl">📰</span>
           </div>
-          <p class="font-handwritten text-base text-pencil/60">请在下方选择新闻来源</p>
+          <p class="font-handwritten text-base text-text-secondary">请在下方选择新闻来源</p>
         </div>
       </div>
 
       <!-- 空新闻列表状态 -->
       <div v-else-if="store.filteredNewsSources.length > 0 && store.filteredNewsSources.every(s => s.items.length === 0) && !store.isLoadingNews" class="h-full flex items-center justify-center">
         <div class="text-center">
-          <div class="w-32 h-32 mx-auto mb-4 bg-white rounded-full border-2 border-pencil flex items-center justify-center" style="box-shadow: 4px 4px 0px #2d2d2d;">
+          <div class="w-32 h-32 mx-auto mb-4 bg-bg-secondary rounded-full border-2 border-border-primary flex items-center justify-center" style="box-shadow: 4px 4px 0px var(--color-border-primary);">
             <span class="text-5xl">📭</span>
           </div>
-          <p class="font-handwritten text-base text-pencil/60">暂时没有新闻数据</p>
-          <p class="font-handwritten text-xs text-pencil/40 mt-1">点击右上角刷新按钮重新加载</p>
+          <p class="font-handwritten text-base text-text-secondary">暂时没有新闻数据</p>
+          <p class="font-handwritten text-xs text-text-secondary/70 mt-1">点击右上角刷新按钮重新加载</p>
         </div>
       </div>
 

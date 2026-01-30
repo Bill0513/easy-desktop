@@ -244,12 +244,12 @@ onUnmounted(() => {
     >
       <!-- 搜索框容器 -->
       <div
-        class="w-full max-w-2xl mx-4 card-hand-drawn bg-white"
+        class="w-full max-w-2xl mx-4 card-hand-drawn bg-bg-secondary"
         @click.stop
       >
         <!-- 搜索输入框 -->
-        <div class="flex items-center px-4 py-3 border-b-2 border-dashed border-gray-300">
-          <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center px-4 py-3 border-b-2 border-dashed border-border-primary/30">
+          <svg class="w-5 h-5 text-text-secondary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -257,10 +257,10 @@ onUnmounted(() => {
             type="text"
             v-model="store.searchQuery"
             placeholder="搜索组件... (Ctrl+F 打开，Esc 关闭)"
-            class="flex-1 text-lg outline-none bg-transparent font-handwritten"
+            class="flex-1 text-lg outline-none bg-transparent font-handwritten text-text-primary"
             @input="selectedIndex = 0"
           />
-          <span class="text-xs text-gray-400 ml-2">{{ store.searchResults.length }} 个结果</span>
+          <span class="text-xs text-text-secondary ml-2">{{ store.searchResults.length }} 个结果</span>
         </div>
 
         <!-- 搜索结果列表 -->
@@ -273,8 +273,8 @@ onUnmounted(() => {
             v-for="(item, index) in store.searchResults"
             :key="item.id"
             :ref="(el) => setItemRef(el as HTMLDivElement, index)"
-            class="flex items-center px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-yellow-50 transition-colors"
-            :class="{ 'bg-yellow-100': index === selectedIndex }"
+            class="flex items-center px-4 py-3 cursor-pointer border-b border-border-primary/10 hover:bg-muted/30 transition-colors"
+            :class="{ 'bg-muted/50': index === selectedIndex }"
             @click="handleResultClick(item)"
             @mouseenter="selectedIndex = index"
           >
@@ -289,16 +289,16 @@ onUnmounted(() => {
             <!-- 内容 -->
             <div class="flex-1 min-w-0">
               <div
-                class="font-medium text-gray-800 truncate"
+                class="font-medium text-text-primary truncate"
                 v-html="highlightText(getItemTitle(item), store.searchQuery)"
               />
-              <div class="text-sm text-gray-500 truncate">
+              <div class="text-sm text-text-secondary truncate">
                 {{ getItemType(item) }} · {{ getItemStatus(item) }}
               </div>
             </div>
 
             <!-- 快捷键提示 -->
-            <span v-if="index === selectedIndex" class="text-xs text-gray-400 ml-2">
+            <span v-if="index === selectedIndex" class="text-xs text-text-secondary ml-2">
               Enter 跳转
             </span>
           </div>
@@ -307,9 +307,9 @@ onUnmounted(() => {
         <!-- 空状态 -->
         <div
           v-else-if="store.searchQuery"
-          class="px-4 py-8 text-center text-gray-400"
+          class="px-4 py-8 text-center text-text-secondary"
         >
-          <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-12 h-12 mx-auto mb-2 text-text-secondary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p>没有找到匹配的组件</p>
@@ -322,7 +322,6 @@ onUnmounted(() => {
 <style scoped>
 .card-hand-drawn {
   border-radius: 8px;
-  box-shadow: 4px 4px 0px #2d2d2d;
 }
 
 .overflow-y-auto::-webkit-scrollbar {
@@ -330,15 +329,15 @@ onUnmounted(() => {
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-scrollbar-track);
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--color-scrollbar-thumb);
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: var(--color-muted);
 }
 </style>

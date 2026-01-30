@@ -246,12 +246,12 @@ watch(selectedIndex, (index) => {
     <!-- 搜索引擎选择器 -->
     <div class="relative">
       <button
-        class="flex items-center gap-1 px-2 py-1.5 bg-white border-2 border-pencil hover:bg-muted/30 transition-colors"
+        class="flex items-center gap-1 px-2 py-1.5 bg-bg-secondary border-2 border-border-primary hover:bg-muted/30 transition-colors"
         :style="{ borderRadius: '125px 15px 125px 15px / 15px 125px 15px 125px' }"
         @click="showEngineDropdown = !showEngineDropdown"
       >
         <span class="text-base">{{ currentEngine.icon }}</span>
-        <svg class="w-3 h-3 text-pencil/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg class="w-3 h-3 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
@@ -259,16 +259,12 @@ watch(selectedIndex, (index) => {
       <!-- 搜索引擎下拉 -->
       <div
         v-if="showEngineDropdown"
-        class="absolute top-full left-0 mt-1 bg-white border-2 border-pencil z-50 min-w-[100px]"
-        :style="{
-          borderRadius: '15px 125px 15px 125px / 125px 15px 125px 15px',
-          boxShadow: '3px 3px 0px 0px #2d2d2d'
-        }"
+        class="absolute top-full left-0 mt-1 bg-bg-secondary border-2 border-border-primary z-50 min-w-[100px] card-hand-drawn"
       >
         <button
           v-for="engine in searchEngines"
           :key="engine.id"
-          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm"
+          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm text-text-primary"
           :class="{ 'bg-muted/50': engine.id === store.searchEngine }"
           @click="selectEngine(engine.id)"
         >
@@ -285,7 +281,7 @@ watch(selectedIndex, (index) => {
         v-model="searchQuery"
         type="text"
         placeholder="搜索..."
-        class="w-full px-3 py-1.5 bg-white border-2 border-pencil font-handwritten text-sm focus:outline-none focus:border-bluePen focus:ring-2 focus:ring-bluePen/20"
+        class="w-full px-3 py-1.5 bg-bg-secondary border-2 border-border-primary font-handwritten text-sm focus:outline-none focus:border-bluePen focus:ring-2 focus:ring-bluePen/20 text-text-primary"
         :style="{ borderRadius: '125px 15px 125px 15px / 15px 125px 15px 125px' }"
         @input="handleInput"
         @focus="handleFocus"
@@ -297,18 +293,14 @@ watch(selectedIndex, (index) => {
       <!-- 下拉列表（联想/历史） -->
       <div
         v-if="showDropdown && displayItems.length > 0"
-        class="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-pencil z-50 max-h-[280px] overflow-y-auto"
-        :style="{
-          borderRadius: '15px 125px 15px 125px / 125px 15px 125px 15px',
-          boxShadow: '3px 3px 0px 0px #2d2d2d'
-        }"
+        class="absolute top-full left-0 right-0 mt-1 bg-bg-secondary border-2 border-border-primary z-50 max-h-[280px] overflow-y-auto card-hand-drawn"
       >
         <!-- 标题栏 -->
-        <div class="flex items-center justify-between px-3 py-1.5 border-b border-pencil/20">
-          <span class="text-xs text-pencil/60 font-handwritten flex items-center gap-1">
+        <div class="flex items-center justify-between px-3 py-1.5 border-b border-border-primary/20">
+          <span class="text-xs text-text-secondary font-handwritten flex items-center gap-1">
             <template v-if="searchQuery.trim()">
               搜索建议
-              <span v-if="isLoadingSuggestions" class="inline-block w-3 h-3 border-2 border-pencil/30 border-t-pencil rounded-full animate-spin"></span>
+              <span v-if="isLoadingSuggestions" class="inline-block w-3 h-3 border-2 border-border-primary/30 border-t-border-primary rounded-full animate-spin"></span>
             </template>
             <template v-else>搜索历史</template>
           </span>
@@ -334,14 +326,14 @@ watch(selectedIndex, (index) => {
         >
           <span class="flex items-center gap-2 truncate flex-1">
             <!-- 图标区分类型 -->
-            <span v-if="item.type === 'history'" class="text-pencil/40 text-xs">🕐</span>
-            <span v-else class="text-pencil/40 text-xs">🔍</span>
-            <span class="truncate">{{ item.text }}</span>
+            <span v-if="item.type === 'history'" class="text-text-secondary text-xs">🕐</span>
+            <span v-else class="text-text-secondary text-xs">🔍</span>
+            <span class="truncate text-text-primary">{{ item.text }}</span>
           </span>
           <!-- 历史记录可删除 -->
           <span
             v-if="item.type === 'history'"
-            class="text-pencil/40 hover:text-accent ml-2 text-xs flex-shrink-0"
+            class="text-text-secondary hover:text-accent ml-2 text-xs flex-shrink-0"
             @click="deleteHistory(item.text, $event)"
           >✕</span>
         </button>
@@ -350,10 +342,10 @@ watch(selectedIndex, (index) => {
 
     <!-- 搜索按钮 -->
     <button
-      class="flex items-center justify-center w-8 h-8 bg-accent text-white border-2 border-pencil hover:bg-accent/80 transition-colors"
+      class="flex items-center justify-center w-8 h-8 bg-accent text-bg-primary border-2 border-border-primary hover:bg-accent/80 transition-colors"
       :style="{
         borderRadius: '125px 15px 125px 15px / 15px 125px 15px 125px',
-        boxShadow: '2px 2px 0px 0px #2d2d2d'
+        boxShadow: '2px 2px 0px 0px var(--color-border-primary)'
       }"
       @click="doSearch()"
     >

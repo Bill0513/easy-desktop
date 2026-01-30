@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet, ThemeMode } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -50,6 +50,11 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   // Background state
   const backgroundColor = ref<string>('#fdfbf7') // 默认纸张色
+
+  // Theme state
+  const themeMode = ref<ThemeMode>('system') // 主题模式：light, dark, system
+  const darkBackgroundColor = ref<string>('#1a1a1a') // 暗色主题背景色
+  let systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null // 系统主题监听器
 
   // File state
   const files = ref<FileItem[]>([])
@@ -243,6 +248,63 @@ export const useDesktopStore = defineStore('desktop', () => {
     return sortedNavigationSites.value.filter(site => site.category === selectedCategory.value)
   })
 
+  // 计算实际生效的主题
+  const effectiveTheme = computed<'light' | 'dark'>(() => {
+    if (themeMode.value === 'system') {
+      return detectSystemTheme()
+    }
+    return themeMode.value
+  })
+
+  // 检测系统主题
+  function detectSystemTheme(): 'light' | 'dark' {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    return 'light'
+  }
+
+  // 应用主题到 DOM
+  function applyTheme() {
+    const theme = effectiveTheme.value
+    document.documentElement.setAttribute('data-theme', theme)
+
+    // 应用背景色
+    const bgColor = theme === 'dark' ? darkBackgroundColor.value : backgroundColor.value
+    document.documentElement.style.setProperty('--color-bg-primary', bgColor)
+  }
+
+  // 初始化主题系统
+  function initTheme() {
+    // 监听系统主题变化
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    systemThemeListener = () => {
+      if (themeMode.value === 'system') {
+        applyTheme()
+      }
+    }
+    mediaQuery.addEventListener('change', systemThemeListener)
+
+    // 应用初始主题
+    applyTheme()
+  }
+
+  // 设置主题模式
+  function setThemeMode(mode: ThemeMode) {
+    themeMode.value = mode
+    applyTheme()
+    save()
+  }
+
+  // 设置暗色主题背景色
+  function setDarkBackgroundColor(color: string) {
+    darkBackgroundColor.value = color
+    if (effectiveTheme.value === 'dark') {
+      applyTheme()
+    }
+    save()
+  }
+
   // Actions
   async function init() {
     isLoading.value = true
@@ -280,6 +342,13 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.backgroundColor !== undefined) {
           backgroundColor.value = cloudData.backgroundColor
         }
+        // 加载主题设置
+        if (cloudData.themeMode !== undefined) {
+          themeMode.value = cloudData.themeMode
+        }
+        if (cloudData.darkBackgroundColor !== undefined) {
+          darkBackgroundColor.value = cloudData.darkBackgroundColor
+        }
         // 加载思维导图历史记录
         if (cloudData.mindMaps !== undefined) {
           mindMaps.value = cloudData.mindMaps
@@ -306,6 +375,8 @@ export const useDesktopStore = defineStore('desktop', () => {
           searchHistory.value = localData.searchHistory || []
           searchEngine.value = localData.searchEngine || 'google'
           backgroundColor.value = localData.backgroundColor || '#fdfbf7'
+          themeMode.value = localData.themeMode || 'system'
+          darkBackgroundColor.value = localData.darkBackgroundColor || '#1a1a1a'
           mindMaps.value = localData.mindMaps || []
           codeSnippets.value = localData.codeSnippets || []
 
@@ -340,6 +411,9 @@ export const useDesktopStore = defineStore('desktop', () => {
       if (!lastSyncTime.value) {
         lastSyncTime.value = Date.now()
       }
+
+      // 初始化主题系统
+      initTheme()
     } catch (error) {
       console.error('Failed to init:', error)
       // 初始化失败，不标记为已初始化
@@ -378,6 +452,8 @@ export const useDesktopStore = defineStore('desktop', () => {
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
         backgroundColor: backgroundColor.value,
+        themeMode: themeMode.value,
+        darkBackgroundColor: darkBackgroundColor.value,
         mindMaps: mindMaps.value,
         codeSnippets: codeSnippets.value,
         version: 1,
@@ -449,6 +525,9 @@ export const useDesktopStore = defineStore('desktop', () => {
         enabledNewsSources: Array.from(enabledSources.value),
         searchHistory: searchHistory.value,
         searchEngine: searchEngine.value,
+        backgroundColor: backgroundColor.value,
+        themeMode: themeMode.value,
+        darkBackgroundColor: darkBackgroundColor.value,
         mindMaps: mindMaps.value,
         codeSnippets: codeSnippets.value,
         version: 1,
@@ -2460,6 +2539,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     searchHistory,
     searchEngine,
     backgroundColor,
+    themeMode,
+    darkBackgroundColor,
+    effectiveTheme,
     syncStatus,
     lastSyncTime,
     syncErrorMessage,
@@ -2536,6 +2618,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     setActiveTab,
     loadActiveTab,
     setBackgroundColor,
+    setThemeMode,
+    setDarkBackgroundColor,
+    applyTheme,
     fetchNews,
     fetchNewsBySource,
     toggleNewsSource,

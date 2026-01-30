@@ -2,13 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme Variables */
+:root {
+  /* 亮色主题 */
+  --color-bg-primary: #fdfbf7;
+  --color-bg-secondary: #ffffff;
+  --color-text-primary: #2d2d2d;
+  --color-text-secondary: #666666;
+  --color-border-primary: #2d2d2d;
+  --color-shadow-primary: #2d2d2d;
+  --color-muted: #e5e0d8;
+  --color-scrollbar-track: #fdfbf7;
+  --color-scrollbar-thumb: #e5e0d8;
+}
+
+[data-theme="dark"] {
+  /* 暗色主题 */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #b0b0b0;
+  --color-border-primary: #f5f5f5;
+  --color-shadow-primary: #000000;
+  --color-muted: #3a3a3a;
+  --color-scrollbar-track: #1a1a1a;
+  --color-scrollbar-thumb: #3a3a3a;
+}
+
 /* Hand-drawn design system base styles */
 body {
   font-family: 'Patrick Hand', cursive;
-  background-color: #fdfbf7;
+  background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(#e5e0d8 1px, transparent 1px),
-    radial-gradient(#e5e0d8 1px, transparent 1px);
+    radial-gradient(var(--color-muted) 1px, transparent 1px),
+    radial-gradient(var(--color-muted) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: 0 0, 12px 12px;
   min-height: 100vh;
@@ -34,15 +61,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Hand-drawn button style */
 .btn-hand-drawn {
-  @apply px-6 py-3 text-lg font-handwritten border-2 border-pencil bg-white text-pencil;
+  @apply px-6 py-3 text-lg font-handwritten border-2 border-border-primary bg-bg-secondary text-text-primary;
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  box-shadow: 4px 4px 0px 0px #2d2d2d;
+  box-shadow: 4px 4px 0px 0px var(--color-shadow-primary);
   transition: all 0.15s ease;
 }
 
 .btn-hand-drawn:hover {
   @apply bg-accent text-white;
-  box-shadow: 2px 2px 0px 0px #2d2d2d;
+  box-shadow: 2px 2px 0px 0px var(--color-shadow-primary);
   transform: translate(2px, 2px);
 }
 
@@ -57,9 +84,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card style */
 .card-hand-drawn {
-  @apply bg-white border-2 border-pencil;
+  @apply bg-bg-secondary border-2 border-border-primary;
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  box-shadow: 4px 4px 0px 0px #2d2d2d;
+  box-shadow: 4px 4px 0px 0px var(--color-shadow-primary);
 }
 
 /* Markdown widget 需要特殊处理，允许工具箱溢出 */
@@ -70,10 +97,11 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Input style */
 .input-hand-drawn {
-  @apply w-full px-4 py-3 bg-white border-2 border-pencil;
+  @apply w-full px-4 py-3 bg-bg-secondary border-2 border-border-primary;
   border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px;
   font-family: 'Patrick Hand', cursive;
   font-size: 1.125rem;
+  color: var(--color-text-primary);
 }
 
 .input-hand-drawn:focus {
@@ -87,16 +115,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-track {
-  background: #fdfbf7;
+  background: var(--color-scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e5e0d8;
+  background: var(--color-scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2d2d2d;
+  background: var(--color-text-primary);
 }
 
 /* Drag handle indicator */

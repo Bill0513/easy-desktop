@@ -48,7 +48,7 @@ const handleCloseSettings = () => {
     <!-- 收起状态的触发条 -->
     <div
       v-show="!isExpanded"
-      class="w-1 h-32 bg-pencil/20 rounded-r-full hover:bg-pencil/40 transition-colors cursor-pointer"
+      class="w-1 h-32 bg-border-primary/20 rounded-r-full hover:bg-border-primary/40 transition-colors cursor-pointer"
     />
 
     <!-- 展开状态的 Tab 栏 -->
@@ -63,7 +63,6 @@ const handleCloseSettings = () => {
       <div
         v-if="isExpanded"
         class="card-hand-drawn py-3 px-2 flex flex-col gap-2 ml-2"
-        style="box-shadow: 6px 6px 0px #2d2d2d;"
       >
         <button
           v-for="tab in tabs"
@@ -81,13 +80,13 @@ const handleCloseSettings = () => {
             :is="tab.icon"
             :stroke-width="2.5"
             class="w-7 h-7 transition-transform group-hover:scale-110"
-            :class="store.activeTab === tab.id ? 'animate-bounce' : ''"
+            :class="store.activeTab === tab.id ? 'animate-bounce text-paper' : 'text-text-primary'"
           />
 
           <!-- 名称 -->
           <span
             class="font-handwritten text-sm font-medium whitespace-nowrap"
-            :class="store.activeTab === tab.id ? 'text-paper' : 'text-pencil'"
+            :class="store.activeTab === tab.id ? 'text-paper' : 'text-text-primary'"
           >
             {{ tab.name }}
           </span>
@@ -95,9 +94,8 @@ const handleCloseSettings = () => {
           <!-- 描述（悬浮时显示） -->
           <div
             class="absolute left-full ml-3 px-3 py-2 card-hand-drawn whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            style="box-shadow: 4px 4px 0px #2d2d2d;"
           >
-            <p class="font-handwritten text-xs text-pencil/80">{{ tab.description }}</p>
+            <p class="font-handwritten text-xs text-text-secondary">{{ tab.description }}</p>
           </div>
 
           <!-- 激活指示器 -->
@@ -108,7 +106,7 @@ const handleCloseSettings = () => {
         </button>
 
         <!-- 分隔线 -->
-        <div class="h-px bg-pencil/20 my-1" />
+        <div class="h-px bg-border-primary/20 my-1" />
 
         <!-- 设置按钮 -->
         <button
@@ -118,20 +116,19 @@ const handleCloseSettings = () => {
           <!-- 图标 -->
           <Settings
             :stroke-width="2.5"
-            class="w-7 h-7 transition-transform group-hover:scale-110"
+            class="w-7 h-7 transition-transform group-hover:scale-110 text-text-primary"
           />
 
           <!-- 名称 -->
-          <span class="font-handwritten text-sm font-medium whitespace-nowrap text-pencil">
+          <span class="font-handwritten text-sm font-medium whitespace-nowrap text-text-primary">
             设置
           </span>
 
           <!-- 描述（悬浮时显示） -->
           <div
             class="absolute left-full ml-3 px-3 py-2 card-hand-drawn whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            style="box-shadow: 4px 4px 0px #2d2d2d;"
           >
-            <p class="font-handwritten text-xs text-pencil/80">网站导入、偏好设置</p>
+            <p class="font-handwritten text-xs text-text-secondary">网站导入、偏好设置</p>
           </div>
         </button>
       </div>

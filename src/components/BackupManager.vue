@@ -1,12 +1,12 @@
 <template>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="card-hand-drawn bg-paper max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+    <div class="card-hand-drawn bg-bg-primary max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b-2 border-pencil">
+      <div class="flex items-center justify-between p-6 border-b-2 border-border-primary">
         <h2 class="text-2xl font-handwritten font-bold">数据备份管理</h2>
         <button
           @click="$emit('close')"
-          class="text-pencil hover:text-red transition-colors"
+          class="text-text-primary hover:text-red transition-colors"
           aria-label="关闭"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,11 +41,11 @@
         </div>
 
         <!-- Backups List -->
-        <div v-if="isLoadingBackups" class="text-center py-8 text-pencil/60">
+        <div v-if="isLoadingBackups" class="text-center py-8 text-text-secondary">
           加载中...
         </div>
 
-        <div v-else-if="backups.length === 0" class="text-center py-8 text-pencil/60">
+        <div v-else-if="backups.length === 0" class="text-center py-8 text-text-secondary">
           暂无备份文件
         </div>
 
@@ -56,13 +56,13 @@
             class="card-hand-drawn p-4 flex items-center justify-between hover:shadow-lg transition-shadow"
           >
             <div class="flex-1">
-              <div class="font-handwritten font-bold text-pencil">
+              <div class="font-handwritten font-bold text-text-primary">
                 {{ formatDate(backup.uploaded) }}
               </div>
-              <div class="text-sm text-pencil/60 mt-1">
+              <div class="text-sm text-text-secondary mt-1">
                 文件大小: {{ formatSize(backup.size) }}
               </div>
-              <div class="text-xs text-pencil/40 mt-1">
+              <div class="text-xs text-text-primary/40 mt-1">
                 {{ backup.filename }}
               </div>
             </div>
@@ -78,8 +78,8 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-6 border-t-2 border-pencil bg-paper/50">
-        <p class="text-sm text-pencil/60">
+      <div class="p-6 border-t-2 border-border-primary bg-bg-primary/50">
+        <p class="text-sm text-text-secondary">
           💡 提示：建议定期备份数据。恢复备份会覆盖当前所有数据，请谨慎操作。
         </p>
       </div>

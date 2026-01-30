@@ -96,7 +96,7 @@ const handleClose = () => {
             <div
               v-for="category in store.navigationCategories"
               :key="category"
-              class="flex items-center justify-between p-2 border-2 border-pencil/20 rounded-lg"
+              class="flex items-center justify-between p-2 border-2 border-border-primary/20 rounded-lg"
             >
               <span class="font-handwritten">{{ category }}</span>
               <button

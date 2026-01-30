@@ -308,10 +308,10 @@ onUnmounted(() => {
 <template>
   <div class="h-screen flex flex-col">
     <!-- 顶部工具栏 -->
-    <div class="flex items-center gap-4 p-4 border-b-2 border-pencil">
+    <div class="flex items-center gap-4 p-4 border-b-2 border-border-primary">
       <button
         @click="createNew"
-        class="btn-hand-drawn px-4 py-2 bg-blue-100 text-pencil flex items-center gap-2"
+        class="btn-hand-drawn px-4 py-2 bg-blue-100 text-text-primary flex items-center gap-2"
       >
         <Plus :size="18" :stroke-width="2.5" />
         <span>新建片段</span>
@@ -328,7 +328,7 @@ onUnmounted(() => {
         v-model="store.snippetSearchQuery"
         type="text"
         placeholder="搜索片段..."
-        class="input-hand-drawn px-3 py-2 bg-white"
+        class="input-hand-drawn px-3 py-2 bg-bg-secondary"
         style="width:400px"
       />
     </div>
@@ -336,7 +336,7 @@ onUnmounted(() => {
     <!-- 主内容区 -->
     <div class="flex-1 flex overflow-hidden">
       <!-- 左侧列表 -->
-      <div class="w-80 border-r-2 border-pencil overflow-y-auto p-4 space-y-2">
+      <div class="w-80 border-r-2 border-border-primary overflow-y-auto p-4 space-y-2">
         <div
           v-for="snippet in store.filteredCodeSnippets"
           :key="snippet.id"
@@ -344,12 +344,12 @@ onUnmounted(() => {
           class="card-hand-drawn p-3 cursor-pointer transition-colors"
           :class="{
             'bg-blue-100': store.selectedSnippetId === snippet.id,
-            'bg-white hover:bg-gray-50': store.selectedSnippetId !== snippet.id,
+            'bg-bg-secondary hover:bg-gray-50': store.selectedSnippetId !== snippet.id,
           }"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
-              <h3 class="font-handwritten font-bold text-pencil truncate">
+              <h3 class="font-handwritten font-bold text-text-primary truncate">
                 {{ snippet.title }}
               </h3>
               <p class="text-xs text-gray-500 font-handwritten">
@@ -359,7 +359,7 @@ onUnmounted(() => {
                 <span
                   v-for="tag in snippet.tags"
                   :key="tag"
-                  class="text-xs px-2 py-0.5 bg-yellow-100 text-pencil rounded font-handwritten"
+                  class="text-xs px-2 py-0.5 bg-yellow-100 text-text-primary rounded font-handwritten"
                 >
                   {{ tag }}
                 </span>
@@ -396,22 +396,22 @@ onUnmounted(() => {
       <div class="flex-1 overflow-y-auto p-6">
         <!-- 编辑模式 -->
         <div v-if="isEditing && editingSnippet" class="space-y-4">
-          <h2 class="text-2xl font-handwritten font-bold text-pencil">
+          <h2 class="text-2xl font-handwritten font-bold text-text-primary">
             {{ editingSnippet.id ? '编辑片段' : '新建片段' }}
           </h2>
 
           <div>
-            <label class="block text-sm font-handwritten text-pencil mb-1">标题</label>
+            <label class="block text-sm font-handwritten text-text-primary mb-1">标题</label>
             <input
               v-model="editingSnippet.title"
               type="text"
-              class="input-hand-drawn w-full px-3 py-2 bg-white"
+              class="input-hand-drawn w-full px-3 py-2 bg-bg-secondary"
               placeholder="片段标题"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-handwritten text-pencil mb-1">语言</label>
+            <label class="block text-sm font-handwritten text-text-primary mb-1">语言</label>
             <CustomSelect
               v-model="editingSnippet.language"
               :options="languageOptions"
@@ -420,37 +420,37 @@ onUnmounted(() => {
           </div>
 
           <div>
-            <label class="block text-sm font-handwritten text-pencil mb-1">代码</label>
+            <label class="block text-sm font-handwritten text-text-primary mb-1">代码</label>
             <div
               ref="editorContainer"
-              class="border-2 border-pencil rounded-lg overflow-hidden"
+              class="border-2 border-border-primary rounded-lg overflow-hidden"
               style="height: 400px"
             ></div>
           </div>
 
           <div>
-            <label class="block text-sm font-handwritten text-pencil mb-1">描述</label>
+            <label class="block text-sm font-handwritten text-text-primary mb-1">描述</label>
             <textarea
               v-model="editingSnippet.description"
-              class="input-hand-drawn w-full px-3 py-2 bg-white"
+              class="input-hand-drawn w-full px-3 py-2 bg-bg-secondary"
               rows="3"
               placeholder="代码片段描述（可选）"
             ></textarea>
           </div>
 
           <div>
-            <label class="block text-sm font-handwritten text-pencil mb-1">标签</label>
+            <label class="block text-sm font-handwritten text-text-primary mb-1">标签</label>
             <div class="flex gap-2 mb-2">
               <input
                 v-model="tagInput"
                 @keydown.enter="addTag"
                 type="text"
-                class="input-hand-drawn flex-1 px-3 py-2 bg-white"
+                class="input-hand-drawn flex-1 px-3 py-2 bg-bg-secondary"
                 placeholder="输入标签后按回车"
               />
               <button
                 @click="addTag"
-                class="btn-hand-drawn px-4 py-2 bg-blue-100 text-pencil"
+                class="btn-hand-drawn px-4 py-2 bg-blue-100 text-text-primary"
               >
                 添加
               </button>
@@ -459,7 +459,7 @@ onUnmounted(() => {
               <span
                 v-for="tag in editingSnippet.tags"
                 :key="tag"
-                class="px-3 py-1 bg-yellow-100 text-pencil rounded font-handwritten flex items-center gap-2"
+                class="px-3 py-1 bg-yellow-100 text-text-primary rounded font-handwritten flex items-center gap-2"
               >
                 {{ tag }}
                 <button
@@ -475,13 +475,13 @@ onUnmounted(() => {
           <div class="flex gap-2">
             <button
               @click="saveSnippet"
-              class="btn-hand-drawn px-6 py-2 bg-green-100 text-pencil"
+              class="btn-hand-drawn px-6 py-2 bg-green-100 text-text-primary"
             >
               保存
             </button>
             <button
               @click="cancelEdit"
-              class="btn-hand-drawn px-6 py-2 bg-gray-100 text-pencil"
+              class="btn-hand-drawn px-6 py-2 bg-gray-100 text-text-primary"
             >
               取消
             </button>
@@ -492,7 +492,7 @@ onUnmounted(() => {
         <div v-else-if="selectedSnippet" class="space-y-4">
           <div class="flex items-start justify-between">
             <div>
-              <h2 class="text-2xl font-handwritten font-bold text-pencil">
+              <h2 class="text-2xl font-handwritten font-bold text-text-primary">
                 {{ selectedSnippet.title }}
               </h2>
               <p class="text-sm text-gray-500 font-handwritten mt-1">
@@ -502,13 +502,13 @@ onUnmounted(() => {
             <div class="flex gap-2">
               <button
                 @click="editSnippet(selectedSnippet.id)"
-                class="btn-hand-drawn px-4 py-2 bg-blue-100 text-pencil"
+                class="btn-hand-drawn px-4 py-2 bg-blue-100 text-text-primary"
               >
                 编辑
               </button>
               <button
                 @click="copyCode(selectedSnippet.code)"
-                class="btn-hand-drawn px-4 py-2 bg-green-100 text-pencil"
+                class="btn-hand-drawn px-4 py-2 bg-green-100 text-text-primary"
               >
                 复制代码
               </button>
@@ -516,14 +516,14 @@ onUnmounted(() => {
           </div>
 
           <div v-if="selectedSnippet.description" class="card-hand-drawn p-4 bg-yellow-50">
-            <p class="font-handwritten text-pencil">{{ selectedSnippet.description }}</p>
+            <p class="font-handwritten text-text-primary">{{ selectedSnippet.description }}</p>
           </div>
 
           <div v-if="selectedSnippet.tags.length > 0" class="flex flex-wrap gap-2">
             <span
               v-for="tag in selectedSnippet.tags"
               :key="tag"
-              class="px-3 py-1 bg-yellow-100 text-pencil rounded font-handwritten"
+              class="px-3 py-1 bg-yellow-100 text-text-primary rounded font-handwritten"
             >
               {{ tag }}
             </span>

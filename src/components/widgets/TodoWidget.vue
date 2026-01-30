@@ -144,7 +144,7 @@ const getPriorityText = (priority?: number) => {
           >
             <!-- 拖拽手柄 -->
             <div class="drag-handle cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg class="w-4 h-4 text-pencil/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
               </svg>
             </div>
@@ -161,11 +161,11 @@ const getPriorityText = (priority?: number) => {
             </button>
             <button
               v-else
-              class="w-6 h-6 rounded-full border-2 border-dashed border-pencil/30 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 hover:border-pencil/60"
+              class="w-6 h-6 rounded-full border-2 border-dashed border-border-primary/30 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 hover:border-border-primary/60"
               @click="store.toggleTodoPriority(widget.id, item.id)"
               title="设置优先级"
             >
-              <svg class="w-3 h-3 text-pencil/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </button>
@@ -173,7 +173,7 @@ const getPriorityText = (priority?: number) => {
             <!-- 复选框 -->
             <button
               class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0"
-              :class="item.completed ? 'bg-accent border-accent' : 'border-pencil hover:bg-muted'"
+              :class="item.completed ? 'bg-accent border-accent' : 'border-border-primary hover:bg-muted'"
               @click="store.toggleTodoItem(widget.id, item.id)"
             >
               <svg v-if="item.completed" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +186,7 @@ const getPriorityText = (priority?: number) => {
               v-if="editingItemId === item.id"
               ref="editInput"
               v-model="editingText"
-              class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none resize-none"
+              class="flex-1 font-handwritten text-lg bg-transparent border-none outline-none resize-none text-text-primary"
               rows="1"
               @blur="saveEdit"
               @keydown="handleEditKeydown"
@@ -196,8 +196,8 @@ const getPriorityText = (priority?: number) => {
             />
             <span
               v-else
-              class="flex-1 font-handwritten text-lg break-all cursor-text"
-              :class="{ 'line-through text-pencil/40': item.completed }"
+              class="flex-1 font-handwritten text-lg break-all cursor-text text-text-primary"
+              :class="{ 'line-through text-text-secondary': item.completed }"
               @dblclick="startEditItem(item.id, item.text)"
             >
               {{ item.text }}
@@ -217,13 +217,13 @@ const getPriorityText = (priority?: number) => {
       </draggable>
 
       <!-- 空状态 -->
-      <div v-if="widget.items.length === 0" class="text-center text-pencil/40 py-4">
+      <div v-if="widget.items.length === 0" class="text-center text-text-secondary py-4">
         <p class="font-handwritten">暂无待办事项</p>
       </div>
     </div>
 
     <!-- 添加输入框 -->
-    <div class="mt-3 pt-3 border-t-2 border-dashed border-pencil/20">
+    <div class="mt-3 pt-3 border-t-2 border-dashed border-border-primary/20">
       <div class="flex gap-2">
         <input
           v-model="newItemText"

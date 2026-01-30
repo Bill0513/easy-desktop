@@ -109,28 +109,28 @@ onUnmounted(() => {
         </template>
         <template v-else-if="isToday">
           <div class="text-5xl font-bold font-handwritten text-bluePen">今天</div>
-          <div class="text-lg font-handwritten text-pencil/70 mt-1">就是今天！</div>
+          <div class="text-lg font-handwritten text-text-secondary mt-1">就是今天！</div>
         </template>
         <template v-else>
           <div class="text-6xl font-bold font-handwritten text-bluePen">{{ daysRemaining }}</div>
-          <div class="text-lg font-handwritten text-pencil/70 mt-1">天</div>
+          <div class="text-lg font-handwritten text-text-secondary mt-1">天</div>
         </template>
       </div>
-      <div v-else class="text-2xl font-handwritten text-pencil/50">
+      <div v-else class="text-2xl font-handwritten text-text-secondary">
         点击下方设置日期
       </div>
 
       <!-- 目标日期 -->
-      <div class="mt-4 text-sm font-handwritten text-pencil/60">
+      <div class="mt-4 text-sm font-handwritten text-text-secondary">
         {{ formattedDate }}
       </div>
     </div>
 
     <!-- 描述区域 -->
-    <div class="mt-2 border-t border-pencil/20 pt-2">
+    <div class="mt-2 border-t border-border-primary/20 pt-2">
       <div
         v-if="!isEditingDescription"
-        class="text-sm font-handwritten text-pencil/70 cursor-pointer hover:text-pencil min-h-[24px] px-1"
+        class="text-sm font-handwritten text-text-secondary cursor-pointer hover:text-text-primary min-h-[24px] px-1"
         @dblclick="startEditDescription"
         :title="widget.description ? '双击编辑' : '双击添加备注'"
       >
@@ -140,7 +140,7 @@ onUnmounted(() => {
         v-else
         ref="descriptionInput"
         v-model="widget.description"
-        class="w-full text-sm font-handwritten bg-white/50 border border-pencil/30 rounded px-2 py-1 outline-none focus:border-bluePen resize-none"
+        class="w-full text-sm font-handwritten bg-bg-secondary border border-border-primary/30 rounded px-2 py-1 outline-none focus:border-bluePen resize-none"
         rows="2"
         placeholder="添加备注..."
         @blur="updateDescription"
@@ -161,7 +161,7 @@ onUnmounted(() => {
       >
         <template #trigger>
           <button
-            class="px-3 py-1.5 text-sm font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center gap-1"
+            class="px-3 py-1.5 text-sm font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors flex items-center gap-1"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -177,15 +177,15 @@ onUnmounted(() => {
 <style scoped>
 /* 自定义日期选择器样式以匹配手绘风格 */
 :deep(.dp__theme_light) {
-  --dp-background-color: #fdfbf7;
-  --dp-text-color: #2d2d2d;
+  --dp-background-color: var(--color-bg-primary);
+  --dp-text-color: var(--color-text-primary);
   --dp-hover-color: #f0ebe3;
-  --dp-hover-text-color: #2d2d2d;
+  --dp-hover-text-color: var(--color-text-primary);
   --dp-primary-color: #4d7cff;
   --dp-primary-text-color: #fff;
   --dp-secondary-color: #f0ebe3;
-  --dp-border-color: #2d2d2d;
-  --dp-menu-border-color: #2d2d2d;
+  --dp-border-color: var(--color-border-primary);
+  --dp-menu-border-color: var(--color-border-primary);
   --dp-border-color-hover: #4d7cff;
   --dp-font-family: 'Patrick Hand', cursive;
 }
@@ -199,6 +199,6 @@ onUnmounted(() => {
 :deep(.dp__menu) {
   border-radius: 15px;
   border-width: 2px;
-  box-shadow: 4px 4px 0px #2d2d2d;
+  box-shadow: 4px 4px 0px var(--color-border-primary);
 }
 </style>

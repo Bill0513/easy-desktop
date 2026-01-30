@@ -1,6 +1,9 @@
 // 组件类型
 export type WidgetType = 'note' | 'todo' | 'text' | 'image' | 'markdown' | 'countdown' | 'random-picker' | 'check-in'
 
+// 主题模式类型
+export type ThemeMode = 'light' | 'dark' | 'system'
+
 // 待办事项项
 export interface TodoItem {
   id: string
@@ -134,6 +137,8 @@ export interface DesktopData {
   searchHistory?: string[]  // 搜索历史
   searchEngine?: string  // 搜索引擎偏好
   backgroundColor?: string  // 背景颜色
+  themeMode?: ThemeMode  // 主题模式
+  darkBackgroundColor?: string  // 暗色主题背景颜色
   mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
   codeSnippets?: CodeSnippet[]  // 代码片段数据
   version: number

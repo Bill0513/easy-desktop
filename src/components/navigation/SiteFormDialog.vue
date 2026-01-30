@@ -204,7 +204,7 @@ const handleClose = () => {
               <div class="flex items-center gap-3">
                 <!-- 图标预览 -->
                 <div
-                  class="w-16 h-16 border-2 border-pencil rounded-lg flex items-center justify-center overflow-hidden"
+                  class="w-16 h-16 border-2 border-border-primary rounded-lg flex items-center justify-center overflow-hidden"
                   style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px #2d2d2d;"
                 >
                   <img
@@ -243,7 +243,7 @@ const handleClose = () => {
                   <p v-else-if="iconFetchResult === 'error'" class="text-xs text-accent mt-2 font-handwritten">
                     ✗ 获取失败
                   </p>
-                  <p v-else class="text-xs text-pencil/60 mt-2 font-handwritten">
+                  <p v-else class="text-xs text-text-secondary mt-2 font-handwritten">
                     {{ formData.icon ? '已获取图标' : '未获取图标，将使用预制颜色' }}
                   </p>
                 </div>
@@ -270,7 +270,7 @@ const handleClose = () => {
                   v-for="color in PRESET_COLORS"
                   :key="color"
                   class="w-10 h-10 rounded-lg border-2 transition-all"
-                  :class="formData.color === color ? 'border-pencil scale-110' : 'border-pencil/30'"
+                  :class="formData.color === color ? 'border-border-primary scale-110' : 'border-border-primary/30'"
                   :style="{ backgroundColor: color }"
                   @click="formData.color = color"
                 />
@@ -291,7 +291,7 @@ const handleClose = () => {
           <!-- 按钮 -->
           <div class="flex justify-end gap-3 mt-6">
             <button
-              class="px-4 py-2 font-handwritten text-sm border-2 border-pencil rounded-lg hover:bg-muted/50 transition-colors"
+              class="px-4 py-2 font-handwritten text-sm border-2 border-border-primary rounded-lg hover:bg-muted/50 transition-colors"
               @click="handleClose"
             >
               取消

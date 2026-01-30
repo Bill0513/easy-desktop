@@ -189,8 +189,8 @@ const arrangeAll = () => {
             ref="outOfViewPopupRef"
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[200px] z-[10000]"
           >
-            <div class="px-3 py-1 border-b border-pencil/20">
-              <span class="font-handwritten text-sm text-pencil/60">
+            <div class="px-3 py-1 border-b border-border-primary/20">
+              <span class="font-handwritten text-sm text-text-secondary">
                 超出可视范围 ({{ store.outOfViewWidgets.length }})
               </span>
             </div>
@@ -207,8 +207,8 @@ const arrangeAll = () => {
                 @mouseenter="showPreview(widget, $event, outOfViewPopupRef)"
                 @mouseleave="hidePreview"
               >
-                <component :is="getWidgetIcon(widget.type)" :stroke-width="2.5" class="w-4 h-4" />
-                <span class="flex-1 truncate">{{ widget.title }}</span>
+                <component :is="getWidgetIcon(widget.type)" :stroke-width="2.5" class="w-4 h-4 text-text-primary" />
+                <span class="flex-1 truncate text-text-primary">{{ widget.title }}</span>
               </button>
             </div>
 
@@ -229,10 +229,10 @@ const arrangeAll = () => {
                   [previewPosition === 'right' ? 'marginLeft' : 'marginRight']: '16px'
                 }"
               >
-                <div class="font-handwritten text-sm font-bold mb-2 text-pencil">
+                <div class="font-handwritten text-sm font-bold mb-2 text-text-primary">
                   {{ previewWidget.title }}
                 </div>
-                <div class="text-xs text-pencil/60 space-y-1">
+                <div class="text-xs text-text-secondary space-y-1">
                   <div>类型: {{ typeNames[previewWidget.type] }}</div>
                   <div v-if="previewWidget.type === 'note' || previewWidget.type === 'text'">
                     <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto">
@@ -247,11 +247,11 @@ const arrangeAll = () => {
                         class="flex items-center gap-2 text-xs"
                       >
                         <span>{{ item.checked ? '☑' : '☐' }}</span>
-                        <span :class="{ 'line-through text-pencil/40': item.checked }">
+                        <span :class="{ 'line-through text-text-secondary': item.checked }">
                           {{ item.text }}
                         </span>
                       </div>
-                      <div v-if="(previewWidget as any).items?.length > 5" class="text-pencil/40">
+                      <div v-if="(previewWidget as any).items?.length > 5" class="text-text-secondary/70">
                         ...还有 {{ (previewWidget as any).items.length - 5 }} 项
                       </div>
                     </div>
@@ -290,7 +290,7 @@ const arrangeAll = () => {
       </div>
 
       <!-- 分隔线 -->
-      <div v-if="store.outOfViewWidgets.length > 0 && (Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized))" class="w-px h-6 bg-pencil/20"></div>
+      <div v-if="store.outOfViewWidgets.length > 0 && (Object.keys(groupedMinimizedWidgets).length > 0 || store.widgets.some(w => !w.isMinimized && !w.isMaximized))" class="w-px h-6 bg-border-primary/20"></div>
 
       <!-- 一键整理按钮 -->
       <button
@@ -299,7 +299,7 @@ const arrangeAll = () => {
         class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
         title="一键整理"
       >
-        <LayoutGrid :stroke-width="2.5" class="w-5 h-5 text-pencil" />
+        <LayoutGrid :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
       </button>
 
       <!-- 一键最小化按钮 -->
@@ -309,19 +309,19 @@ const arrangeAll = () => {
         class="p-1.5 hover:bg-muted/50 rounded-lg transition-colors group"
         title="最小化全部"
       >
-        <Minimize2 :stroke-width="2.5" class="w-5 h-5 text-pencil" />
+        <Minimize2 :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
       </button>
 
       <!-- 分隔线 -->
-      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0 && store.widgets.some(w => !w.isMinimized && !w.isMaximized)" class="w-px h-6 bg-pencil/20"></div>
+      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0 && store.widgets.some(w => !w.isMinimized && !w.isMaximized)" class="w-px h-6 bg-border-primary/20"></div>
 
       <!-- 任务栏标题 -->
-      <span v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="text-sm font-handwritten text-pencil/40 px-2">
+      <span v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="text-sm font-handwritten text-text-secondary px-2">
         已最小化
       </span>
 
       <!-- 分隔线 -->
-      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="w-px h-6 bg-pencil/20"></div>
+      <div v-if="Object.keys(groupedMinimizedWidgets).length > 0" class="w-px h-6 bg-border-primary/20"></div>
 
       <!-- 按类型分组的组件按钮 -->
       <div
@@ -334,8 +334,8 @@ const arrangeAll = () => {
         <button
           class="flex items-center gap-1.5 px-2 py-1.5 hover:bg-muted/50 rounded-lg transition-colors group relative"
         >
-          <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-5 h-5" />
-          <span class="font-handwritten text-xs font-bold">
+          <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-5 h-5 text-text-primary" />
+          <span class="font-handwritten text-xs font-bold text-text-primary">
             {{ widgets.length }}
           </span>
         </button>
@@ -355,8 +355,8 @@ const arrangeAll = () => {
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[160px] z-[10000]"
             :style="{ left: '50%', transform: 'translateX(-50%)' }"
           >
-            <div class="px-3 py-1 border-b border-pencil/20">
-              <span class="font-handwritten text-sm text-pencil/60">
+            <div class="px-3 py-1 border-b border-border-primary/20">
+              <span class="font-handwritten text-sm text-text-secondary">
                 {{ `${typeNames[type]} (${widgets.length})` }}
               </span>
             </div>
@@ -373,8 +373,8 @@ const arrangeAll = () => {
                 @mouseenter="showPreview(widget, $event)"
                 @mouseleave="hidePreview"
               >
-                <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-4 h-4" />
-                <span class="flex-1 truncate">{{ widget.title }}</span>
+                <component :is="getWidgetIcon(type)" :stroke-width="2.5" class="w-4 h-4 text-text-primary" />
+                <span class="flex-1 truncate text-text-primary">{{ widget.title }}</span>
               </button>
             </div>
 
@@ -395,10 +395,10 @@ const arrangeAll = () => {
                   [previewPosition === 'right' ? 'marginLeft' : 'marginRight']: '16px'
                 }"
               >
-                <div class="font-handwritten text-sm font-bold mb-2 text-pencil">
+                <div class="font-handwritten text-sm font-bold mb-2 text-text-primary">
                   {{ previewWidget.title }}
                 </div>
-                <div class="text-xs text-pencil/60 space-y-1">
+                <div class="text-xs text-text-secondary space-y-1">
                   <div>类型: {{ typeNames[previewWidget.type] }}</div>
                   <div v-if="previewWidget.type === 'note' || previewWidget.type === 'text'">
                     <div class="mt-2 p-2 bg-muted/30 rounded max-h-[200px] overflow-y-auto">
@@ -413,11 +413,11 @@ const arrangeAll = () => {
                         class="flex items-center gap-2 text-xs"
                       >
                         <span>{{ item.checked ? '☑' : '☐' }}</span>
-                        <span :class="{ 'line-through text-pencil/40': item.checked }">
+                        <span :class="{ 'line-through text-text-secondary': item.checked }">
                           {{ item.text }}
                         </span>
                       </div>
-                      <div v-if="(previewWidget as any).items?.length > 5" class="text-pencil/40">
+                      <div v-if="(previewWidget as any).items?.length > 5" class="text-text-secondary/70">
                         ...还有 {{ (previewWidget as any).items.length - 5 }} 项
                       </div>
                     </div>

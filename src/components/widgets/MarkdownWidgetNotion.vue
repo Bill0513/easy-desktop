@@ -482,7 +482,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .toolbar-btn {
-  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center justify-center min-w-[32px];
+  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary transition-colors flex items-center justify-center min-w-[32px];
+}
+
+.toolbar-btn:hover {
+  background-color: var(--color-muted);
+  opacity: 0.5;
 }
 
 .toolbar-btn.is-active {
@@ -492,7 +497,7 @@ onBeforeUnmount(() => {
 /* TipTap 编辑器样式 */
 :deep(.tiptap-editor) {
   font-family: 'Patrick Hand', cursive;
-  color: #2d2d2d;
+  color: var(--color-text-primary);
   padding: 1rem;
   min-height: 200px;
 }
@@ -558,7 +563,7 @@ onBeforeUnmount(() => {
 
 /* 引用样式 */
 :deep(.tiptap-editor blockquote) {
-  border-left: 3px solid #2d2d2d;
+  border-left: 3px solid var(--color-border-primary);
   padding-left: 1rem;
   margin-left: 0;
   margin-bottom: 0.75rem;
@@ -592,7 +597,7 @@ onBeforeUnmount(() => {
 /* 水平线 */
 :deep(.tiptap-editor hr) {
   border: none;
-  border-top: 2px solid #2d2d2d;
+  border-top: 2px solid var(--color-border-primary);
   margin: 1.5rem 0;
 }
 
@@ -619,10 +624,10 @@ onBeforeUnmount(() => {
 /* 斜杠命令菜单样式 */
 .slash-menu {
   z-index: 99999;
-  background: white;
-  border: 2px solid #2d2d2d;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border-primary);
   border-radius: 8px;
-  box-shadow: 4px 4px 0px #2d2d2d;
+  box-shadow: 4px 4px 0px var(--color-border-primary);
   padding: 0.5rem;
   min-width: 200px;
   max-height: 300px;
@@ -658,7 +663,7 @@ onBeforeUnmount(() => {
 .slash-menu-title {
   flex: 1;
   font-size: 0.875rem;
-  color: #2d2d2d;
+  color: var(--color-text-primary);
 }
 
 /* 表格样式 */
@@ -668,13 +673,13 @@ onBeforeUnmount(() => {
   width: 100%;
   margin: 1rem 0;
   overflow: hidden;
-  border: 2px solid #2d2d2d;
+  border: 2px solid var(--color-border-primary);
 }
 
 :deep(.tiptap-editor td),
 :deep(.tiptap-editor th) {
   min-width: 1em;
-  border: 2px solid #2d2d2d;
+  border: 2px solid var(--color-border-primary);
   padding: 0.5rem 0.75rem;
   vertical-align: top;
   box-sizing: border-box;

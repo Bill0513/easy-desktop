@@ -29,15 +29,15 @@ const hasError = computed(() => {
     <!-- 上传进度显示 -->
     <div v-if="isUploading" class="w-full h-full flex flex-col items-center justify-center">
       <div class="text-4xl mb-4 animate-bounce">📤</div>
-      <div class="text-lg font-handwritten text-pencil mb-2">上传中...</div>
+      <div class="text-lg font-handwritten text-text-primary mb-2">上传中...</div>
 
       <!-- 进度条 -->
-      <div class="w-3/4 h-6 bg-paper border-2 border-pencil rounded-lg overflow-hidden relative">
+      <div class="w-3/4 h-6 bg-bg-primary border-2 border-border-primary rounded-lg overflow-hidden relative">
         <div
           class="h-full bg-blue-pen transition-all duration-300"
           :style="{ width: `${widget.uploadProgress}%` }"
         ></div>
-        <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-pencil">
+        <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-text-primary">
           {{ widget.uploadProgress }}%
         </div>
       </div>
@@ -47,7 +47,7 @@ const hasError = computed(() => {
     <div v-else-if="hasError" class="w-full h-full flex flex-col items-center justify-center text-center p-4">
       <div class="text-4xl mb-4">❌</div>
       <div class="text-lg font-handwritten text-red-accent mb-2">上传失败</div>
-      <div class="text-sm font-handwritten text-pencil/60">{{ widget.uploadError }}</div>
+      <div class="text-sm font-handwritten text-text-secondary">{{ widget.uploadError }}</div>
     </div>
 
     <!-- 图片显示区域 -->
@@ -77,7 +77,7 @@ const hasError = computed(() => {
     </div>
 
     <!-- 空状态 -->
-    <div v-else class="text-pencil/40 font-handwritten text-center">
+    <div v-else class="text-text-secondary font-handwritten text-center">
       <div class="text-4xl mb-2">🖼️</div>
       <p>暂无图片</p>
     </div>

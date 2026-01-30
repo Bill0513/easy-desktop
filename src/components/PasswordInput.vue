@@ -87,13 +87,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-paper flex items-center justify-center z-50">
+  <div class="fixed inset-0 bg-bg-primary flex items-center justify-center z-50">
     <div class="card-hand-drawn p-8 md:p-12 text-center max-w-lg w-full mx-4">
       <!-- 标题 -->
-      <h1 class="text-3xl md:text-4xl font-marker mb-2 text-pencil">
+      <h1 class="text-3xl md:text-4xl font-marker mb-2 text-text-primary">
         密码保护
       </h1>
-      <p class="text-lg font-handwritten text-pencil/70 mb-8">
+      <p class="text-lg font-handwritten text-text-secondary mb-8">
         请输入6位数字密码
       </p>
 
@@ -115,7 +115,7 @@ onMounted(() => {
           inputmode="numeric"
           maxlength="1"
           :value="passwordValues[index]"
-          class="w-12 h-16 md:w-14 md:h-18 text-center text-2xl md:text-3xl font-handwritten border-3 border-pencil bg-white shadow-hard focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen outline-none transition-all duration-100"
+          class="w-12 h-16 md:w-14 md:h-18 text-center text-2xl md:text-3xl font-handwritten border-3 border-border-primary bg-bg-secondary shadow-hard focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen outline-none transition-all duration-100"
           :style="{
             borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px',
           }"

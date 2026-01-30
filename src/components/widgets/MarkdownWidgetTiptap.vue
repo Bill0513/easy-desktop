@@ -246,7 +246,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .toolbar-btn {
-  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center justify-center min-w-[32px];
+  @apply px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors flex items-center justify-center min-w-[32px];
 }
 
 .toolbar-btn.is-active {
@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
 /* TipTap 编辑器样式 */
 :deep(.tiptap-editor) {
   font-family: 'Patrick Hand', cursive;
-  color: #2d2d2d;
+  color: var(--color-text-primary);
   padding: 1rem;
   min-height: 200px;
 }

@@ -145,24 +145,20 @@ const onDragEnd = (evt: any) => {
     <div class="flex-shrink-0 p-8 pb-0">
       <!-- 标题 -->
       <div class="mb-6">
-        <h1 class="font-handwritten text-3xl font-bold text-pencil">网页导航</h1>
-        <p class="font-handwritten text-sm text-pencil/60 mt-1">收藏你常用的网站</p>
+        <h1 class="font-handwritten text-3xl font-bold text-text-primary">网页导航</h1>
+        <p class="font-handwritten text-sm text-text-secondary mt-1">收藏你常用的网站</p>
       </div>
 
       <!-- 分类筛选 -->
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <span class="font-handwritten text-sm text-pencil/60">分类:</span>
+          <span class="font-handwritten text-sm text-text-secondary">分类:</span>
           <div class="flex gap-2 flex-wrap">
             <button
               v-for="category in store.allCategories"
               :key="category"
               class="card-hand-drawn px-4 py-2 flex items-center gap-2 transition-all hover:scale-105"
-              :style="{
-                background: store.selectedCategory === category ? '#ff4d4d' : '#e8e8e8',
-                color: store.selectedCategory === category ? '#fdfbf7' : '#2d2d2d',
-                boxShadow: '2px 2px 0px #2d2d2d'
-              }"
+              :class="store.selectedCategory === category ? 'bg-accent text-bg-primary' : 'bg-muted text-text-primary'"
               @click="store.selectCategory(category)"
             >
               <span class="font-handwritten text-sm font-medium">{{ category }}</span>
@@ -208,10 +204,10 @@ const onDragEnd = (evt: any) => {
       <!-- 空状态 -->
       <div v-if="store.filteredNavigationSites.length === 0" class="text-center py-20">
         <div class="text-6xl mb-4">🌐</div>
-        <p class="font-handwritten text-lg text-pencil/60 mb-2">
+        <p class="font-handwritten text-lg text-text-secondary mb-2">
           {{ store.selectedCategory === '全部' ? '还没有添加网站' : '该分类下还没有网站' }}
         </p>
-        <p class="font-handwritten text-sm text-pencil/40">右键点击空白处添加你的第一个网站</p>
+        <p class="font-handwritten text-sm text-text-secondary/70">右键点击空白处添加你的第一个网站</p>
       </div>
     </div>
 

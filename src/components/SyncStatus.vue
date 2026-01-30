@@ -100,7 +100,7 @@ const statusColor = computed(() => {
       return 'text-red-600'
     default:
       // 如果有脏数据，显示橙色警告
-      return currentHasDirtyData.value ? 'text-orange-600' : 'text-gray-600'
+      return currentHasDirtyData.value ? 'text-orange-600' : 'text-text-primary'
   }
 })
 
@@ -150,7 +150,7 @@ onUnmounted(() => {
     <!-- 新闻 Tab：刷新新闻按钮 -->
     <template v-if="store.activeTab === 'news'">
       <div
-        class="card-hand-drawn bg-paper px-3 py-2 flex items-center gap-2 text-sm"
+        class="card-hand-drawn bg-bg-secondary px-3 py-2 flex items-center gap-2 text-sm"
         :class="isRefreshingNews ? 'text-blue-600' : 'text-gray-600'"
       >
         <Loader2 v-if="isRefreshingNews" :size="18" :stroke-width="2.5" class="animate-spin" />
@@ -163,7 +163,7 @@ onUnmounted(() => {
       <button
         @click="handleRefreshNews"
         :disabled="isRefreshingNews"
-        class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
+        class="btn-hand-drawn px-3 py-2 bg-bg-secondary text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
         title="刷新新闻（超过30分钟的源会更新）"
       >
         <RefreshCw
@@ -177,7 +177,7 @@ onUnmounted(() => {
     <!-- 其他 Tab：同步状态显示 -->
     <template v-else>
       <div
-        class="card-hand-drawn bg-paper px-3 py-2 flex flex-col gap-1 text-sm w-48"
+        class="card-hand-drawn bg-bg-secondary px-3 py-2 flex flex-col gap-1 text-sm w-48"
         :class="statusColor"
       >
         <div class="flex items-center gap-2">
@@ -189,7 +189,7 @@ onUnmounted(() => {
             <span v-if="currentHasDirtyData" class="text-orange-500" title="有未同步的数据">●</span>
           </span>
         </div>
-        <div class="text-xs text-gray-500 font-handwritten" v-if="currentLastSyncTime">
+        <div class="text-xs text-text-secondary font-handwritten" v-if="currentLastSyncTime">
           上次同步: {{ currentLastSyncText }}
         </div>
       </div>
@@ -198,7 +198,7 @@ onUnmounted(() => {
       <button
         @click="handleSync"
         :disabled="currentSyncStatus === 'syncing'"
-        class="btn-hand-drawn px-3 py-2 bg-paper text-pencil disabled:opacity-50 disabled:cursor-not-allowed"
+        class="btn-hand-drawn px-3 py-2 bg-bg-secondary text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
         :title="store.activeTab === 'file' ? '手动同步文件到云端' : '手动同步到云端'"
       >
         <RefreshCw

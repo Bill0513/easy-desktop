@@ -29,8 +29,8 @@ const addWidget = (type: string) => {
         title="添加便签"
         @click="addWidget('note')"
       >
-        <StickyNote :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">便签</span>
+        <StickyNote :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">便签</span>
       </button>
 
       <!-- 待办 -->
@@ -39,8 +39,8 @@ const addWidget = (type: string) => {
         title="添加待办"
         @click="addWidget('todo')"
       >
-        <CheckSquare :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">待办</span>
+        <CheckSquare :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">待办</span>
       </button>
 
       <!-- 文本 -->
@@ -49,8 +49,8 @@ const addWidget = (type: string) => {
         title="添加文本"
         @click="addWidget('text')"
       >
-        <FileText :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">文本</span>
+        <FileText :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">文本</span>
       </button>
 
       <!-- Markdown -->
@@ -59,8 +59,8 @@ const addWidget = (type: string) => {
         title="添加Markdown"
         @click="addWidget('markdown')"
       >
-        <FileCode :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">Markdown</span>
+        <FileCode :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">Markdown</span>
       </button>
 
       <!-- 图片 -->
@@ -69,8 +69,8 @@ const addWidget = (type: string) => {
         title="添加图片"
         @click="addWidget('image')"
       >
-        <Image :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">图片</span>
+        <Image :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">图片</span>
       </button>
 
       <!-- 倒计时 -->
@@ -79,8 +79,8 @@ const addWidget = (type: string) => {
         title="添加倒计时"
         @click="addWidget('countdown')"
       >
-        <Timer :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">倒计时</span>
+        <Timer :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">倒计时</span>
       </button>
 
       <!-- 随机决策器 -->
@@ -89,8 +89,8 @@ const addWidget = (type: string) => {
         title="添加随机决策器"
         @click="addWidget('random-picker')"
       >
-        <Dices :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">决策器</span>
+        <Dices :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">决策器</span>
       </button>
 
       <!-- 打卡 -->
@@ -99,12 +99,12 @@ const addWidget = (type: string) => {
         title="添加打卡"
         @click="addWidget('check-in')"
       >
-        <CalendarCheck :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
-        <span class="text-[10px] font-handwritten text-pencil/60">打卡</span>
+        <CalendarCheck :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform text-text-primary" />
+        <span class="text-[10px] font-handwritten text-text-secondary">打卡</span>
       </button>
 
       <!-- 分隔线 -->
-      <div class="w-px h-8 bg-pencil/20 mx-2"></div>
+      <div class="w-px h-8 bg-border-primary/20 mx-2"></div>
 
       <!-- 搜索栏 -->
       <SearchBar class="w-[380px]" />

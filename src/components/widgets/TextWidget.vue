@@ -46,7 +46,7 @@ watch(() => props.widget.content, autoResize, { immediate: true })
     <!-- 复制按钮 -->
     <div class="flex justify-end mb-2">
       <button
-        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center gap-1"
+        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors flex items-center gap-1"
         :class="{ 'bg-green-100 border-green-600': copied }"
         @click="copyContent"
         title="复制内容"
@@ -67,7 +67,7 @@ watch(() => props.widget.content, autoResize, { immediate: true })
       v-model="widget.content"
       class="flex-1 w-full resize-none bg-transparent border-none outline-none font-handwritten text-lg leading-relaxed"
       style="min-height: 100px;"
-      :style="{ color: '#2d2d2d' }"
+      :style="{ color: 'var(--color-text-primary)' }"
       placeholder="在这里记录重要的文本内容..."
       @input="handleInput"
     />

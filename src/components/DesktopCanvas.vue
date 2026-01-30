@@ -306,7 +306,7 @@ onUnmounted(() => {
         v-if="visibleWidgets.length === 0 && !store.isLoading && store.minimizedWidgets.length === 0"
         class="absolute inset-0 flex items-center justify-center"
       >
-        <div class="text-center text-pencil/50">
+        <div class="text-center text-text-primary/50">
           <div class="text-6xl mb-4">📋</div>
           <p class="text-2xl font-handwritten">点击上方工具栏添加组件</p>
         </div>
@@ -335,13 +335,13 @@ onUnmounted(() => {
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
         title="适应窗口 - 调整到最佳缩放比例"
       >
-        <Focus :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <Focus :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform text-text-primary" />
       </button>
 
       <!-- 分隔线 -->
-      <div class="w-px h-6 bg-pencil/20"></div>
+      <div class="w-px h-6 bg-border-primary/20"></div>
 
-      <span class="font-handwritten text-sm text-pencil/60">缩放</span>
+      <span class="font-handwritten text-sm text-text-secondary">缩放</span>
       <input
         type="range"
         min="30"
@@ -351,7 +351,7 @@ onUnmounted(() => {
         @input="(e) => store.setCanvasScale(Number((e.target as HTMLInputElement).value))"
         class="scale-slider"
       />
-      <span class="font-handwritten text-sm font-bold text-pencil min-w-[3rem] text-right">{{ store.canvasScale }}%</span>
+      <span class="font-handwritten text-sm font-bold text-text-primary min-w-[3rem] text-right">{{ store.canvasScale }}%</span>
     </div>
   </div>
 </template>

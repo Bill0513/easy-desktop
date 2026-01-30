@@ -23,21 +23,21 @@ const handleRefresh = async () => {
 
 <template>
   <div
-    class="card-hand-drawn flex flex-col overflow-hidden bg-white"
+    class="card-hand-drawn flex flex-col overflow-hidden bg-bg-secondary"
     style="
-      box-shadow: 3px 3px 0px #2d2d2d;
-      border: 2px solid #2d2d2d;
+      box-shadow: 3px 3px 0px var(--color-border-primary);
+      border: 2px solid var(--color-border-primary);
       min-height: 500px;
       max-height: 500px;
     "
   >
     <!-- 新闻源标题 -->
     <div
-      class="px-4 py-3 flex items-center gap-2 flex-shrink-0 border-b-2 border-pencil"
+      class="px-4 py-3 flex items-center gap-2 flex-shrink-0 border-b-2 border-border-primary"
     >
       <span class="text-2xl">{{ source.icon }}</span>
       <div class="flex-1 min-w-0">
-        <h3 class="font-handwritten text-lg font-bold text-pencil">{{ source.name }}</h3>
+        <h3 class="font-handwritten text-lg font-bold text-text-primary">{{ source.name }}</h3>
       </div>
 
       <!-- 刷新按钮 -->
@@ -47,7 +47,7 @@ const handleRefresh = async () => {
         @click="handleRefresh"
       >
         <svg
-          class="w-4 h-4 text-pencil transition-transform"
+          class="w-4 h-4 text-text-primary transition-transform"
           :class="{ 'animate-spin': isRefreshing }"
           fill="none"
           stroke="currentColor"
@@ -65,17 +65,17 @@ const handleRefresh = async () => {
 
     <!-- 空状态 -->
     <div v-if="source.items.length === 0 && !store.isLoadingNews" class="flex-1 flex items-center justify-center p-4">
-      <p class="font-handwritten text-xs text-pencil/50 text-center">暂无新闻</p>
+      <p class="font-handwritten text-xs text-text-secondary text-center">暂无新闻</p>
     </div>
 
     <!-- 加载状态 -->
     <div v-else-if="store.isLoadingNews && source.items.length === 0" class="flex-1 flex items-center justify-center p-4">
       <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-pencil animate-spin" fill="none" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-text-primary animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        <span class="font-handwritten text-xs text-pencil/60">加载中...</span>
+        <span class="font-handwritten text-xs text-text-secondary">加载中...</span>
       </div>
     </div>
 
@@ -84,14 +84,14 @@ const handleRefresh = async () => {
       <button
         v-for="(item, index) in source.items"
         :key="item.id"
-        class="w-full text-left group px-4 py-3 border-b border-pencil/10 hover:bg-yellow-50 transition-colors flex items-center gap-3"
+        class="w-full text-left group px-4 py-3 border-b border-border-primary/10 hover:bg-yellow-50 transition-colors flex items-center gap-3"
         @click="openLink(item.url)"
       >
         <!-- 序号 -->
         <span
           class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full font-handwritten text-xs font-bold"
           :class="[
-            index < 3 ? 'bg-accent text-paper' : 'bg-muted text-pencil'
+            index < 3 ? 'bg-accent text-bg-primary' : 'bg-muted text-text-primary'
           ]"
         >
           {{ index + 1 }}
@@ -99,7 +99,7 @@ const handleRefresh = async () => {
 
         <!-- 标题 -->
         <p
-          class="font-handwritten text-base text-pencil group-hover:text-accent transition-colors flex-1 line-clamp-2"
+          class="font-handwritten text-base text-text-primary group-hover:text-accent transition-colors flex-1 line-clamp-2"
           :title="item.title"
         >
           {{ item.title }}

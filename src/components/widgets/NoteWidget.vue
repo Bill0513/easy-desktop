@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { NoteWidget } from '@/types'
 
@@ -35,6 +35,27 @@ const colors = [
   '#f3e5f5', // 紫色
 ]
 
+// 判断颜色是否为深色
+const isDarkColor = (color: string) => {
+  // 将十六进制颜色转换为RGB
+  const hex = color.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+
+  // 计算亮度 (使用相对亮度公式)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+
+  // 如果亮度小于128，认为是深色
+  return brightness < 128
+}
+
+// 根据背景色计算文本颜色
+const textColor = computed(() => {
+  const bgColor = props.widget.color || '#fff9c4'
+  return isDarkColor(bgColor) ? '#ffffff' : '#2d2d2d'
+})
+
 // 切换颜色
 const setColor = (color: string) => {
   store.updateWidget(props.widget.id, { color })
@@ -66,25 +87,25 @@ watch(() => props.widget.content, autoResize, { immediate: true })
           v-for="color in colors"
           :key="color"
           class="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110"
-          :style="{ backgroundColor: color, borderColor: widget.color === color ? '#2d2d2d' : 'transparent' }"
+          :style="{ backgroundColor: color, borderColor: widget.color === color ? 'var(--color-border-primary)' : 'transparent' }"
           @click="setColor(color)"
         />
       </div>
 
       <!-- 复制按钮 -->
       <button
-        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-pencil hover:bg-muted/50 transition-colors flex items-center gap-1"
+        class="px-2 py-1 text-xs font-handwritten rounded border-2 border-border-primary hover:bg-muted/50 transition-colors flex items-center gap-1"
         :class="{ 'bg-green-100 border-green-600': copied }"
         @click="copyContent"
         title="复制内容"
       >
-        <svg v-if="!copied" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-if="!copied" class="w-3 h-3 text-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
         <svg v-else class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <span>{{ copied ? '已复制' : '复制' }}</span>
+        <span class="text-text-primary">{{ copied ? '已复制' : '复制' }}</span>
       </button>
     </div>
 
@@ -93,7 +114,7 @@ watch(() => props.widget.content, autoResize, { immediate: true })
       ref="textarea"
       v-model="widget.content"
       class="flex-1 w-full resize-none bg-transparent border-none outline-none font-handwritten text-lg leading-relaxed"
-      :style="{ color: '#2d2d2d' }"
+      :style="{ color: textColor }"
       placeholder="在这里写下你的想法..."
       @input="handleInput"
     />

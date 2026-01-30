@@ -268,7 +268,7 @@ const stopResize = () => {
   >
     <!-- 拖拽手柄（标题栏） -->
     <div
-      class="drag-handle h-10 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing select-none border-b-2 border-pencil/20 bg-muted/30 rounded-t-[255px_15px_0_0]"
+      class="drag-handle h-10 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing select-none border-b-2 border-border-primary/20 bg-muted/30 rounded-t-[255px_15px_0_0]"
       :class="[
         widget.isMaximized ? 'rounded-t-none' : ''
       ]"
@@ -278,7 +278,7 @@ const stopResize = () => {
         <!-- 图片图标 -->
         <span v-if="widget.type === 'image'" class="text-lg">🖼️</span>
         <!-- 拖拽图标 -->
-        <svg v-else class="w-4 h-4 text-pencil/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-else class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
         </svg>
         <!-- 标题编辑 -->
@@ -286,8 +286,8 @@ const stopResize = () => {
           v-if="isEditingTitle"
           ref="titleInput"
           v-model="editedTitle"
-          class="flex-1 bg-white border-2 border-pencil px-2 py-1 outline-none font-handwritten text-sm font-medium min-w-0 focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen transition-all"
-          style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px 0px #2d2d2d;"
+          class="flex-1 bg-bg-secondary border-2 border-border-primary px-2 py-1 outline-none font-handwritten text-sm font-medium min-w-0 focus:ring-2 focus:ring-bluePen/30 focus:border-bluePen transition-all text-text-primary"
+          style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px 0px var(--color-border-primary);"
           @blur="saveTitle"
           @keydown="handleTitleKeydown"
           @compositionstart="isComposingTitle = true"
@@ -296,7 +296,7 @@ const stopResize = () => {
         />
         <span
           v-else
-          class="flex-1 font-handwritten text-sm font-medium truncate cursor-text hover:text-bluePen transition-colors"
+          class="flex-1 font-handwritten text-sm font-medium truncate cursor-text hover:text-bluePen transition-colors text-text-primary"
           @dblclick.stop="startEditTitle"
         >{{ widget.title }}</span>
       </div>
@@ -372,7 +372,7 @@ const stopResize = () => {
     >
       <!-- 视觉指示器 -->
       <div class="absolute bottom-1 right-1 w-4 h-4 flex items-end justify-end">
-        <svg class="w-3 h-3 text-pencil/40 group-hover:text-pencil/70 transition-colors" fill="currentColor" viewBox="0 0 16 16">
+        <svg class="w-3 h-3 text-text-secondary group-hover:text-text-primary transition-colors" fill="currentColor" viewBox="0 0 16 16">
           <path d="M14 14V8h-2v4H8v2h6zM6 14v-2H2V8H0v6h6z"/>
         </svg>
       </div>

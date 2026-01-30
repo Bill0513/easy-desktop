@@ -524,7 +524,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
     @drop="handleDrop"
   >
     <!-- 工具栏 -->
-    <div class="flex items-center gap-3 p-4 border-b-2 border-pencil/20">
+    <div class="flex items-center gap-3 p-4 border-b-2 border-border-primary/20">
       <button
         class="btn-hand-drawn p-3"
         @click="handleUploadFiles"
@@ -555,7 +555,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
     </div>
 
     <!-- 面包屑导航 -->
-    <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-pencil/10">
+    <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-border-primary/10">
       <button
         class="font-handwritten text-sm hover:text-accent transition-colors flex items-center gap-1"
         @click="store.currentFolderId = null"
@@ -564,7 +564,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
         <span>根目录</span>
       </button>
       <template v-for="folder in store.breadcrumbPath" :key="folder.id">
-        <span class="text-pencil/40">/</span>
+        <span class="text-text-secondary">/</span>
         <button
           class="font-handwritten text-sm hover:text-accent transition-colors"
           @click="store.currentFolderId = folder.id"
@@ -617,14 +617,14 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       <!-- 加载状态 -->
       <div v-if="store.isLoadingFiles" class="flex flex-col items-center justify-center h-full">
         <div class="text-4xl mb-4">⏳</div>
-        <p class="font-handwritten text-pencil/60">加载中...</p>
+        <p class="font-handwritten text-text-secondary">加载中...</p>
       </div>
 
       <!-- 空状态 -->
       <div v-else-if="store.currentFolderItems.length === 0" class="flex flex-col items-center justify-center h-full">
         <div class="text-6xl mb-4">📂</div>
-        <h3 class="font-handwritten text-xl text-pencil mb-2">文件夹为空</h3>
-        <p class="font-handwritten text-pencil/60 mb-4">右键或点击上方按钮开始上传文件</p>
+        <h3 class="font-handwritten text-xl text-text-primary mb-2">文件夹为空</h3>
+        <p class="font-handwritten text-text-secondary mb-4">右键或点击上方按钮开始上传文件</p>
       </div>
 
       <!-- 文件列表 - 网格视图 -->
@@ -670,16 +670,16 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             </div>
             <!-- 名称 - 显示两行 -->
             <div
-              class="font-handwritten text-sm text-center text-pencil line-clamp-2 leading-tight min-h-[2.5rem]"
+              class="font-handwritten text-sm text-center text-text-primary line-clamp-2 leading-tight min-h-[2.5rem]"
               :title="item.name"
             >
               {{ item.name }}
             </div>
             <!-- 文件大小和上传日期 -->
-            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-pencil/60 mt-1">
+            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-center text-text-secondary mt-1">
               {{ Math.round(item.size / 1024) }} KB
             </div>
-            <div class="font-handwritten text-xs text-center text-pencil/40 mt-0.5">
+            <div class="font-handwritten text-xs text-center text-text-secondary mt-0.5">
               {{ new Date(item.createdAt).toLocaleDateString() }}
             </div>
           </div>
@@ -728,15 +728,15 @@ const getItemIcon = (item: FileItem | FolderItem) => {
               </svg>
             </div>
             <!-- 名称 -->
-            <div class="flex-1 font-handwritten text-sm text-pencil truncate" :title="item.name">
+            <div class="flex-1 font-handwritten text-sm text-text-primary truncate" :title="item.name">
               {{ item.name }}
             </div>
             <!-- 文件大小 -->
-            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-pencil/60">
+            <div v-if="item.type === 'file'" class="font-handwritten text-xs text-text-secondary">
               {{ Math.round(item.size / 1024) }} KB
             </div>
             <!-- 日期 -->
-            <div class="font-handwritten text-xs text-pencil/60">
+            <div class="font-handwritten text-xs text-text-secondary">
               {{ new Date(item.updatedAt).toLocaleDateString() }}
             </div>
           </div>
@@ -756,9 +756,9 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       >
         <div
           v-if="contextMenu.show"
-          class="fixed z-[10000] card-hand-drawn py-2 min-w-[160px] bg-paper"
+          class="fixed z-[10000] card-hand-drawn py-2 min-w-[160px] bg-bg-primary"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
-          style="box-shadow: 4px 4px 0px #2d2d2d;"
+          style="box-shadow: 4px 4px 0px var(--color-border-primary);"
         >
           <!-- 空白处菜单 -->
           <template v-if="contextMenu.type === 'blank'">
@@ -841,11 +841,11 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       >
         <div
           v-if="showUploadDialog"
-          class="fixed inset-0 z-[10000] flex items-center justify-center bg-pencil/50"
+          class="fixed inset-0 z-[10000] flex items-center justify-center bg-border-primary/50"
           @click.self="showUploadDialog = false"
         >
-          <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-paper" style="box-shadow: 8px 8px 0px #2d2d2d;">
-            <h2 class="font-handwritten text-2xl text-pencil mb-4">
+          <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-bg-primary" style="box-shadow: 8px 8px 0px var(--color-border-primary);">
+            <h2 class="font-handwritten text-2xl text-text-primary mb-4">
               {{ uploadMode === 'folder' ? '上传文件夹' : '上传文件' }}
             </h2>
 
@@ -853,20 +853,20 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             <div v-if="isUploading" class="mb-4 space-y-4">
               <!-- 当前文件名 -->
               <div class="text-center">
-                <div class="font-handwritten text-sm text-pencil/60 mb-1">正在上传</div>
-                <div class="font-handwritten text-base text-pencil font-bold truncate" :title="uploadStats.currentFileName">
+                <div class="font-handwritten text-sm text-text-secondary mb-1">正在上传</div>
+                <div class="font-handwritten text-base text-text-primary font-bold truncate" :title="uploadStats.currentFileName">
                   {{ uploadStats.currentFileName }}
                 </div>
               </div>
 
               <!-- 进度条 -->
               <div class="space-y-2">
-                <div class="w-full h-6 bg-muted border-2 border-pencil wobbly-sm overflow-hidden relative">
+                <div class="w-full h-6 bg-muted border-2 border-border-primary wobbly-sm overflow-hidden relative">
                   <div
                     class="h-full bg-accent transition-all duration-300"
                     :style="{ width: uploadPercentage + '%' }"
                   ></div>
-                  <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-pencil font-bold">
+                  <div class="absolute inset-0 flex items-center justify-center text-sm font-handwritten text-text-primary font-bold">
                     {{ uploadPercentage }}%
                   </div>
                 </div>
@@ -875,33 +875,33 @@ const getItemIcon = (item: FileItem | FolderItem) => {
               <!-- 统计信息 -->
               <div class="grid grid-cols-2 gap-3">
                 <!-- 文件数量 -->
-                <div class="card-hand-drawn p-3 bg-paper/50">
-                  <div class="font-handwritten text-xs text-pencil/60 mb-1">文件进度</div>
-                  <div class="font-handwritten text-lg text-pencil font-bold">
+                <div class="card-hand-drawn p-3 bg-bg-primary/50">
+                  <div class="font-handwritten text-xs text-text-secondary mb-1">文件进度</div>
+                  <div class="font-handwritten text-lg text-text-primary font-bold">
                     {{ uploadStats.completedFiles }} / {{ uploadStats.totalFiles }}
                   </div>
                 </div>
 
                 <!-- 上传速度 -->
-                <div class="card-hand-drawn p-3 bg-paper/50">
-                  <div class="font-handwritten text-xs text-pencil/60 mb-1">上传速度</div>
-                  <div class="font-handwritten text-lg text-pencil font-bold">
+                <div class="card-hand-drawn p-3 bg-bg-primary/50">
+                  <div class="font-handwritten text-xs text-text-secondary mb-1">上传速度</div>
+                  <div class="font-handwritten text-lg text-text-primary font-bold">
                     {{ formatSpeed(uploadStats.speed) }}
                   </div>
                 </div>
 
                 <!-- 总大小 -->
-                <div class="card-hand-drawn p-3 bg-paper/50">
-                  <div class="font-handwritten text-xs text-pencil/60 mb-1">总大小</div>
-                  <div class="font-handwritten text-sm text-pencil font-bold">
+                <div class="card-hand-drawn p-3 bg-bg-primary/50">
+                  <div class="font-handwritten text-xs text-text-secondary mb-1">总大小</div>
+                  <div class="font-handwritten text-sm text-text-primary font-bold">
                     {{ formatFileSize(uploadStats.uploadedSize) }} / {{ formatFileSize(uploadStats.totalSize) }}
                   </div>
                 </div>
 
                 <!-- 剩余时间 -->
-                <div class="card-hand-drawn p-3 bg-paper/50">
-                  <div class="font-handwritten text-xs text-pencil/60 mb-1">剩余时间</div>
-                  <div class="font-handwritten text-sm text-pencil font-bold">
+                <div class="card-hand-drawn p-3 bg-bg-primary/50">
+                  <div class="font-handwritten text-xs text-text-secondary mb-1">剩余时间</div>
+                  <div class="font-handwritten text-sm text-text-primary font-bold">
                     {{ estimatedTimeRemaining }}
                   </div>
                 </div>
@@ -936,10 +936,10 @@ const getItemIcon = (item: FileItem | FolderItem) => {
                 <div class="font-handwritten text-lg">
                   {{ uploadMode === 'folder' ? '选择文件夹' : '选择文件' }}
                 </div>
-                <div class="font-handwritten text-sm text-pencil/60 mt-2">
+                <div class="font-handwritten text-sm text-text-secondary mt-2">
                   {{ uploadMode === 'folder' ? '支持整个文件夹上传' : '支持多文件选择' }}
                 </div>
-                <div class="font-handwritten text-xs text-pencil/60 mt-1">
+                <div class="font-handwritten text-xs text-text-secondary mt-1">
                   单个文件最大 20MB
                 </div>
               </button>

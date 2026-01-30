@@ -37,13 +37,13 @@ const cancelRemove = () => {
 </script>
 
 <template>
-  <div class="border-t-2 border-pencil/20 bg-paper/50 p-4">
+  <div class="border-t-2 border-border-primary/20 bg-paper/50 p-4">
     <div class="flex items-start justify-between mb-3 gap-4">
       <div class="flex-1">
-        <h3 class="font-handwritten text-lg text-pencil mb-3">最近打开</h3>
+        <h3 class="font-handwritten text-lg text-text-primary mb-3">最近打开</h3>
 
         <div v-if="history.length === 0" class="text-center py-4">
-          <p class="font-handwritten text-sm text-pencil/60">暂无历史记录</p>
+          <p class="font-handwritten text-sm text-text-secondary">暂无历史记录</p>
         </div>
 
         <div v-else class="flex gap-3 overflow-x-auto pb-2 flex-nowrap scrollbar-thin">
@@ -55,16 +55,16 @@ const cancelRemove = () => {
           >
             <!-- Thumbnail or icon -->
             <div class="w-full h-24 mb-2 flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
-              <Brain :stroke-width="2" class="w-10 h-10 text-pencil/60" />
+              <Brain :stroke-width="2" class="w-10 h-10 text-text-secondary" />
             </div>
 
             <!-- Name -->
-            <div class="font-handwritten text-sm text-pencil truncate" :title="item.name">
+            <div class="font-handwritten text-sm text-text-primary truncate" :title="item.name">
               {{ item.name }}
             </div>
 
             <!-- Last opened -->
-            <div class="font-handwritten text-xs text-pencil/60">
+            <div class="font-handwritten text-xs text-text-secondary">
               {{ new Date(item.lastOpened).toLocaleDateString() }}
             </div>
 
@@ -80,7 +80,7 @@ const cancelRemove = () => {
       </div>
 
       <!-- 快捷键提示 -->
-      <div class="flex-shrink-0 font-handwritten text-xs text-pencil/60 space-y-1">
+      <div class="flex-shrink-0 font-handwritten text-xs text-text-secondary space-y-1">
         <div>Tab: 添加子节点</div>
         <div>Enter: 添加同级节点</div>
         <div>Ctrl+C: 复制</div>
@@ -106,8 +106,8 @@ const cancelRemove = () => {
           @click.self="cancelRemove"
         >
           <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-paper" style="box-shadow: 8px 8px 0px #2d2d2d;">
-            <h2 class="font-handwritten text-2xl text-pencil mb-4">删除确认</h2>
-            <p class="font-handwritten text-pencil/80 mb-6">确定要删除这个思维导图吗？此操作不可恢复。</p>
+            <h2 class="font-handwritten text-2xl text-text-primary mb-4">删除确认</h2>
+            <p class="font-handwritten text-text-primary/80 mb-6">确定要删除这个思维导图吗？此操作不可恢复。</p>
 
             <div class="flex gap-3">
               <button class="btn-hand-drawn px-4 py-2 flex-1 bg-accent/10 hover:bg-accent/20" @click="confirmRemove">

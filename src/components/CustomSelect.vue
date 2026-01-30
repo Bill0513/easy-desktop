@@ -67,8 +67,8 @@ onUnmounted(() => {
     <!-- 选择框 -->
     <button
       type="button"
-      class="select-button w-full px-3 py-2 bg-white text-pencil font-handwritten text-left flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-[3px_3px_0px_#2d2d2d]"
-      :class="{ 'shadow-[3px_3px_0px_#2d2d2d]': isOpen }"
+      class="select-button w-full px-3 py-2 bg-bg-secondary text-text-primary font-handwritten text-left flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-[3px_3px_0px_var(--color-border-primary)]"
+      :class="{ 'shadow-[3px_3px_0px_var(--color-border-primary)]': isOpen }"
       @click="toggleDropdown"
     >
       <span class="flex-1 truncate">{{ displayText }}</span>
@@ -84,13 +84,13 @@ onUnmounted(() => {
     <Transition name="dropdown">
       <div
         v-if="isOpen"
-        class="dropdown-menu absolute top-full left-0 right-0 mt-2 bg-paper border-2 border-pencil shadow-[4px_4px_0px_#2d2d2d] max-h-60 overflow-y-auto z-50"
+        class="dropdown-menu absolute top-full left-0 right-0 mt-2 bg-bg-primary border-2 border-border-primary shadow-[4px_4px_0px_var(--color-border-primary)] max-h-60 overflow-y-auto z-50"
         style="border-radius: 15px 225px 15px 225px / 225px 15px 255px 15px;"
       >
         <div
           v-for="option in options"
           :key="option.value"
-          class="option-item px-3 py-2 cursor-pointer font-handwritten text-pencil transition-colors hover:bg-yellow-100"
+          class="option-item px-3 py-2 cursor-pointer font-handwritten text-text-primary transition-colors hover:bg-yellow-100"
           :class="{ 'bg-blue-100': option.value === modelValue }"
           @click="selectOption(option)"
         >
@@ -103,14 +103,14 @@ onUnmounted(() => {
 
 <style scoped>
 .select-button {
-  border: 2px solid #2d2d2d;
+  border: 2px solid var(--color-border-primary);
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  box-shadow: 2px 2px 0px #2d2d2d;
+  box-shadow: 2px 2px 0px var(--color-border-primary);
 }
 
 .dropdown-menu {
   scrollbar-width: thin;
-  scrollbar-color: #2d2d2d #fdfbf7;
+  scrollbar-color: var(--color-border-primary) var(--color-bg-primary);
 }
 
 .dropdown-menu::-webkit-scrollbar {
@@ -118,11 +118,11 @@ onUnmounted(() => {
 }
 
 .dropdown-menu::-webkit-scrollbar-track {
-  background: #fdfbf7;
+  background: var(--color-bg-primary);
 }
 
 .dropdown-menu::-webkit-scrollbar-thumb {
-  background: #2d2d2d;
+  background: var(--color-border-primary);
   border-radius: 4px;
 }
 

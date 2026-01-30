@@ -189,13 +189,13 @@ const handleContentClick = (e: Event) => {
         @click="handleClose"
       >
         <div
-          class="card-hand-drawn bg-paper max-w-6xl w-full mx-4 max-h-[90vh] flex flex-col"
+          class="card-hand-drawn bg-bg-primary max-w-6xl w-full mx-4 max-h-[90vh] flex flex-col"
           style="box-shadow: 8px 8px 0px #2d2d2d;"
           @click="handleContentClick"
         >
           <!-- 标题栏 -->
-          <div class="flex items-center justify-between p-4 border-b-2 border-pencil/20">
-            <h2 class="font-handwritten text-xl text-pencil truncate flex-1" :title="file.name">
+          <div class="flex items-center justify-between p-4 border-b-2 border-border-primary/20">
+            <h2 class="font-handwritten text-xl text-text-primary truncate flex-1" :title="file.name">
               {{ file.name }}
             </h2>
             <div class="flex items-center gap-2 ml-4">
@@ -232,7 +232,7 @@ const handleContentClick = (e: Event) => {
                       class="transition-all duration-150"
                     />
                   </svg>
-                  <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-pencil">
+                  <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-text-primary">
                     {{ downloadProgress }}
                   </span>
                 </div>
@@ -251,13 +251,13 @@ const handleContentClick = (e: Event) => {
             <!-- 加载中 -->
             <div v-if="isLoading" class="flex flex-col items-center justify-center h-full">
               <div class="text-4xl mb-4">⏳</div>
-              <p class="font-handwritten text-pencil/60">加载中...</p>
+              <p class="font-handwritten text-text-secondary">加载中...</p>
             </div>
 
             <!-- 加载错误 -->
             <div v-else-if="loadError" class="flex flex-col items-center justify-center h-full">
               <div class="text-4xl mb-4">❌</div>
-              <p class="font-handwritten text-pencil/60">{{ loadError }}</p>
+              <p class="font-handwritten text-text-secondary">{{ loadError }}</p>
             </div>
 
             <!-- 图片预览 -->
@@ -309,14 +309,14 @@ const handleContentClick = (e: Event) => {
 
             <!-- 文本预览 -->
             <div v-else-if="fileType === 'text'" class="h-full">
-              <pre class="font-mono text-sm text-pencil whitespace-pre-wrap break-words p-4 bg-muted/20 rounded">{{ fileContent }}</pre>
+              <pre class="font-mono text-sm text-text-primary whitespace-pre-wrap break-words p-4 bg-muted/20 rounded">{{ fileContent }}</pre>
             </div>
 
             <!-- 不支持预览 -->
             <div v-else class="flex flex-col items-center justify-center h-full">
               <div class="text-6xl mb-4">📄</div>
-              <h3 class="font-handwritten text-xl text-pencil mb-2">无法预览此文件</h3>
-              <p class="font-handwritten text-pencil/60 mb-4">
+              <h3 class="font-handwritten text-xl text-text-primary mb-2">无法预览此文件</h3>
+              <p class="font-handwritten text-text-secondary mb-4">
                 文件类型：{{ file.mimeType }}
               </p>
               <div class="flex items-center gap-2">
@@ -352,7 +352,7 @@ const handleContentClick = (e: Event) => {
                       class="transition-all duration-150"
                     />
                   </svg>
-                  <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-pencil">
+                  <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-text-primary">
                     {{ downloadProgress }}
                   </span>
                 </div>
