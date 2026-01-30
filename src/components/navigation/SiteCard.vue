@@ -87,16 +87,16 @@ const handleContextMenu = (e: MouseEvent) => {
 .site-icon-wrapper {
   width: 80px;
   height: 80px;
-  border: 2px solid #2d2d2d;
+  border: 2px solid var(--color-border-primary);
   border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px;
-  box-shadow: 2px 2px 0px 0px #2d2d2d;
+  box-shadow: 2px 2px 0px 0px var(--color-shadow-primary);
   overflow: hidden;
-  background-color: #fff;
+  background-color: var(--color-bg-secondary);
   transition: box-shadow 0.2s;
 }
 
 .site-card:hover .site-icon-wrapper {
-  box-shadow: 3px 3px 0px 0px #2d2d2d;
+  box-shadow: 3px 3px 0px 0px var(--color-shadow-primary);
 }
 
 .site-name {
@@ -110,7 +110,7 @@ const handleContextMenu = (e: MouseEvent) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.3;
-  color: #2d2d2d;
+  color: var(--color-text-primary);
   min-height: 36px;
 }
 </style>

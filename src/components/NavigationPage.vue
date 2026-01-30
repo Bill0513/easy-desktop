@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import draggable from 'vuedraggable'
 import SiteCard from './navigation/SiteCard.vue'
@@ -9,6 +9,11 @@ import type { NavigationSite } from '@/types'
 import { Settings } from 'lucide-vue-next'
 
 const store = useDesktopStore()
+
+// 检测是否为暗色模式
+const isDarkMode = computed(() => {
+  return store.effectiveTheme === 'dark'
+})
 
 // 右键菜单状态
 const contextMenu = ref({
@@ -157,8 +162,13 @@ const onDragEnd = (evt: any) => {
             <button
               v-for="category in store.allCategories"
               :key="category"
-              class="card-hand-drawn px-4 py-2 flex items-center gap-2 transition-all hover:scale-105"
-              :class="store.selectedCategory === category ? 'bg-accent text-bg-primary' : 'bg-muted text-text-primary'"
+              class="px-4 py-2 flex items-center gap-2 transition-all hover:scale-105 border-2 border-border-primary"
+              :class="[
+                store.selectedCategory === category
+                  ? (isDarkMode ? 'bg-bluePen text-white' : 'bg-accent text-white')
+                  : 'bg-muted text-text-primary hover:bg-muted/70'
+              ]"
+              style="border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; box-shadow: 4px 4px 0px 0px var(--color-shadow-primary);"
               @click="store.selectCategory(category)"
             >
               <span class="font-handwritten text-sm font-medium">{{ category }}</span>
@@ -207,7 +217,7 @@ const onDragEnd = (evt: any) => {
         <p class="font-handwritten text-lg text-text-secondary mb-2">
           {{ store.selectedCategory === '全部' ? '还没有添加网站' : '该分类下还没有网站' }}
         </p>
-        <p class="font-handwritten text-sm text-text-secondary/70">右键点击空白处添加你的第一个网站</p>
+        <p class="font-handwritten text-sm text-text-secondary">右键点击空白处添加你的第一个网站</p>
       </div>
     </div>
 

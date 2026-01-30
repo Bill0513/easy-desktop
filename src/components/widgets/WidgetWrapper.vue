@@ -409,7 +409,12 @@ const stopResize = () => {
     >
       <!-- 视觉指示器 -->
       <div class="absolute bottom-1 right-1 w-4 h-4 flex items-end justify-end">
-        <svg class="w-3 h-3 text-text-secondary group-hover:text-text-primary transition-colors" fill="currentColor" viewBox="0 0 16 16">
+        <svg
+          class="w-3 h-3 transition-colors"
+          :class="isDarkMode ? 'text-white/70 group-hover:text-white' : 'text-text-secondary group-hover:text-text-primary'"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+        >
           <path d="M14 14V8h-2v4H8v2h6zM6 14v-2H2V8H0v6h6z"/>
         </svg>
       </div>

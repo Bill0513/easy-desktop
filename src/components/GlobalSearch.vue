@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted, computed } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { Widget, NavigationSite, FileItem, FolderItem, MindMapFile, CodeSnippet } from '@/types'
 
@@ -8,6 +8,11 @@ const searchInput = ref<HTMLInputElement | null>(null)
 const resultsContainer = ref<HTMLDivElement | null>(null)
 const selectedIndex = ref(0)
 const itemRefs = ref<HTMLDivElement[]>([])
+
+// 检测是否为暗色模式
+const isDarkMode = computed(() => {
+  return store.effectiveTheme === 'dark'
+})
 
 // 组件类型名称映射
 const typeNames: Record<string, string> = {
@@ -215,7 +220,10 @@ const handleBackdropClick = () => {
 const highlightText = (text: string, query: string): string => {
   if (!query.trim()) return text
   const regex = new RegExp(`(${query})`, 'gi')
-  return text.replace(regex, '<span class="bg-yellow-200">$1</span>')
+  const highlightClass = isDarkMode.value
+    ? 'bg-yellow-600 text-white font-semibold'
+    : 'bg-yellow-200 text-gray-900 font-semibold'
+  return text.replace(regex, `<span class="${highlightClass}">$1</span>`)
 }
 
 // 保存元素引用
@@ -273,8 +281,12 @@ onUnmounted(() => {
             v-for="(item, index) in store.searchResults"
             :key="item.id"
             :ref="(el) => setItemRef(el as HTMLDivElement, index)"
-            class="flex items-center px-4 py-3 cursor-pointer border-b border-border-primary/10 hover:bg-muted/30 transition-colors"
-            :class="{ 'bg-muted/50': index === selectedIndex }"
+            class="flex items-center px-4 py-3 cursor-pointer border-b border-border-primary/10 transition-colors"
+            :class="[
+              index === selectedIndex
+                ? (isDarkMode ? 'bg-bluePen/30 hover:bg-bluePen/40' : 'bg-bluePen/15 hover:bg-bluePen/20')
+                : 'hover:bg-muted/30'
+            ]"
             @click="handleResultClick(item)"
             @mouseenter="selectedIndex = index"
           >

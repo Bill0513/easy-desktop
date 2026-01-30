@@ -67,14 +67,14 @@ const handleClose = () => {
         @click="handleClose"
       >
         <div
-          class="card-hand-drawn p-6 max-w-md w-full mx-4"
+          class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-bg-secondary"
           @click.stop
         >
-          <h3 class="font-handwritten text-xl font-medium mb-4">管理分类</h3>
+          <h3 class="font-handwritten text-xl font-medium mb-4 text-text-primary">管理分类</h3>
 
           <!-- 添加新分类 -->
           <div class="mb-4">
-            <label class="block font-handwritten text-sm mb-1">添加新分类</label>
+            <label class="block font-handwritten text-sm mb-1 text-text-primary">添加新分类</label>
             <div class="flex gap-2">
               <input
                 v-model="newCategoryName"
@@ -96,9 +96,9 @@ const handleClose = () => {
             <div
               v-for="category in store.navigationCategories"
               :key="category"
-              class="flex items-center justify-between p-2 border-2 border-border-primary/20 rounded-lg"
+              class="flex items-center justify-between p-2 border-2 border-border-primary/20 rounded-lg bg-bg-primary"
             >
-              <span class="font-handwritten">{{ category }}</span>
+              <span class="font-handwritten text-text-primary">{{ category }}</span>
               <button
                 class="text-accent hover:text-accent/80 transition-colors"
                 @click="handleDeleteCategory(category)"

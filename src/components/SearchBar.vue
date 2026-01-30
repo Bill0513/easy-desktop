@@ -4,11 +4,16 @@ import { useDesktopStore } from '@/stores/desktop'
 
 const store = useDesktopStore()
 
+// 检测是否为暗色模式
+const isDarkMode = computed(() => {
+  return store.effectiveTheme === 'dark'
+})
+
 // 搜索引擎配置
 const searchEngines = [
-  { id: 'google', name: '谷歌', icon: '🔍', url: 'https://www.google.com/search?q=' },
+  { id: 'google', name: '谷歌', icon: '🌐', url: 'https://www.google.com/search?q=' },
   { id: 'baidu', name: '百度', icon: '🅱️', url: 'https://www.baidu.com/s?wd=' },
-  { id: 'bing', name: '必应', icon: '🔎', url: 'https://www.bing.com/search?q=' },
+  { id: 'bing', name: '必应', icon: '🔷', url: 'https://www.bing.com/search?q=' },
 ]
 
 const MAX_HISTORY = 10
@@ -264,8 +269,12 @@ watch(selectedIndex, (index) => {
         <button
           v-for="engine in searchEngines"
           :key="engine.id"
-          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm text-text-primary"
-          :class="{ 'bg-muted/50': engine.id === store.searchEngine }"
+          class="w-full flex items-center gap-2 px-3 py-2 transition-colors font-handwritten text-sm"
+          :class="
+            engine.id === store.searchEngine
+              ? 'bg-accent text-white hover:bg-accent/80'
+              : (isDarkMode ? 'text-text-primary hover:bg-bluePen/30' : 'text-text-primary hover:bg-bluePen/15')
+          "
           @click="selectEngine(engine.id)"
         >
           <span>{{ engine.icon }}</span>
@@ -318,22 +327,25 @@ watch(selectedIndex, (index) => {
           v-for="(item, index) in displayItems"
           :key="item.text"
           :class="[
-            'w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors font-handwritten text-sm text-left',
+            'w-full flex items-center justify-between px-3 py-2 transition-colors font-handwritten text-sm text-left',
             `dropdown-item-${index}`,
-            { 'bg-muted/50': index === selectedIndex }
+            index === selectedIndex
+              ? 'bg-accent text-white hover:bg-accent/80'
+              : (isDarkMode ? 'hover:bg-bluePen/30' : 'hover:bg-bluePen/15')
           ]"
           @click="selectItem(item.text)"
         >
           <span class="flex items-center gap-2 truncate flex-1">
             <!-- 图标区分类型 -->
-            <span v-if="item.type === 'history'" class="text-text-secondary text-xs">🕐</span>
-            <span v-else class="text-text-secondary text-xs">🔍</span>
-            <span class="truncate text-text-primary">{{ item.text }}</span>
+            <span v-if="item.type === 'history'" :class="index === selectedIndex ? 'text-white' : 'text-text-secondary'" class="text-xs">🕐</span>
+            <span v-else :class="index === selectedIndex ? 'text-white' : 'text-text-secondary'" class="text-xs">🔍</span>
+            <span class="truncate" :class="index === selectedIndex ? 'text-white' : 'text-text-primary'">{{ item.text }}</span>
           </span>
           <!-- 历史记录可删除 -->
           <span
             v-if="item.type === 'history'"
-            class="text-text-secondary hover:text-accent ml-2 text-xs flex-shrink-0"
+            :class="index === selectedIndex ? 'text-white hover:text-white/80' : 'text-text-secondary hover:text-accent'"
+            class="ml-2 text-xs flex-shrink-0"
             @click="deleteHistory(item.text, $event)"
           >✕</span>
         </button>
