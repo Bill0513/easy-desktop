@@ -560,14 +560,14 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 <template>
   <div class="w-full h-full flex">
     <!-- Left sidebar with tools -->
-    <div class="w-20 flex-shrink-0 border-r-2 border-border-primary/20 flex flex-col items-center gap-2 py-4" :style="{ backgroundColor: store.backgroundColor }">
+    <div class="w-20 flex-shrink-0 bg-bg-primary border-r-2 border-border-primary/20 flex flex-col items-center gap-2 py-4">
       <!-- 新建 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
         title="新建 (Ctrl+N)"
         @click="handleNew"
       >
-        <Plus :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <Plus :stroke-width="2.5" class="w-6 h-6 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">新建</span>
       </button>
 
@@ -579,12 +579,12 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         @click="handleSave"
         :disabled="!hasUnsavedChanges || isSaving"
       >
-        <Save :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <Save :stroke-width="2.5" class="w-6 h-6 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">保存</span>
       </button>
 
       <!-- 分隔线 -->
-      <div class="w-10 h-px bg-pencil/20 my-1"></div>
+      <div class="w-10 h-px bg-border-primary/20 my-1"></div>
 
       <!-- 撤销 -->
       <button
@@ -594,7 +594,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         @click="undo"
         :disabled="!canUndo"
       >
-        <Undo :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <Undo :stroke-width="2.5" class="w-5 h-5 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">撤销</span>
       </button>
 
@@ -606,12 +606,12 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         @click="redo"
         :disabled="!canRedo"
       >
-        <Redo :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <Redo :stroke-width="2.5" class="w-5 h-5 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">重做</span>
       </button>
 
       <!-- 分隔线 -->
-      <div class="w-10 h-px bg-pencil/20 my-1"></div>
+      <div class="w-10 h-px bg-border-primary/20 my-1"></div>
 
       <!-- 放大 -->
       <button
@@ -619,7 +619,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         title="放大"
         @click="zoomIn"
       >
-        <ZoomIn :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <ZoomIn :stroke-width="2.5" class="w-5 h-5 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">放大</span>
       </button>
 
@@ -629,7 +629,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         title="缩小"
         @click="zoomOut"
       >
-        <ZoomOut :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <ZoomOut :stroke-width="2.5" class="w-5 h-5 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">缩小</span>
       </button>
 
@@ -639,7 +639,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         title="适应画布"
         @click="fitCanvas"
       >
-        <Maximize :stroke-width="2.5" class="w-5 h-5 group-hover:scale-110 transition-transform" />
+        <Maximize :stroke-width="2.5" class="w-5 h-5 text-text-primary group-hover:scale-110 transition-transform" />
         <span class="text-[10px] font-handwritten text-text-secondary">适应</span>
       </button>
 
@@ -651,24 +651,24 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
           class="p-2 hover:bg-muted/50 rounded-lg transition-colors flex flex-col items-center gap-0.5"
           title="导出"
         >
-          <Download :stroke-width="2.5" class="w-6 h-6 group-hover:scale-110 transition-transform" />
+          <Download :stroke-width="2.5" class="w-6 h-6 text-text-primary group-hover:scale-110 transition-transform" />
           <span class="text-[10px] font-handwritten text-text-secondary">导出</span>
         </button>
         <div class="absolute left-full ml-2 bottom-0 card-hand-drawn py-2 min-w-[120px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 bg-bg-primary">
           <button
-            class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
+            class="w-full px-4 py-2 text-left font-handwritten text-sm text-text-primary hover:bg-muted/50"
             @click="handleExport('png')"
           >
             PNG 图片
           </button>
           <button
-            class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
+            class="w-full px-4 py-2 text-left font-handwritten text-sm text-text-primary hover:bg-muted/50"
             @click="handleExport('svg')"
           >
             SVG 矢量
           </button>
           <button
-            class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50"
+            class="w-full px-4 py-2 text-left font-handwritten text-sm text-text-primary hover:bg-muted/50"
             @click="handleExport('json')"
           >
             JSON 数据
@@ -705,7 +705,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- Empty state (show when no mind map is open) -->
       <div v-else class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <Brain :stroke-width="1.5" class="w-24 h-24 mx-auto mb-6 text-text-primary/30" />
+          <Brain :stroke-width="1.5" class="w-24 h-24 mx-auto mb-6 text-text-secondary" />
           <h2 class="font-handwritten text-2xl text-text-primary mb-2">开始创建思维导图</h2>
           <p class="font-handwritten text-text-secondary mb-6">点击"新建"创建新的思维导图，或从下方历史记录中选择</p>
           <button
