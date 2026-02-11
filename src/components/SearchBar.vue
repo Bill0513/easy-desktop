@@ -9,6 +9,16 @@ const isDarkMode = computed(() => {
   return store.effectiveTheme === 'dark'
 })
 
+const engineSelectedClass = computed(() => {
+  return isDarkMode.value ? 'bg-bluePen text-white hover:bg-bluePen/80' : 'bg-accent text-white hover:bg-accent/80'
+})
+
+const searchButtonClass = computed(() => {
+  return isDarkMode.value
+    ? 'flex items-center justify-center w-8 h-8 bg-bluePen text-white border-2 border-border-primary hover:bg-bluePen/80 transition-colors'
+    : 'flex items-center justify-center w-8 h-8 bg-accent text-bg-primary border-2 border-border-primary hover:bg-accent/80 transition-colors'
+})
+
 // 搜索引擎配置
 const searchEngines = [
   { id: 'google', name: '谷歌', icon: '🌐', url: 'https://www.google.com/search?q=' },
@@ -272,7 +282,7 @@ watch(selectedIndex, (index) => {
           class="w-full flex items-center gap-2 px-3 py-2 transition-colors font-handwritten text-sm"
           :class="
             engine.id === store.searchEngine
-              ? 'bg-accent text-white hover:bg-accent/80'
+              ? engineSelectedClass
               : (isDarkMode ? 'text-text-primary hover:bg-bluePen/30' : 'text-text-primary hover:bg-bluePen/15')
           "
           @click="selectEngine(engine.id)"
@@ -354,7 +364,7 @@ watch(selectedIndex, (index) => {
 
     <!-- 搜索按钮 -->
     <button
-      class="flex items-center justify-center w-8 h-8 bg-accent text-bg-primary border-2 border-border-primary hover:bg-accent/80 transition-colors"
+      :class="searchButtonClass"
       :style="{
         borderRadius: '125px 15px 125px 15px / 15px 125px 15px 125px',
         boxShadow: '2px 2px 0px 0px var(--color-border-primary)'

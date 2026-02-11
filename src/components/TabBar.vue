@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Component } from 'vue'
+import { ref, computed, type Component } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { TabType } from '@/types'
 import SettingsDialog from '@/components/SettingsDialog.vue'
@@ -9,21 +9,20 @@ import {
   Flame,
   FolderOpen,
   Brain,
-  Settings,
-  Code
+  Settings
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 const isExpanded = ref(false)
 const showSettings = ref(false)
+const isDarkMode = computed(() => store.effectiveTheme === 'dark')
 
 const tabs: { id: TabType; name: string; icon: Component; description: string }[] = [
   { id: 'desktop', name: '记录', icon: StickyNote, description: '便签、待办、文本' },
   { id: 'navigation', name: '导航', icon: Globe, description: '网页导航站' },
   { id: 'news', name: '热点', icon: Flame, description: '新闻热搜' },
   { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' },
-  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' },
-  { id: 'code-snippets', name: '代码片段', icon: Code, description: '代码收藏库' }
+  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' }
 ]
 
 const handleTabClick = (tabId: TabType) => {
@@ -37,6 +36,24 @@ const handleSettingsClick = () => {
 const handleCloseSettings = () => {
   showSettings.value = false
 }
+
+const selectedTabClass = computed(() => {
+  return isDarkMode.value
+    ? 'bg-bluePen text-white scale-105'
+    : 'bg-accent text-paper scale-105'
+})
+
+const selectedIconClass = computed(() => {
+  return isDarkMode.value ? 'animate-bounce text-white' : 'animate-bounce text-paper'
+})
+
+const selectedTextClass = computed(() => {
+  return isDarkMode.value ? 'text-white' : 'text-paper'
+})
+
+const activeIndicatorClass = computed(() => {
+  return isDarkMode.value ? 'bg-bluePen' : 'bg-paper'
+})
 </script>
 
 <template>
@@ -70,7 +87,7 @@ const handleCloseSettings = () => {
           class="group relative flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200"
           :class="[
             store.activeTab === tab.id
-              ? 'bg-accent text-paper scale-105'
+              ? selectedTabClass
               : 'hover:bg-muted/50 hover:scale-105'
           ]"
           @click="handleTabClick(tab.id)"
@@ -80,13 +97,13 @@ const handleCloseSettings = () => {
             :is="tab.icon"
             :stroke-width="2.5"
             class="w-7 h-7 transition-transform group-hover:scale-110"
-            :class="store.activeTab === tab.id ? 'animate-bounce text-paper' : 'text-text-primary'"
+            :class="store.activeTab === tab.id ? selectedIconClass : 'text-text-primary'"
           />
 
           <!-- 名称 -->
           <span
             class="font-handwritten text-sm font-medium whitespace-nowrap"
-            :class="store.activeTab === tab.id ? 'text-paper' : 'text-text-primary'"
+            :class="store.activeTab === tab.id ? selectedTextClass : 'text-text-primary'"
           >
             {{ tab.name }}
           </span>
@@ -101,7 +118,8 @@ const handleCloseSettings = () => {
           <!-- 激活指示器 -->
           <div
             v-if="store.activeTab === tab.id"
-            class="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-paper rounded-full"
+            class="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full"
+            :class="activeIndicatorClass"
           />
         </button>
 

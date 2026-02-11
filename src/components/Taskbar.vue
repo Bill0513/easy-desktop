@@ -16,6 +16,21 @@ import {
 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
+const isDarkMode = computed(() => store.effectiveTheme === 'dark')
+
+const popupItemClass = computed(() => {
+  return [
+    'w-full px-4 py-2 text-left font-handwritten text-sm flex items-center gap-2 transition-colors text-text-primary',
+    isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
+  ]
+})
+
+const popupHeaderClass = computed(() => {
+  return [
+    'px-3 py-1 border-b border-border-primary/20',
+    isDarkMode.value ? 'bg-bluePen/15' : 'bg-accent/10'
+  ]
+})
 
 // 按类型分组的最小化组件
 const groupedMinimizedWidgets = computed(() => {
@@ -189,7 +204,7 @@ const arrangeAll = () => {
             ref="outOfViewPopupRef"
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[200px] z-[10000]"
           >
-            <div class="px-3 py-1 border-b border-border-primary/20">
+            <div :class="popupHeaderClass">
               <span class="font-handwritten text-sm text-text-secondary">
                 超出可视范围 ({{ store.outOfViewWidgets.length }})
               </span>
@@ -202,7 +217,7 @@ const arrangeAll = () => {
               <button
                 v-for="widget in store.outOfViewWidgets"
                 :key="widget.id"
-                class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
+                :class="popupItemClass"
                 @click="resetWidget(widget.id)"
                 @mouseenter="showPreview(widget, $event, outOfViewPopupRef)"
                 @mouseleave="hidePreview"
@@ -355,7 +370,7 @@ const arrangeAll = () => {
             class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-hand-drawn py-2 min-w-[160px] z-[10000]"
             :style="{ left: '50%', transform: 'translateX(-50%)' }"
           >
-            <div class="px-3 py-1 border-b border-border-primary/20">
+            <div :class="popupHeaderClass">
               <span class="font-handwritten text-sm text-text-secondary">
                 {{ `${typeNames[type]} (${widgets.length})` }}
               </span>
@@ -368,7 +383,7 @@ const arrangeAll = () => {
               <button
                 v-for="widget in widgets"
                 :key="widget.id"
-                class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 flex items-center gap-2"
+                :class="popupItemClass"
                 @click="restoreWidget(widget.id)"
                 @mouseenter="showPreview(widget, $event)"
                 @mouseleave="hidePreview"

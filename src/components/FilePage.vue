@@ -7,7 +7,7 @@ const FilePreviewDialog = defineAsyncComponent(() => import('./FilePreviewDialog
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 import { getFileIcon } from '@/utils/fileIcons'
-import { FolderOpen } from 'lucide-vue-next'
+import { FolderOpen, Upload, FolderUp, FolderPlus, FilePlus2, FolderInput, FilePenLine, Pencil, Trash2 } from 'lucide-vue-next'
 import CustomSelect from './CustomSelect.vue'
 
 const store = useDesktopStore()
@@ -18,6 +18,32 @@ const uploadMode = ref<'file' | 'folder'>('file')
 const isUploading = ref(false)
 const uploadProgress = ref(0)
 const previewFile = ref<FileItem | null>(null)
+const showCreateFileDialog = ref(false)
+const newFileName = ref('')
+const newFileType = ref('ts')
+const fileSearchQuery = ref('')
+
+const isEditorOpen = ref(false)
+const editorLoading = ref(false)
+const editorSaving = ref(false)
+const editorFile = ref<FileItem | null>(null)
+const editorContent = ref('')
+const originalContent = ref('')
+const editorLanguage = ref('')
+const editorDescription = ref('')
+const editorTagsInput = ref('')
+
+const TEXT_FILE_TYPES = [
+  { label: 'TypeScript (.ts)', value: 'ts' },
+  { label: 'JavaScript (.js)', value: 'js' },
+  { label: 'Python (.py)', value: 'py' },
+  { label: 'Markdown (.md)', value: 'md' },
+  { label: 'JSON (.json)', value: 'json' },
+  { label: 'Vue (.vue)', value: 'vue' },
+  { label: 'CSS (.css)', value: 'css' },
+  { label: 'HTML (.html)', value: 'html' },
+  { label: 'Text (.txt)', value: 'txt' },
+]
 
 // 上传进度详情
 const uploadStats = ref({
@@ -150,10 +176,23 @@ const isDragging = ref(false)
 const isDragOver = ref(false)
 
 // 可拖拽的文件列表（用于 v-model）
+const hasFileFilter = computed(() => {
+  return !!fileSearchQuery.value.trim()
+})
+
+const filteredCurrentFolderItems = computed(() => {
+  const query = fileSearchQuery.value.trim().toLowerCase()
+  return store.currentFolderItems.filter(item => {
+    return !query || item.name.toLowerCase().includes(query)
+  })
+})
+
 const draggableItems = computed({
-  get: () => store.currentFolderItems,
+  get: () => filteredCurrentFolderItems.value,
   set: (value) => {
-    store.reorderFileItems(value)
+    if (!hasFileFilter.value) {
+      store.reorderFileItems(value)
+    }
   }
 })
 
@@ -211,6 +250,49 @@ const contextMenu = ref({
   item: null as FileItem | FolderItem | null
 })
 
+const availableFileLanguages = computed(() => {
+  return store.usedFileLanguages.map(language => ({ label: language, value: language }))
+})
+
+const isDarkMode = computed(() => store.effectiveTheme === 'dark')
+
+const contextMenuItemClass = computed(() => {
+  return [
+    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
+  ]
+})
+
+const contextMenuDangerItemClass = computed(() => {
+  return [
+    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
+  ]
+})
+
+const breadcrumbButtonClass = computed(() => {
+  return [
+    'font-handwritten text-sm text-text-primary transition-colors',
+    isDarkMode.value ? 'hover:text-bluePen' : 'hover:text-accent'
+  ]
+})
+
+const editorIsDirty = computed(() => {
+  return editorContent.value !== originalContent.value
+})
+
+const parseTagsInput = (value: string): string[] => {
+  return value
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const getFileUrl = (file: FileItem) => {
+  const domain = import.meta.env.VITE_IMAGE_DOMAIN || 'https://sunkkk.de5.net'
+  return `${domain}/${file.url}`
+}
+
 // 初始化文件数据
 onMounted(() => {
   store.initFiles()
@@ -227,6 +309,13 @@ onUnmounted(() => {
 const handleKeyDown = (e: KeyboardEvent) => {
   // 只在文件 tab 下处理快捷键
   if (store.activeTab !== 'file') return
+
+  // 编辑器内保存
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && isEditorOpen.value) {
+    e.preventDefault()
+    saveEditorContent()
+    return
+  }
 
   // 如果在输入框或可编辑元素中，不处理快捷键
   const target = e.target as HTMLElement
@@ -283,7 +372,11 @@ const handleKeyDown = (e: KeyboardEvent) => {
   // Escape 取消选择
   if (e.key === 'Escape') {
     e.preventDefault()
-    store.clearFileSelection()
+    if (isEditorOpen.value) {
+      closeEditor()
+    } else {
+      store.clearFileSelection()
+    }
   }
 }
 
@@ -356,6 +449,38 @@ const handleCreateFolder = async () => {
   closeContextMenu()
 }
 
+const openCreateFileDialog = () => {
+  newFileName.value = ''
+  newFileType.value = 'ts'
+  showCreateFileDialog.value = true
+  closeContextMenu()
+}
+
+const createTextFile = async () => {
+  const rawName = newFileName.value.trim()
+  if (!rawName) {
+    await showAlert('创建失败', '请输入文件名')
+    return
+  }
+
+  const extension = newFileType.value
+  const finalName = rawName.includes('.') ? rawName : `${rawName}.${extension}`
+
+  try {
+    const file = await store.createTextFile({
+      name: finalName,
+      parentId: store.currentFolderId,
+      content: '',
+      tags: [],
+      description: '',
+    })
+    showCreateFileDialog.value = false
+    await openEditorForFile(file)
+  } catch (error) {
+    await showAlert('创建失败', error instanceof Error ? error.message : '未知错误')
+  }
+}
+
 // 重命名
 const handleRename = async () => {
   if (!contextMenu.value.item) return
@@ -404,6 +529,69 @@ const handleUploadFolder = () => {
   uploadMode.value = 'folder'
   showUploadDialog.value = true
   closeContextMenu()
+}
+
+const openEditorForFile = async (file: FileItem) => {
+  if (!store.isTextCodeFileItem(file)) {
+    previewFile.value = file
+    return
+  }
+
+  editorLoading.value = true
+  isEditorOpen.value = true
+  editorFile.value = file
+  editorLanguage.value = file.language || store.inferLanguageFromFilename(file.name)
+  editorDescription.value = file.description || ''
+  editorTagsInput.value = (file.tags || []).join(', ')
+
+  try {
+    const response = await fetch(getFileUrl(file))
+    if (!response.ok) {
+      throw new Error('加载文件内容失败')
+    }
+    const content = await response.text()
+    editorContent.value = content
+    originalContent.value = content
+  } catch (error) {
+    await showAlert('打开失败', error instanceof Error ? error.message : '未知错误')
+    isEditorOpen.value = false
+  } finally {
+    editorLoading.value = false
+  }
+}
+
+const saveEditorContent = async () => {
+  if (!editorFile.value || editorSaving.value) return
+
+  editorSaving.value = true
+  try {
+    await store.updateTextFileContent(editorFile.value.id, editorContent.value)
+    store.updateFileMetadata(editorFile.value.id, {
+      language: editorLanguage.value,
+      description: editorDescription.value,
+      tags: parseTagsInput(editorTagsInput.value)
+    })
+    originalContent.value = editorContent.value
+    await showAlert('保存成功', '文本/代码文件已保存')
+  } catch (error) {
+    await showAlert('保存失败', error instanceof Error ? error.message : '未知错误')
+  } finally {
+    editorSaving.value = false
+  }
+}
+
+const closeEditor = async () => {
+  if (editorIsDirty.value) {
+    const confirmed = await showConfirm('放弃修改', '你有未保存的更改，确定要关闭编辑器吗？')
+    if (!confirmed) return
+  }
+  isEditorOpen.value = false
+  editorFile.value = null
+  editorContent.value = ''
+  originalContent.value = ''
+  editorLanguage.value = ''
+  editorDescription.value = ''
+  editorTagsInput.value = ''
 }
 
 // 文件选择处理
@@ -479,8 +667,7 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
   if (item.type === 'folder') {
     store.currentFolderId = item.id
   } else {
-    // 打开文件预览
-    previewFile.value = item
+    openEditorForFile(item)
   }
 }
 
@@ -525,39 +712,21 @@ const getItemIcon = (item: FileItem | FolderItem) => {
   >
     <!-- 工具栏 -->
     <div class="flex items-center gap-3 p-4 border-b-2 border-border-primary/20">
-      <button
-        class="btn-hand-drawn p-3"
-        @click="handleUploadFiles"
-        title="上传文件"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-      </button>
-      <button
-        class="btn-hand-drawn p-3"
-        @click="handleUploadFolder"
-        title="上传文件夹"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-        </svg>
-      </button>
-      <button
-        class="btn-hand-drawn p-3"
-        @click="handleCreateFolder"
-        title="新建文件夹"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
+      <div class="flex items-center gap-2">
+        <input
+          v-model="fileSearchQuery"
+          type="text"
+          placeholder="筛选文件名..."
+          class="input-hand-drawn px-3 py-2 bg-bg-secondary"
+          style="width: 300px"
+        />
+      </div>
     </div>
 
     <!-- 面包屑导航 -->
     <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-border-primary/10">
       <button
-        class="font-handwritten text-sm hover:text-accent transition-colors flex items-center gap-1"
+        :class="[breadcrumbButtonClass, 'flex items-center gap-1']"
         @click="store.currentFolderId = null"
       >
         <FolderOpen :size="16" :stroke-width="2.5" />
@@ -566,7 +735,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       <template v-for="folder in store.breadcrumbPath" :key="folder.id">
         <span class="text-text-secondary">/</span>
         <button
-          class="font-handwritten text-sm hover:text-accent transition-colors"
+          :class="breadcrumbButtonClass"
           @click="store.currentFolderId = folder.id"
         >
           {{ folder.name }}
@@ -621,10 +790,10 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       </div>
 
       <!-- 空状态 -->
-      <div v-else-if="store.currentFolderItems.length === 0" class="flex flex-col items-center justify-center h-full">
+      <div v-else-if="filteredCurrentFolderItems.length === 0" class="flex flex-col items-center justify-center h-full">
         <div class="text-6xl mb-4">📂</div>
-        <h3 class="font-handwritten text-xl text-text-primary mb-2">文件夹为空</h3>
-        <p class="font-handwritten text-text-secondary mb-4">右键或点击上方按钮开始上传文件</p>
+        <h3 class="font-handwritten text-xl text-text-primary mb-2">暂无匹配内容</h3>
+        <p class="font-handwritten text-text-secondary mb-4">可上传文件或新建文本/代码文件</p>
       </div>
 
       <!-- 文件列表 - 网格视图 -->
@@ -763,66 +932,102 @@ const getItemIcon = (item: FileItem | FolderItem) => {
           <!-- 空白处菜单 -->
           <template v-if="contextMenu.type === 'blank'">
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleUploadFiles"
             >
-              📤 上传文件
+              <span class="inline-flex items-center gap-2">
+                <Upload :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>上传文件</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleUploadFolder"
             >
-              📁 上传文件夹
+              <span class="inline-flex items-center gap-2">
+                <FolderUp :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>上传文件夹</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleCreateFolder"
             >
-              ➕ 新建文件夹
+              <span class="inline-flex items-center gap-2">
+                <FolderPlus :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>新建文件夹</span>
+              </span>
+            </button>
+            <button
+              :class="contextMenuItemClass"
+              @click="openCreateFileDialog"
+            >
+              <span class="inline-flex items-center gap-2">
+                <FilePlus2 :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>新建文本/代码文件</span>
+              </span>
             </button>
           </template>
 
           <!-- 文件夹菜单 -->
           <template v-else-if="contextMenu.type === 'folder'">
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleItemDoubleClick(contextMenu.item!)"
             >
-              📂 打开
+              <span class="inline-flex items-center gap-2">
+                <FolderInput :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>打开</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleRename"
             >
-              ✏️ 重命名
+              <span class="inline-flex items-center gap-2">
+                <Pencil :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>重命名</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors text-red-600"
+              :class="contextMenuDangerItemClass"
               @click="handleDelete"
             >
-              🗑️ 删除
+              <span class="inline-flex items-center gap-2">
+                <Trash2 :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>删除</span>
+              </span>
             </button>
           </template>
 
           <!-- 文件菜单 -->
           <template v-else-if="contextMenu.type === 'file'">
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleItemDoubleClick(contextMenu.item!)"
             >
-              👁️ 预览
+              <span class="inline-flex items-center gap-2">
+                <FilePenLine :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>打开</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors"
+              :class="contextMenuItemClass"
               @click="handleRename"
             >
-              ✏️ 重命名
+              <span class="inline-flex items-center gap-2">
+                <Pencil :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>重命名</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors text-red-600"
+              :class="contextMenuDangerItemClass"
               @click="handleDelete"
             >
-              🗑️ 删除
+              <span class="inline-flex items-center gap-2">
+                <Trash2 :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>删除</span>
+              </span>
             </button>
           </template>
         </div>
@@ -953,6 +1158,91 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             >
               {{ isUploading ? '上传中...' : '关闭' }}
             </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- 新建文件对话框 -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showCreateFileDialog"
+          class="fixed inset-0 z-[10000] flex items-center justify-center bg-border-primary/50"
+          @click.self="showCreateFileDialog = false"
+        >
+          <div class="card-hand-drawn p-6 max-w-md w-full mx-4 bg-bg-primary" style="box-shadow: 8px 8px 0px var(--color-border-primary);">
+            <h2 class="font-handwritten text-2xl text-text-primary mb-4">新建文本/代码文件</h2>
+            <div class="space-y-3">
+              <input
+                v-model="newFileName"
+                type="text"
+                class="input-hand-drawn w-full px-3 py-2 bg-bg-secondary"
+                placeholder="输入文件名（不含扩展名）"
+              />
+              <CustomSelect v-model="newFileType" :options="TEXT_FILE_TYPES" width="100%" />
+            </div>
+            <div class="flex gap-2 mt-5">
+              <button class="btn-hand-drawn px-4 py-2 flex-1" @click="createTextFile">创建</button>
+              <button class="btn-hand-drawn px-4 py-2 flex-1" @click="showCreateFileDialog = false">取消</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- 文本/代码编辑器 -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isEditorOpen" class="fixed inset-0 z-[10000] flex items-center justify-center bg-border-primary/50">
+          <div class="card-hand-drawn w-[90vw] h-[85vh] bg-bg-primary flex flex-col" style="box-shadow: 8px 8px 0px var(--color-border-primary);">
+            <div class="flex items-center gap-3 p-4 border-b border-border-primary/20">
+              <div class="font-handwritten text-lg text-text-primary flex-1 truncate">
+                {{ editorFile?.name }}
+              </div>
+              <span v-if="editorIsDirty" class="text-xs font-handwritten text-orange-600">未保存</span>
+              <button class="btn-hand-drawn px-3 py-1 text-sm" :disabled="editorSaving" @click="saveEditorContent">
+                {{ editorSaving ? '保存中...' : '保存 (Ctrl+S)' }}
+              </button>
+              <button class="btn-hand-drawn px-3 py-1 text-sm" @click="closeEditor">关闭</button>
+            </div>
+
+            <div v-if="editorLoading" class="flex-1 flex items-center justify-center font-handwritten text-text-secondary">加载中...</div>
+            <div v-else class="flex-1 grid grid-cols-[1fr_260px] gap-4 p-4 overflow-hidden">
+              <textarea
+                v-model="editorContent"
+                class="input-hand-drawn w-full h-full resize-none p-4 font-mono text-sm bg-bg-secondary"
+                spellcheck="false"
+              ></textarea>
+              <div class="space-y-3 overflow-auto">
+                <div>
+                  <label class="block text-sm font-handwritten mb-1">语言</label>
+                  <CustomSelect v-model="editorLanguage" :options="availableFileLanguages" width="100%" />
+                </div>
+                <div>
+                  <label class="block text-sm font-handwritten mb-1">标签（逗号分隔）</label>
+                  <input v-model="editorTagsInput" type="text" class="input-hand-drawn w-full px-3 py-2 bg-bg-secondary" placeholder="api, auth" />
+                </div>
+                <div>
+                  <label class="block text-sm font-handwritten mb-1">描述</label>
+                  <textarea v-model="editorDescription" rows="4" class="input-hand-drawn w-full px-3 py-2 bg-bg-secondary resize-none"></textarea>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Transition>

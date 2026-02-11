@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
+import { useDesktopStore } from '@/stores/desktop'
 
 interface Option {
   label: string
@@ -25,6 +26,29 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const selectRef = ref<HTMLDivElement>()
+const store = useDesktopStore()
+
+const isDarkMode = computed(() => store.effectiveTheme === 'dark')
+
+const selectButtonClass = computed(() => {
+  return [
+    'select-button w-full px-3 py-2 bg-bg-secondary text-text-primary font-handwritten text-left flex items-center justify-between gap-2 cursor-pointer transition-all',
+    isDarkMode.value
+      ? 'hover:border-bluePen hover:shadow-[3px_3px_0px_#2d5da1]'
+      : 'hover:border-accent hover:shadow-[3px_3px_0px_#ff4d4d]',
+  ]
+})
+
+const optionItemClass = computed(() => {
+  return [
+    'option-item px-3 py-2 cursor-pointer font-handwritten text-text-primary transition-colors',
+    isDarkMode.value ? 'hover:bg-bluePen/25' : 'hover:bg-accent/20',
+  ]
+})
+
+const selectedOptionClass = computed(() => {
+  return isDarkMode.value ? 'bg-bluePen/35' : 'bg-accent/25'
+})
 
 const selectedOption = computed(() => {
   return props.options.find(opt => opt.value === props.modelValue)
@@ -67,8 +91,12 @@ onUnmounted(() => {
     <!-- 选择框 -->
     <button
       type="button"
-      class="select-button w-full px-3 py-2 bg-bg-secondary text-text-primary font-handwritten text-left flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-[3px_3px_0px_var(--color-border-primary)]"
-      :class="{ 'shadow-[3px_3px_0px_var(--color-border-primary)]': isOpen }"
+      :class="[
+        selectButtonClass,
+        isOpen
+          ? (isDarkMode ? 'border-bluePen shadow-[3px_3px_0px_#2d5da1]' : 'border-accent shadow-[3px_3px_0px_#ff4d4d]')
+          : ''
+      ]"
       @click="toggleDropdown"
     >
       <span class="flex-1 truncate">{{ displayText }}</span>
@@ -90,8 +118,7 @@ onUnmounted(() => {
         <div
           v-for="option in options"
           :key="option.value"
-          class="option-item px-3 py-2 cursor-pointer font-handwritten text-text-primary transition-colors hover:bg-yellow-100"
-          :class="{ 'bg-blue-100': option.value === modelValue }"
+          :class="[optionItemClass, option.value === modelValue ? selectedOptionClass : '']"
           @click="selectOption(option)"
         >
           {{ option.label }}

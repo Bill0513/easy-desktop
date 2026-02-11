@@ -146,7 +146,7 @@ export interface DesktopData {
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'navigation' | 'news' | 'file' | 'mindmap' | 'code-snippets'
+export type TabType = 'desktop' | 'navigation' | 'news' | 'file' | 'mindmap'
 
 // 新闻项
 export interface NewsItem {
@@ -210,6 +210,10 @@ export interface FileItem {
   order: number
   createdAt: number
   updatedAt: number
+  language?: string
+  tags?: string[]
+  description?: string
+  isTextEditable?: boolean
   uploadProgress?: number
   uploadError?: string
 }

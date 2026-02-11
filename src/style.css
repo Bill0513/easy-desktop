@@ -68,9 +68,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-hand-drawn:hover {
-  @apply bg-accent text-white;
+  @apply text-white;
+  background-color: #ff4d4d;
+  border-color: #ff4d4d;
   box-shadow: 2px 2px 0px 0px var(--color-shadow-primary);
   transform: translate(2px, 2px);
+}
+
+[data-theme="dark"] .btn-hand-drawn:hover {
+  background-color: #2d5da1;
+  border-color: #2d5da1;
 }
 
 .btn-hand-drawn:active {

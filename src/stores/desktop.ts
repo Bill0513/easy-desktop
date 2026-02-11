@@ -1,12 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, CodeSnippet, ThemeMode } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, ThemeMode } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
 const DESKTOP_DATA_KEY = 'desktop-data' // IndexedDB 中的主数据键
+const TEXT_CODE_EXTENSIONS = new Set([
+  'txt', 'md', 'markdown', 'js', 'jsx', 'ts', 'tsx', 'json', 'vue',
+  'css', 'scss', 'less', 'html', 'htm', 'py', 'sql', 'sh', 'bash',
+  'yml', 'yaml', 'xml', 'c', 'cpp', 'h', 'hpp', 'java', 'go', 'rs', 'php'
+])
 
 // 默认组件颜色
 const DEFAULT_COLORS = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#ffe0b2', '#f3e5f5']
@@ -88,12 +93,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   const currentMindMapId = ref<string | null>(null)
   const isLoadingMindMap = ref(false)
 
-  // Code snippets state
-  const codeSnippets = ref<CodeSnippet[]>([])
-  const selectedSnippetId = ref<string | null>(null)
-  const snippetSearchQuery = ref('')
-  const selectedLanguage = ref<string>('all')
-
   // Canvas scale state (30% - 150%)
   const canvasScale = ref<number>(100)
   const lastArrangedScale = ref<number | null>(null) // 记录一键整理后的最佳缩放比例
@@ -158,7 +157,10 @@ export const useDesktopStore = defineStore('desktop', () => {
     )
 
     const fileResults = files.value.filter(file =>
-      file.name.toLowerCase().includes(query)
+      file.name.toLowerCase().includes(query) ||
+      file.language?.toLowerCase().includes(query) ||
+      file.description?.toLowerCase().includes(query) ||
+      file.tags?.some(tag => tag.toLowerCase().includes(query))
     )
 
     const folderResults = folders.value.filter(folder =>
@@ -169,13 +171,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       mindMap.name.toLowerCase().includes(query)
     )
 
-    const codeSnippetResults = codeSnippets.value.filter(snippet =>
-      snippet.title.toLowerCase().includes(query) ||
-      snippet.code.toLowerCase().includes(query)
-    )
-
-    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹、思维导图、代码片段最后
-    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults, ...mindMapResults, ...codeSnippetResults]
+    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹、思维导图最后
+    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults, ...mindMapResults]
   })
 
   // 当前文件夹下的项目（文件+文件夹）
@@ -353,11 +350,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.mindMaps !== undefined) {
           mindMaps.value = cloudData.mindMaps
         }
-        // 加载代码片段
-        if (cloudData.codeSnippets !== undefined) {
-          codeSnippets.value = cloudData.codeSnippets
-        }
-
         // 标记已从云端成功加载
         isCloudInitialized.value = true
 
@@ -378,7 +370,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           themeMode.value = localData.themeMode || 'system'
           darkBackgroundColor.value = localData.darkBackgroundColor || '#1a1a1a'
           mindMaps.value = localData.mindMaps || []
-          codeSnippets.value = localData.codeSnippets || []
 
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           isCloudInitialized.value = true
@@ -397,7 +388,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           searchHistory.value = []
           searchEngine.value = 'google'
           mindMaps.value = []
-          codeSnippets.value = []
 
           // 标记为已初始化
           isCloudInitialized.value = true
@@ -424,7 +414,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
     // 加载当前激活的标签页（从 localStorage，这是临时 UI 状态）
     const savedTab = localStorage.getItem(TAB_STORAGE_KEY)
-    if (savedTab) {
+    if (savedTab === 'desktop' || savedTab === 'navigation' || savedTab === 'news' || savedTab === 'file' || savedTab === 'mindmap') {
       activeTab.value = savedTab as TabType
     }
   }
@@ -455,7 +445,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         themeMode: themeMode.value,
         darkBackgroundColor: darkBackgroundColor.value,
         mindMaps: mindMaps.value,
-        codeSnippets: codeSnippets.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -529,7 +518,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         themeMode: themeMode.value,
         darkBackgroundColor: darkBackgroundColor.value,
         mindMaps: mindMaps.value,
-        codeSnippets: codeSnippets.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -639,7 +627,6 @@ export const useDesktopStore = defineStore('desktop', () => {
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
       mindMaps: mindMaps.value,
-      codeSnippets: codeSnippets.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1239,7 +1226,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   function loadActiveTab() {
     const saved = localStorage.getItem(TAB_STORAGE_KEY)
-    if (saved === 'desktop' || saved === 'news') {
+    if (saved === 'desktop' || saved === 'navigation' || saved === 'news' || saved === 'file' || saved === 'mindmap') {
       activeTab.value = saved
     }
   }
@@ -1863,6 +1850,53 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveFilesLocal()
   }
 
+  function getFileExtension(filename: string): string {
+    const parts = filename.split('.')
+    return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
+  }
+
+  function inferLanguageFromFilename(filename: string): string {
+    const extension = getFileExtension(filename)
+    const languageMap: Record<string, string> = {
+      js: 'javascript',
+      jsx: 'javascript',
+      ts: 'typescript',
+      tsx: 'typescript',
+      py: 'python',
+      sql: 'sql',
+      html: 'html',
+      htm: 'html',
+      css: 'css',
+      scss: 'scss',
+      less: 'less',
+      vue: 'vue',
+      sh: 'bash',
+      bash: 'bash',
+      json: 'json',
+      yml: 'yaml',
+      yaml: 'yaml',
+      md: 'markdown',
+      markdown: 'markdown',
+      java: 'java',
+      go: 'go',
+      rs: 'rust',
+      php: 'php',
+      xml: 'xml',
+      txt: 'text',
+    }
+    return languageMap[extension] || extension || 'text'
+  }
+
+  function isTextCodeFilename(filename: string): boolean {
+    return TEXT_CODE_EXTENSIONS.has(getFileExtension(filename))
+  }
+
+  function isTextCodeFileItem(file: FileItem): boolean {
+    if (file.isTextEditable) return true
+    if (file.mimeType.startsWith('text/')) return true
+    return isTextCodeFilename(file.name)
+  }
+
   // 上传单个文件
   async function uploadFile(file: File, parentId: string | null = null): Promise<FileItem> {
     // 验证文件大小（20MB）
@@ -1921,6 +1955,10 @@ export const useDesktopStore = defineStore('desktop', () => {
 
       // 更新文件项
       fileItem.url = response.filename
+      fileItem.size = response.size
+      fileItem.mimeType = response.mimeType
+      fileItem.isTextEditable = isTextCodeFilename(file.name)
+      fileItem.language = fileItem.isTextEditable ? inferLanguageFromFilename(file.name) : fileItem.language
       fileItem.uploadProgress = undefined
       saveFilesLocal()
 
@@ -1933,6 +1971,78 @@ export const useDesktopStore = defineStore('desktop', () => {
       }
       throw error
     }
+  }
+
+  async function createTextFile(params: {
+    name: string
+    content?: string
+    parentId?: string | null
+    tags?: string[]
+    description?: string
+  }): Promise<FileItem> {
+    const name = params.name.trim()
+    const parentId = params.parentId ?? null
+    if (!name) {
+      throw new Error('文件名不能为空')
+    }
+    if (!isTextCodeFilename(name)) {
+      throw new Error('仅支持创建文本/代码文件')
+    }
+
+    const duplicated = files.value.some(file => file.parentId === parentId && file.name === name)
+    if (duplicated) {
+      throw new Error('同目录下已存在同名文件')
+    }
+
+    const content = params.content || ''
+    const source = new File([content], name, { type: 'text/plain;charset=utf-8' })
+    const item = await uploadFile(source, parentId)
+    item.isTextEditable = true
+    item.language = inferLanguageFromFilename(name)
+    item.tags = params.tags || []
+    item.description = params.description || ''
+    item.updatedAt = Date.now()
+    saveFilesLocal()
+    return item
+  }
+
+  async function updateTextFileContent(fileId: string, content: string): Promise<FileItem> {
+    const target = files.value.find(file => file.id === fileId)
+    if (!target) {
+      throw new Error('文件不存在')
+    }
+    if (!isTextCodeFileItem(target)) {
+      throw new Error('仅支持文本/代码文件编辑')
+    }
+
+    const oldUrl = target.url
+    const source = new File([content], target.name, { type: 'text/plain;charset=utf-8' })
+    const uploaded = await uploadFile(source, target.parentId)
+
+    target.url = uploaded.url
+    target.size = uploaded.size
+    target.mimeType = uploaded.mimeType
+    target.language = target.language || inferLanguageFromFilename(target.name)
+    target.isTextEditable = true
+    target.updatedAt = Date.now()
+
+    const tmpIndex = files.value.findIndex(file => file.id === uploaded.id)
+    if (tmpIndex !== -1) {
+      files.value.splice(tmpIndex, 1)
+    }
+
+    if (oldUrl) {
+      fetch('/api/file', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: oldUrl }),
+      }).catch((error) => {
+        console.error('Failed to delete old file version:', error)
+      })
+    }
+
+    saveFilesLocal()
+    return target
   }
 
   // 批量上传文件
@@ -2333,6 +2443,35 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveFilesLocal()
   }
 
+  const usedFileLanguages = computed(() => {
+    const languages = new Set<string>()
+    files.value.forEach(file => {
+      if (file.language) {
+        languages.add(file.language)
+      }
+    })
+    return Array.from(languages).sort()
+  })
+
+  const usedFileTags = computed(() => {
+    const tags = new Set<string>()
+    files.value.forEach(file => {
+      file.tags?.forEach(tag => tags.add(tag))
+    })
+    return Array.from(tags).sort()
+  })
+
+  function updateFileMetadata(id: string, updates: Partial<Pick<FileItem, 'language' | 'tags' | 'description'>>) {
+    const file = files.value.find(item => item.id === id)
+    if (!file) return
+
+    if (updates.language !== undefined) file.language = updates.language
+    if (updates.tags !== undefined) file.tags = updates.tags
+    if (updates.description !== undefined) file.description = updates.description
+    file.updatedAt = Date.now()
+    saveFilesLocal()
+  }
+
   // Mind Map Actions
 
   function loadMindMaps() {
@@ -2418,93 +2557,6 @@ export const useDesktopStore = defineStore('desktop', () => {
       saveMindMaps()
     }
   }
-
-  // Code Snippets Actions
-
-  // 创建代码片段
-  function createCodeSnippet(params: {
-    title: string
-    code: string
-    language: string
-    description?: string
-    tags?: string[]
-  }): CodeSnippet {
-    const snippet: CodeSnippet = {
-      id: uuidv4(),
-      title: params.title,
-      code: params.code,
-      language: params.language,
-      description: params.description || '',
-      tags: params.tags || [],
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-
-    codeSnippets.value.unshift(snippet)
-    save()
-    return snippet
-  }
-
-  // 更新代码片段
-  function updateCodeSnippet(id: string, updates: Partial<CodeSnippet>) {
-    const snippet = codeSnippets.value.find(s => s.id === id)
-    if (snippet) {
-      Object.assign(snippet, updates, { updatedAt: Date.now() })
-      save()
-    }
-  }
-
-  // 删除代码片段
-  function deleteCodeSnippet(id: string) {
-    const index = codeSnippets.value.findIndex(s => s.id === id)
-    if (index !== -1) {
-      codeSnippets.value.splice(index, 1)
-      save()
-    }
-  }
-
-  // 选择代码片段
-  function selectSnippet(id: string | null) {
-    selectedSnippetId.value = id
-  }
-
-  // 过滤后的代码片段列表
-  const filteredCodeSnippets = computed(() => {
-    let filtered = codeSnippets.value
-
-    // 按语言筛选
-    if (selectedLanguage.value !== 'all') {
-      filtered = filtered.filter(s => s.language === selectedLanguage.value)
-    }
-
-    // 按搜索关键词筛选
-    if (snippetSearchQuery.value.trim()) {
-      const query = snippetSearchQuery.value.toLowerCase()
-      filtered = filtered.filter(s =>
-        s.title.toLowerCase().includes(query) ||
-        s.code.toLowerCase().includes(query) ||
-        s.description?.toLowerCase().includes(query) ||
-        s.tags.some(tag => tag.toLowerCase().includes(query))
-      )
-    }
-
-    return filtered
-  })
-
-  // 获取所有使用的语言列表
-  const usedLanguages = computed(() => {
-    const languages = new Set(codeSnippets.value.map(s => s.language))
-    return Array.from(languages).sort()
-  })
-
-  // 获取所有使用的标签列表
-  const usedTags = computed(() => {
-    const tags = new Set<string>()
-    codeSnippets.value.forEach(s => {
-      s.tags.forEach(tag => tags.add(tag))
-    })
-    return Array.from(tags).sort()
-  })
 
   // Toast 相关方法
   function setToastContainer(container: any) {
@@ -2644,6 +2696,11 @@ export const useDesktopStore = defineStore('desktop', () => {
     uploadFile,
     uploadFiles,
     uploadFolder,
+    createTextFile,
+    updateTextFileContent,
+    updateFileMetadata,
+    isTextCodeFileItem,
+    inferLanguageFromFilename,
     saveFilesLocal,
     loadFilesFromCloud,
     saveFilesToCloud,
@@ -2656,6 +2713,8 @@ export const useDesktopStore = defineStore('desktop', () => {
     copyFiles,
     cutFiles,
     pasteFiles,
+    usedFileLanguages,
+    usedFileTags,
     // Mind map actions
     loadMindMaps,
     createMindMap,
@@ -2663,20 +2722,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveMindMap,
     renameMindMap,
     deleteMindMap,
-    // Code snippets state
-    codeSnippets,
-    selectedSnippetId,
-    snippetSearchQuery,
-    selectedLanguage,
-    // Code snippets getters
-    filteredCodeSnippets,
-    usedLanguages,
-    usedTags,
-    // Code snippets actions
-    createCodeSnippet,
-    updateCodeSnippet,
-    deleteCodeSnippet,
-    selectSnippet,
     // Toast actions
     setToastContainer,
     showToast,

@@ -14,7 +14,6 @@ import ToastContainer from '@/components/ToastContainer.vue'
 const NewsPage = defineAsyncComponent(() => import('@/components/NewsPage.vue'))
 const FilePage = defineAsyncComponent(() => import('@/components/FilePage.vue'))
 const MindMapPage = defineAsyncComponent(() => import('@/components/MindMapPage.vue'))
-const CodeSnippetsPage = defineAsyncComponent(() => import('@/components/CodeSnippetsPage.vue'))
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
@@ -132,10 +131,6 @@ const handleUnlock = async () => {
         <MindMapPage />
       </div>
 
-      <!-- 代码片段 Tab -->
-      <div v-show="store.activeTab === 'code-snippets'" class="w-full h-full">
-        <CodeSnippetsPage />
-      </div>
     </template>
   </div>
 </template>

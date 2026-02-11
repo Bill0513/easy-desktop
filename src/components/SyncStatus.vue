@@ -151,7 +151,7 @@ onUnmounted(() => {
     <template v-if="store.activeTab === 'news'">
       <div
         class="card-hand-drawn bg-bg-secondary px-3 py-2 flex items-center gap-2 text-sm"
-        :class="isRefreshingNews ? 'text-blue-600' : 'text-gray-600'"
+        :class="isRefreshingNews ? 'text-blue-600' : 'text-text-secondary'"
       >
         <Loader2 v-if="isRefreshingNews" :size="18" :stroke-width="2.5" class="animate-spin" />
         <Newspaper v-else :size="18" :stroke-width="2.5" />
