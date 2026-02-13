@@ -819,12 +819,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     const widget = getWidgetById.value(id)
     if (widget) {
       widget.isMinimized = !widget.isMinimized
-
-      // 最小化时，将缩放重置为 100%
-      if (widget.isMinimized) {
-        setCanvasScale(100)
-      }
-
       save()
     }
   }
