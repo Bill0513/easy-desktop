@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
+import { useResponsiveMode } from '@/composables/useResponsiveMode'
 import MindMap from 'simple-mind-map'
 // 导入插件
 import Drag from 'simple-mind-map/src/plugins/Drag.js'
@@ -34,6 +35,7 @@ MindMap.usePlugin(Export)
 MindMap.usePlugin(KeyboardNavigation)
 
 const store = useDesktopStore()
+const { isMobile } = useResponsiveMode()
 
 // Mind map instance - use shallowRef to preserve the instance
 const mindMapContainer = ref<HTMLElement | null>(null)
@@ -59,6 +61,8 @@ const confirmDialogCallback = ref<(() => void) | null>(null)
 const showContextMenu = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 const hasActiveNode = ref(false)
+const showMobileMoreSheet = ref(false)
+const showMobileExportSheet = ref(false)
 
 // Undo/Redo state
 const canUndo = ref(false)
@@ -132,13 +136,20 @@ const getDefaultData = (name: string = '新建思维导图'): SimpleMindMapNode 
 
 // Context menu handlers
 const handleContextMenu = (e: MouseEvent) => {
+  if (isMobile.value) return
   e.preventDefault()
   contextMenuPosition.value = { x: e.clientX, y: e.clientY }
   showContextMenu.value = true
 }
 
+const handleContainerContextMenu = (e: MouseEvent) => {
+  handleContextMenu(e)
+}
+
 const hideContextMenu = () => {
   showContextMenu.value = false
+  showMobileMoreSheet.value = false
+  showMobileExportSheet.value = false
 }
 
 // Node operations
@@ -225,6 +236,16 @@ const fitCanvas = () => {
   }
 }
 
+const openMobileExportSheet = () => {
+  showMobileExportSheet.value = true
+  showMobileMoreSheet.value = false
+}
+
+const openMobileMoreSheet = () => {
+  showMobileMoreSheet.value = true
+  showMobileExportSheet.value = false
+}
+
 // Initialize mind map with retry mechanism
 const initMindMap = async (retryCount = 0): Promise<boolean> => {
   if (!mindMapContainer.value) return false
@@ -286,9 +307,11 @@ const initMindMap = async (retryCount = 0): Promise<boolean> => {
     })
 
     // Listen for right click
-    instance.on('node_contextmenu', (e: MouseEvent) => {
-      handleContextMenu(e)
-    })
+    if (!isMobile.value) {
+      instance.on('node_contextmenu', (e: MouseEvent) => {
+        handleContextMenu(e)
+      })
+    }
 
     // Click to hide context menu
     instance.on('draw_click', () => {
@@ -558,9 +581,9 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
 </script>
 
 <template>
-  <div class="w-full h-full flex">
+  <div class="w-full h-full flex" :class="isMobile ? 'flex-col' : ''">
     <!-- Left sidebar with tools -->
-    <div class="w-20 flex-shrink-0 bg-bg-primary border-r-2 border-border-primary/20 flex flex-col items-center gap-2 py-4">
+    <div v-if="!isMobile" class="w-20 flex-shrink-0 bg-bg-primary border-r-2 border-border-primary/20 flex flex-col items-center gap-2 py-4">
       <!-- 新建 -->
       <button
         class="p-2 hover:bg-muted/50 rounded-lg transition-colors group flex flex-col items-center gap-0.5"
@@ -677,10 +700,31 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       </div>
     </div>
 
+    <!-- Mobile top tools -->
+    <div v-if="isMobile" class="mobile-mindmap-topbar">
+      <div class="mobile-mindmap-topbar-inner card-hand-drawn bg-bg-secondary">
+        <div class="min-w-0 flex-1">
+          <div class="font-handwritten text-base text-text-primary truncate">
+            {{ currentFileName || '未命名思维导图' }}
+            <span v-if="hasUnsavedChanges" class="text-accent">*</span>
+          </div>
+          <div class="font-handwritten text-xs text-text-secondary">移动编辑模式</div>
+        </div>
+        <button class="mobile-mindmap-btn" @click="handleNew">
+          <Plus :stroke-width="2.5" class="w-4 h-4" />
+          新建
+        </button>
+        <button class="mobile-mindmap-btn" :disabled="!hasUnsavedChanges || isSaving" @click="handleSave">
+          <Save :stroke-width="2.5" class="w-4 h-4" />
+          保存
+        </button>
+      </div>
+    </div>
+
     <!-- Main content area -->
     <div class="flex-1 flex flex-col">
       <!-- Title bar with tips (only show when mind map is open) -->
-      <div v-if="isMindMapOpen" class="flex items-center justify-between p-4 border-b-2 border-border-primary/20">
+      <div v-if="isMindMapOpen && !isMobile" class="flex items-center justify-between p-4 border-b-2 border-border-primary/20">
         <div class="text-xs font-handwritten text-text-secondary/70">
           
         </div>
@@ -698,8 +742,9 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         v-if="isMindMapOpen"
         ref="mindMapContainer"
         class="flex-1 relative overflow-hidden"
+        :class="isMobile ? 'pt-[74px] pb-[84px]' : ''"
         style="min-height: 400px;"
-        @contextmenu="handleContextMenu"
+        @contextmenu="handleContainerContextMenu"
       ></div>
 
       <!-- Empty state (show when no mind map is open) -->
@@ -721,9 +766,20 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
       <!-- History section -->
       <MindMapHistory
         :history="store.mindMaps"
+        :is-mobile="isMobile"
         @open="handleOpen"
         @remove="store.deleteMindMap"
       />
+    </div>
+
+    <!-- Mobile bottom actions -->
+    <div v-if="isMobile && isMindMapOpen" class="mobile-mindmap-bottombar">
+      <button class="mobile-mindmap-btn" :disabled="!canUndo" @click="undo">撤销</button>
+      <button class="mobile-mindmap-btn" :disabled="!canRedo" @click="redo">重做</button>
+      <button class="mobile-mindmap-btn" :disabled="!hasActiveNode" @click="addChildNode">子节点</button>
+      <button class="mobile-mindmap-btn" :disabled="!hasActiveNode" @click="addSiblingNode">同级</button>
+      <button class="mobile-mindmap-btn" @click="openMobileExportSheet">导出</button>
+      <button class="mobile-mindmap-btn" @click="openMobileMoreSheet">更多</button>
     </div>
 
     <!-- Context Menu -->
@@ -737,7 +793,7 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
         leave-to-class="opacity-0 scale-95"
       >
         <div
-          v-if="showContextMenu"
+          v-if="showContextMenu && !isMobile"
           class="fixed z-[10001] card-hand-drawn py-2 min-w-[160px] bg-bg-primary"
           :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
           @click.stop
@@ -802,6 +858,66 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
             删除
             <span class="ml-auto text-text-secondary/70 text-xs">Delete</span>
           </button>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Mobile export sheet -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showMobileExportSheet && isMobile"
+          class="fixed inset-0 z-[10000] bg-border-primary/45"
+          @click="hideContextMenu"
+        >
+          <div class="mobile-mindmap-sheet card-hand-drawn bg-bg-primary p-4" @click.stop>
+            <div class="font-handwritten text-base text-text-primary mb-3">导出</div>
+            <div class="space-y-2">
+              <button class="mobile-mindmap-sheet-btn" @click="handleExport('png'); hideContextMenu()">导出 PNG</button>
+              <button class="mobile-mindmap-sheet-btn" @click="handleExport('svg'); hideContextMenu()">导出 SVG</button>
+              <button class="mobile-mindmap-sheet-btn" @click="handleExport('json'); hideContextMenu()">导出 JSON</button>
+              <button class="mobile-mindmap-sheet-btn" @click="hideContextMenu">取消</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Mobile more actions sheet -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showMobileMoreSheet && isMobile"
+          class="fixed inset-0 z-[10000] bg-border-primary/45"
+          @click="hideContextMenu"
+        >
+          <div class="mobile-mindmap-sheet card-hand-drawn bg-bg-primary p-4" @click.stop>
+            <div class="font-handwritten text-base text-text-primary mb-3">更多操作</div>
+            <div class="space-y-2">
+              <button class="mobile-mindmap-sheet-btn" @click="zoomIn">放大</button>
+              <button class="mobile-mindmap-sheet-btn" @click="zoomOut">缩小</button>
+              <button class="mobile-mindmap-sheet-btn" @click="fitCanvas">适应画布</button>
+              <button class="mobile-mindmap-sheet-btn" :disabled="!hasActiveNode" @click="copyNode">复制节点</button>
+              <button class="mobile-mindmap-sheet-btn" :disabled="!hasActiveNode" @click="cutNode">剪切节点</button>
+              <button class="mobile-mindmap-sheet-btn" @click="pasteNode">粘贴节点</button>
+              <button class="mobile-mindmap-sheet-btn text-accent" :disabled="!hasActiveNode" @click="deleteNode">删除节点</button>
+              <button class="mobile-mindmap-sheet-btn" @click="hideContextMenu">关闭</button>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -901,5 +1017,68 @@ const handleExport = (format: 'png' | 'svg' | 'json') => {
   box-shadow: 4px 4px 0px #2d2d2d !important;
   background: #fdfbf7 !important;
   border: 2px solid #2d2d2d !important;
+}
+
+.mobile-mindmap-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  padding: 8px 10px 6px;
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.mobile-mindmap-topbar-inner {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.mobile-mindmap-bottombar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 9998;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--color-bg-secondary) 94%, transparent);
+  border-top: 2px solid var(--color-border-primary);
+}
+
+.mobile-mindmap-btn {
+  min-height: 34px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 10px;
+  padding: 0 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mobile-mindmap-sheet {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-mindmap-sheet-btn {
+  width: 100%;
+  min-height: 40px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 12px;
+  text-align: left;
+  padding: 0 12px;
+  font-family: 'Patrick Hand', cursive;
 }
 </style>

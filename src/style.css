@@ -204,6 +204,26 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 768px) {
+  .btn-hand-drawn {
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    box-shadow: 2px 2px 0px 0px var(--color-shadow-primary);
+  }
+
+  .btn-hand-drawn:hover {
+    box-shadow: 1px 1px 0px 0px var(--color-shadow-primary);
+    transform: translate(1px, 1px);
+  }
+
+  .btn-hand-drawn:active {
+    transform: translate(2px, 2px);
+  }
+
+  .input-hand-drawn {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+  }
+
   .mobile-main-content {
     padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   }

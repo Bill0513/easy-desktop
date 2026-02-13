@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { NewsSource } from '@/types'
+import { useResponsiveMode } from '@/composables/useResponsiveMode'
 
 const props = defineProps<{
   source: NewsSource
@@ -9,6 +10,7 @@ const props = defineProps<{
 
 const store = useDesktopStore()
 const isRefreshing = ref(false)
+const { isMobile } = useResponsiveMode()
 
 const openLink = (url: string) => {
   window.open(url, '_blank', 'noopener,noreferrer')
@@ -27,9 +29,9 @@ const handleRefresh = async () => {
     style="
       box-shadow: 3px 3px 0px var(--color-border-primary);
       border: 2px solid var(--color-border-primary);
-      min-height: 500px;
-      max-height: 500px;
+      min-height: 360px;
     "
+    :class="isMobile ? 'news-card-mobile' : 'news-card-desktop'"
   >
     <!-- 新闻源标题 -->
     <div
@@ -134,5 +136,13 @@ const handleRefresh = async () => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.news-card-desktop {
+  max-height: 500px;
+}
+
+.news-card-mobile {
+  max-height: 60vh;
 }
 </style>

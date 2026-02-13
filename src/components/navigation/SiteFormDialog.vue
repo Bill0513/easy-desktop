@@ -167,14 +167,14 @@ const handleClose = () => {
         @click="handleClose"
       >
         <div
-          class="card-hand-drawn p-6 max-w-md w-full mx-4"
+          class="site-form-dialog card-hand-drawn p-6 max-w-md w-full mx-4"
           @click.stop
         >
           <h3 class="font-handwritten text-xl font-medium mb-4 text-text-primary">
             {{ site ? '编辑网站' : '添加网站' }}
           </h3>
 
-          <div class="space-y-4">
+          <div class="site-form-content space-y-4">
             <!-- 网站名称 -->
             <div>
               <label class="block font-handwritten text-sm mb-1 text-text-primary">网站名称 *</label>
@@ -289,9 +289,9 @@ const handleClose = () => {
           </div>
 
           <!-- 按钮 -->
-          <div class="flex justify-end gap-3 mt-6">
+          <div class="site-form-actions flex justify-end gap-3 mt-6">
             <button
-              class="px-4 py-2 font-handwritten text-sm text-text-primary border-2 border-border-primary rounded-lg hover:bg-muted/50 transition-colors"
+              class="site-form-secondary-btn px-4 py-2 font-handwritten text-sm text-text-primary border-2 border-border-primary rounded-lg hover:bg-muted/50 transition-colors"
               @click="handleClose"
             >
               取消
@@ -309,3 +309,60 @@ const handleClose = () => {
     </Transition>
   </Teleport>
 </template>
+
+<style scoped>
+.site-form-dialog {
+  max-height: min(86vh, 760px);
+  display: flex;
+  flex-direction: column;
+}
+
+.site-form-content {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+@media (max-width: 768px) {
+  .site-form-dialog {
+    width: calc(100vw - 20px);
+    max-width: none;
+    max-height: calc(100vh - 120px);
+    padding: 14px 12px;
+  }
+
+  .site-form-content {
+    max-height: calc(100vh - 290px);
+  }
+
+  .site-form-content > div {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+  }
+
+  .site-form-content > div > label {
+    margin: 0;
+    padding-top: 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--color-text-secondary);
+  }
+
+  .site-form-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-secondary);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+
+  .site-form-actions button {
+    flex: 1;
+  }
+
+  .site-form-secondary-btn {
+    min-height: 38px;
+  }
+}
+</style>

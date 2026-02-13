@@ -4,10 +4,12 @@ import type { NavigationSite } from '@/types'
 
 const props = defineProps<{
   site: NavigationSite
+  showActions?: boolean
 }>()
 
 const emit = defineEmits<{
   contextmenu: [e: MouseEvent]
+  actions: [site: NavigationSite]
 }>()
 
 // 获取首字母
@@ -30,6 +32,12 @@ const handleContextMenu = (e: MouseEvent) => {
   e.preventDefault()
   e.stopPropagation()
   emit('contextmenu', e)
+}
+
+const handleActionsClick = (e: MouseEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
+  emit('actions', props.site)
 }
 </script>
 
@@ -63,6 +71,15 @@ const handleContextMenu = (e: MouseEvent) => {
     <div class="site-name">
       {{ site.name }}
     </div>
+
+    <button
+      v-if="showActions"
+      class="site-actions-btn"
+      title="更多操作"
+      @click="handleActionsClick"
+    >
+      ⋯
+    </button>
   </div>
 </template>
 
@@ -74,6 +91,7 @@ const handleContextMenu = (e: MouseEvent) => {
   align-items: center;
   gap: 6px;
   transition: transform 0.2s;
+  position: relative;
 }
 
 .site-card:hover {
@@ -112,5 +130,22 @@ const handleContextMenu = (e: MouseEvent) => {
   line-height: 1.3;
   color: var(--color-text-primary);
   min-height: 36px;
+}
+
+.site-actions-btn {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 999px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

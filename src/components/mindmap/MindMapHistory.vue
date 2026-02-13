@@ -5,6 +5,7 @@ import { Brain, X } from 'lucide-vue-next'
 
 defineProps<{
   history: MindMapFile[]
+  isMobile?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -51,6 +52,7 @@ const cancelRemove = () => {
             v-for="item in history"
             :key="item.id"
             class="card-hand-drawn p-3 min-w-[180px] flex-shrink-0 cursor-pointer hover:scale-105 transition-transform group relative"
+            @click="emit('open', item)"
             @dblclick="emit('open', item)"
           >
             <!-- Thumbnail or icon -->
@@ -70,7 +72,7 @@ const cancelRemove = () => {
 
             <!-- Remove button -->
             <button
-              class="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              class="history-remove-btn absolute top-2 right-2 w-6 h-6 rounded-full bg-accent text-paper transition-opacity flex items-center justify-center"
               @click="(e) => handleRemove(e, item.id)"
             >
               <X :stroke-width="2.5" class="w-4 h-4" />
@@ -142,5 +144,19 @@ const cancelRemove = () => {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #ff4d4d;
+}
+
+.history-remove-btn {
+  opacity: 0;
+}
+
+.group:hover .history-remove-btn {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .history-remove-btn {
+    opacity: 1;
+  }
 }
 </style>

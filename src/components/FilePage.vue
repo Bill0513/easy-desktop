@@ -2,15 +2,17 @@
 import { ref, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
+import { useResponsiveMode } from '@/composables/useResponsiveMode'
 // 异步加载文件预览对话框，减少主bundle大小
 const FilePreviewDialog = defineAsyncComponent(() => import('./FilePreviewDialog.vue'))
 import HandDrawnDialog from './HandDrawnDialog.vue'
 import draggable from 'vuedraggable'
 import { getFileIcon } from '@/utils/fileIcons'
-import { FolderOpen, Upload, FolderUp, FolderPlus, FilePlus2, FolderInput, FilePenLine, Pencil, Trash2 } from 'lucide-vue-next'
+import { FolderOpen, Upload, FolderUp, FolderPlus, FilePlus2, FolderInput, FilePenLine, Pencil, Trash2, MoreVertical } from 'lucide-vue-next'
 import CustomSelect from './CustomSelect.vue'
 
 const store = useDesktopStore()
+const { isMobile } = useResponsiveMode()
 
 // 临时状态
 const showUploadDialog = ref(false)
@@ -195,6 +197,23 @@ const draggableItems = computed({
     }
   }
 })
+
+const mobilePathText = computed(() => {
+  const pathNames = store.breadcrumbPath.map(folder => folder.name)
+  return ['根目录', ...pathNames].join(' / ')
+})
+
+const canGoBackFolder = computed(() => store.currentFolderId !== null)
+
+const goBackFolder = () => {
+  if (!canGoBackFolder.value) return
+  const path = store.breadcrumbPath
+  if (path.length <= 1) {
+    store.currentFolderId = null
+    return
+  }
+  store.currentFolderId = path[path.length - 2].id
+}
 
 // 拖拽上传处理
 const handleDragOver = (e: DragEvent) => {
@@ -405,6 +424,7 @@ const handleBatchDelete = async () => {
 
 // 右键菜单处理
 const handleBlankContextMenu = (e: MouseEvent) => {
+  if (isMobile.value) return
   e.preventDefault()
   contextMenu.value = {
     show: true,
@@ -417,6 +437,7 @@ const handleBlankContextMenu = (e: MouseEvent) => {
 }
 
 const handleItemContextMenu = (e: MouseEvent, item: FileItem | FolderItem) => {
+  if (isMobile.value) return
   e.preventDefault()
   e.stopPropagation()
   contextMenu.value = {
@@ -431,6 +452,17 @@ const handleItemContextMenu = (e: MouseEvent, item: FileItem | FolderItem) => {
 
 const closeContextMenu = () => {
   contextMenu.value.show = false
+}
+
+const openMobileItemActions = (item: FileItem | FolderItem) => {
+  contextMenu.value = {
+    show: true,
+    x: 0,
+    y: 0,
+    type: item.type,
+    itemId: item.id,
+    item
+  }
 }
 
 // 点击外部关闭菜单
@@ -673,6 +705,12 @@ const handleItemDoubleClick = (item: FileItem | FolderItem) => {
 
 // 点击选择处理
 const handleItemClick = (e: MouseEvent, item: FileItem | FolderItem) => {
+  if (isMobile.value && item.type === 'folder' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    store.currentFolderId = item.id
+    closeContextMenu()
+    return
+  }
+
   if (e.ctrlKey || e.metaKey) {
     // Ctrl/Cmd + 点击：切换选中状态
     store.toggleFileSelection(item.id)
@@ -711,20 +749,50 @@ const getItemIcon = (item: FileItem | FolderItem) => {
     @drop="handleDrop"
   >
     <!-- 工具栏 -->
-    <div class="flex items-center gap-3 p-4 border-b-2 border-border-primary/20">
-      <div class="flex items-center gap-2">
+    <div :class="isMobile ? 'mobile-file-topbar' : 'flex items-center gap-3 p-4 border-b-2 border-border-primary/20'">
+      <div :class="isMobile ? 'mobile-file-topbar-inner card-hand-drawn bg-bg-secondary' : 'flex items-center gap-2'">
         <input
           v-model="fileSearchQuery"
           type="text"
           placeholder="筛选文件名..."
           class="input-hand-drawn px-3 py-2 bg-bg-secondary"
-          style="width: 300px"
+          :style="isMobile ? 'width: 100%;' : 'width: 300px'"
         />
+        <div v-if="isMobile" class="mobile-file-path-row">
+          <button
+            class="mobile-file-back-btn"
+            :disabled="!canGoBackFolder"
+            @click.stop="goBackFolder"
+          >
+            返回
+          </button>
+          <p class="mobile-file-path" :title="mobilePathText">
+            当前位置：{{ mobilePathText }}
+          </p>
+        </div>
+        <div v-if="isMobile" class="grid grid-cols-2 gap-2 w-full mt-2">
+          <button class="mobile-file-action-btn" @click.stop="handleUploadFiles">
+            <Upload :size="14" :stroke-width="2.5" />
+            上传
+          </button>
+          <button class="mobile-file-action-btn" @click.stop="handleUploadFolder">
+            <FolderUp :size="14" :stroke-width="2.5" />
+            上传文件夹
+          </button>
+          <button class="mobile-file-action-btn" @click.stop="handleCreateFolder">
+            <FolderPlus :size="14" :stroke-width="2.5" />
+            新建文件夹
+          </button>
+          <button class="mobile-file-action-btn" @click.stop="openCreateFileDialog">
+            <FilePlus2 :size="14" :stroke-width="2.5" />
+            新建文件
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- 面包屑导航 -->
-    <div class="flex items-center gap-2 px-4 py-3 pr-64 border-b border-border-primary/10">
+    <div class="flex items-center gap-2 px-4 py-3 border-b border-border-primary/10" :class="isMobile ? 'pt-[136px] overflow-x-auto whitespace-nowrap' : 'pr-64'">
       <button
         :class="[breadcrumbButtonClass, 'flex items-center gap-1']"
         @click="store.currentFolderId = null"
@@ -742,10 +810,10 @@ const getItemIcon = (item: FileItem | FolderItem) => {
         </button>
       </template>
 
-      <div class="flex-1"></div>
+      <div class="flex-1" v-if="!isMobile"></div>
 
       <!-- 排序选项 -->
-      <div class="flex items-center gap-2">
+      <div v-if="!isMobile" class="flex items-center gap-2">
         <CustomSelect
           v-model="store.fileSortBy"
           :options="[
@@ -768,6 +836,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       </div>
 
       <button
+        v-if="!isMobile"
         class="btn-hand-drawn p-3"
         @click="store.fileViewMode = store.fileViewMode === 'grid' ? 'list' : 'grid'"
         :title="store.fileViewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'"
@@ -851,6 +920,15 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             <div class="font-handwritten text-xs text-center text-text-secondary mt-0.5">
               {{ new Date(item.createdAt).toLocaleDateString() }}
             </div>
+            <div v-if="isMobile" class="mt-2 flex justify-center">
+              <button
+                class="mobile-item-more-btn"
+                @click.stop="openMobileItemActions(item)"
+              >
+                <MoreVertical :size="14" :stroke-width="2.5" />
+                更多
+              </button>
+            </div>
           </div>
         </template>
       </draggable>
@@ -908,6 +986,14 @@ const getItemIcon = (item: FileItem | FolderItem) => {
             <div class="font-handwritten text-xs text-text-secondary">
               {{ new Date(item.updatedAt).toLocaleDateString() }}
             </div>
+            <button
+              v-if="isMobile"
+              class="mobile-item-more-btn"
+              @click.stop="openMobileItemActions(item)"
+            >
+              <MoreVertical :size="14" :stroke-width="2.5" />
+              更多
+            </button>
           </div>
         </template>
       </draggable>
@@ -924,7 +1010,7 @@ const getItemIcon = (item: FileItem | FolderItem) => {
         leave-to-class="transform scale-95 opacity-0"
       >
         <div
-          v-if="contextMenu.show"
+          v-if="contextMenu.show && !isMobile"
           class="fixed z-[10000] card-hand-drawn py-2 min-w-[160px] bg-bg-primary"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
           style="box-shadow: 4px 4px 0px var(--color-border-primary);"
@@ -1030,6 +1116,36 @@ const getItemIcon = (item: FileItem | FolderItem) => {
               </span>
             </button>
           </template>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- 移动端项目动作抽屉 -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="contextMenu.show && isMobile && contextMenu.type !== 'blank'"
+          class="fixed inset-0 z-[10000] bg-border-primary/45"
+          @click="closeContextMenu"
+        >
+          <div class="mobile-file-action-modal card-hand-drawn bg-bg-primary p-4" @click.stop>
+            <div class="font-handwritten text-base text-text-primary mb-3">
+              {{ contextMenu.type === 'folder' ? '文件夹操作' : '文件操作' }}
+            </div>
+            <div class="space-y-2">
+              <button v-if="contextMenu.type === 'file'" class="mobile-file-sheet-btn" @click="handleItemDoubleClick(contextMenu.item!)">打开文件</button>
+              <button class="mobile-file-sheet-btn" @click="handleRename">重命名</button>
+              <button class="mobile-file-sheet-btn text-accent" @click="handleDelete">删除</button>
+              <button class="mobile-file-sheet-btn" @click="closeContextMenu">取消</button>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -1264,3 +1380,98 @@ const getItemIcon = (item: FileItem | FolderItem) => {
     />
   </div>
 </template>
+
+<style scoped>
+.mobile-file-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  padding: 8px 10px 6px;
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.mobile-file-topbar-inner {
+  min-height: 92px;
+  padding: 8px 10px;
+}
+
+.mobile-file-action-btn {
+  min-height: 34px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 10px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mobile-file-path {
+  padding: 4px 8px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 10px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.mobile-file-path-row {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-file-back-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 10px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+}
+
+.mobile-file-back-btn:disabled {
+  opacity: 0.55;
+}
+
+.mobile-item-more-btn {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+}
+
+.mobile-file-action-modal {
+  width: min(360px, calc(100vw - 24px));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mobile-file-sheet-btn {
+  width: 100%;
+  min-height: 42px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 12px;
+  padding: 0 12px;
+  text-align: left;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+}
+</style>
