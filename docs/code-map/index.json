@@ -1,0 +1,821 @@
+{
+  "generatedAt": "2026-02-13T01:54:46.740Z",
+  "gitCommit": null,
+  "stats": {
+    "totalModules": 16,
+    "totalFiles": 90
+  },
+  "modules": [
+    {
+      "name": "backend/core",
+      "files": [
+        {
+          "file": "server/db.js",
+          "type": "code-file",
+          "featurePoints": [
+            "export: backupStore",
+            "export: db",
+            "export: initDatabase",
+            "export: kvStore",
+            "export: newsCache"
+          ]
+        },
+        {
+          "file": "server/index.js",
+          "type": "code-file",
+          "featurePoints": [
+            "endpoint: GET /health",
+            "endpoint: USE /api/desktop",
+            "endpoint: USE /api/file",
+            "endpoint: USE /api/file-metadata",
+            "endpoint: USE /api/image",
+            "endpoint: USE /api/news",
+            "endpoint: USE /api/restore",
+            "endpoint: USE /scheduled/backup"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "backend/news",
+      "files": [
+        {
+          "file": "server/news/index.js",
+          "type": "code-file",
+          "featurePoints": [
+            "export: fetchAllNews",
+            "export: getNewsSources"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "backend/routes",
+      "files": [
+        {
+          "file": "server/routes/backup.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: POST /",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/desktop.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: DELETE /",
+            "endpoint: GET /",
+            "endpoint: POST /",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/file-metadata.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: GET /",
+            "endpoint: POST /",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/file.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: DELETE /:filename",
+            "endpoint: GET /:filename",
+            "endpoint: POST /",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/image.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: DELETE /:filename",
+            "endpoint: GET /:filename",
+            "endpoint: POST /",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/news.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: GET /",
+            "endpoint: POST /init-cache",
+            "export: router"
+          ]
+        },
+        {
+          "file": "server/routes/restore.js",
+          "type": "express-route",
+          "featurePoints": [
+            "endpoint: GET /",
+            "endpoint: POST /",
+            "export: router"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "edge/api",
+      "files": [
+        {
+          "file": "functions/api/desktop.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/file-metadata.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/file.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/image.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/init-news-cache.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/news.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/restore.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequest"
+          ]
+        },
+        {
+          "file": "functions/api/transform-navigation.ts",
+          "type": "edge-handler",
+          "featurePoints": [
+            "export: onRequestPost"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "edge/news",
+      "files": [
+        {
+          "file": "functions/news/registry.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: getAllSources",
+            "export: getSource",
+            "export: newsSources"
+          ]
+        },
+        {
+          "file": "functions/news/types.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "feature: types"
+          ]
+        },
+        {
+          "file": "functions/news/utils.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: myFetch"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "edge/news-sources",
+      "files": [
+        {
+          "file": "functions/news/sources/36kr.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetch36krNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/baidu.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchBaiduNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/chongbuluo.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchChongbuluoNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/coolapk.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchCoolapkNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/douyin.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchDouyinNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/fastbull.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchFastbullNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/gelonghui.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchGelonghuiNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/github.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchGithubNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/hupu.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchHupuNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/ithome.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchIthomeNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/jin10.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchJin10News",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/juejin.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchJuejinNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/mktnews.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchMktnewsNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/solidot.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchSolidotNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/sputniknewscn.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchSputniknewscnNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/sspai.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchSspaiNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/tencent.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchTencentNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/thepaper.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchThepaperNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/tieba.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchTiebaNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/toutiao.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchToutiaoNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/wallstreetcn.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchWallstreetcnNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/xueqiu.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchXueqiuNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/zaobao.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchZaobaoNews",
+            "news source fetcher"
+          ]
+        },
+        {
+          "file": "functions/news/sources/zhihu.ts",
+          "type": "news-source",
+          "featurePoints": [
+            "export: fetchZhihuNews",
+            "news source fetcher"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "edge/scheduled",
+      "files": [
+        {
+          "file": "functions/scheduled/backup.ts",
+          "type": "scheduled-handler",
+          "featurePoints": [
+            "export: onRequest",
+            "scheduled task entry"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "edge/types",
+      "files": [
+        {
+          "file": "functions/types/cloudflare.d.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "feature: cloudflare.d"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/components",
+      "files": [
+        {
+          "file": "src/components/BackupManager.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/CustomSelect.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/DesktopCanvas.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/FilePage.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/FilePreviewDialog.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/GlobalSearch.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/HandDrawnDialog.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/MindMapPage.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/NavigationPage.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/NewsCard.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/NewsPage.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/PasswordInput.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/SearchBar.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/SettingsDialog.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/SyncStatus.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/TabBar.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/Taskbar.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/Toast.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/ToastContainer.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "feature: ToastContainer"
+          ]
+        },
+        {
+          "file": "src/components/Toolbar.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/core",
+      "files": [
+        {
+          "file": "src/App.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/env.d.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: Drag",
+            "export: Export",
+            "export: KeyboardNavigation",
+            "export: Select",
+            "export: component"
+          ]
+        },
+        {
+          "file": "src/main.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "feature: main"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/mindmap",
+      "files": [
+        {
+          "file": "src/components/mindmap/MindMapHistory.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "feature: MindMapHistory"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/navigation",
+      "files": [
+        {
+          "file": "src/components/navigation/CategoryManagerDialog.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/navigation/SiteCard.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state"
+          ]
+        },
+        {
+          "file": "src/components/navigation/SiteFormDialog.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "reactive watcher"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/state",
+      "files": [
+        {
+          "file": "src/stores/desktop.ts",
+          "type": "state-store",
+          "featurePoints": [
+            "export: useDesktopStore"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/types",
+      "files": [
+        {
+          "file": "src/types/editorjs.d.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: class"
+          ]
+        },
+        {
+          "file": "src/types/index.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "feature: index"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/utils",
+      "files": [
+        {
+          "file": "src/utils/fileIcons.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: getFileExtension",
+            "export: getFileIcon"
+          ]
+        },
+        {
+          "file": "src/utils/indexedDB.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: indexedDB"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "frontend/widgets",
+      "files": [
+        {
+          "file": "src/components/widgets/CheckInWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/widgets/CountdownWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/components/widgets/ImageWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state"
+          ]
+        },
+        {
+          "file": "src/components/widgets/MarkdownWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/MarkdownWidgetNotion.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/MarkdownWidgetTiptap.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/NoteWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/RandomPickerWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/TextWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "desktop store integration",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/widgets/TodoWidget.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
+          "file": "src/components/widgets/WidgetWrapper.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        }
+      ]
+    }
+  ]
+}
