@@ -9,6 +9,11 @@ import TabBar from '@/components/TabBar.vue'
 import NavigationPage from '@/components/NavigationPage.vue'
 import SyncStatus from '@/components/SyncStatus.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+import BottomTabBar from '@/components/BottomTabBar.vue'
+import MobileQuickAddFab from '@/components/MobileQuickAddFab.vue'
+import MobileDesktopPage from '@/components/MobileDesktopPage.vue'
+import SettingsDialog from '@/components/SettingsDialog.vue'
+import { useResponsiveMode } from '@/composables/useResponsiveMode'
 
 // 异步加载其他tab组件
 const NewsPage = defineAsyncComponent(() => import('@/components/NewsPage.vue'))
@@ -17,7 +22,9 @@ const MindMapPage = defineAsyncComponent(() => import('@/components/MindMapPage.
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
+const showSettings = ref(false)
 const toastContainer = ref<InstanceType<typeof ToastContainer> | null>(null)
+const { isMobile } = useResponsiveMode()
 let syncInterval: number | null = null
 
 // Ctrl+F 快捷键打开搜索（在所有Tab下生效）
@@ -94,10 +101,13 @@ const handleUnlock = async () => {
       <ToastContainer ref="toastContainer" />
 
       <!-- 同步状态 -->
-      <SyncStatus />
+      <SyncStatus v-if="!(isMobile && store.activeTab === 'desktop')" />
 
-      <!-- Tab 栏 -->
-      <TabBar />
+      <!-- Tab 栏（桌面） -->
+      <TabBar v-if="!isMobile" />
+
+      <!-- Tab 栏（移动） -->
+      <BottomTabBar v-else @open-settings="showSettings = true" />
 
       <!-- 全局搜索（在所有tab都生效） -->
       <GlobalSearch />
@@ -105,32 +115,36 @@ const handleUnlock = async () => {
       <!-- 桌面 Tab -->
       <div v-show="store.activeTab === 'desktop'" class="w-full h-full">
         <!-- 工具栏 -->
-        <Toolbar />
+        <Toolbar v-if="!isMobile" />
 
-        <!-- 桌面画布 -->
-        <DesktopCanvas />
+        <template v-if="isMobile">
+          <MobileDesktopPage />
+          <MobileQuickAddFab />
+        </template>
+        <DesktopCanvas v-else />
       </div>
 
       <!-- 导航 Tab -->
-      <div v-show="store.activeTab === 'navigation'" class="w-full h-full">
+      <div v-show="store.activeTab === 'navigation'" class="w-full h-full mobile-main-content">
         <NavigationPage />
       </div>
 
       <!-- 新闻 Tab -->
-      <div v-show="store.activeTab === 'news'" class="w-full h-full">
+      <div v-show="store.activeTab === 'news'" class="w-full h-full mobile-main-content">
         <NewsPage />
       </div>
 
       <!-- 文件 Tab -->
-      <div v-show="store.activeTab === 'file'" class="w-full h-full">
+      <div v-show="store.activeTab === 'file'" class="w-full h-full mobile-main-content">
         <FilePage />
       </div>
 
       <!-- 思维导图 Tab -->
-      <div v-show="store.activeTab === 'mindmap'" class="w-full h-full">
+      <div v-show="store.activeTab === 'mindmap'" class="w-full h-full mobile-main-content">
         <MindMapPage />
       </div>
 
+      <SettingsDialog v-if="showSettings" @close="showSettings = false" />
     </template>
   </div>
 </template>

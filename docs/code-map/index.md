@@ -1,9 +1,9 @@
 # Code Map
 
-- Generated at: 2026-02-13T01:54:46.740Z
+- Generated at: 2026-02-13T06:50:24.684Z
 - Git commit: unknown
 - Modules: 16
-- Files: 90
+- Files: 94
 
 This file is generated. Run `npm run code-map:build` after feature/module changes.
 
@@ -177,6 +177,9 @@ This file is generated. Run `npm run code-map:build` after feature/module change
 - src/components/BackupManager.vue
   - Type: vue-component
   - Feature points: mount lifecycle
+- src/components/BottomTabBar.vue
+  - Type: vue-component
+  - Feature points: computed state; desktop store integration
 - src/components/CustomSelect.vue
   - Type: vue-component
   - Feature points: computed state; desktop store integration; mount lifecycle
@@ -198,6 +201,12 @@ This file is generated. Run `npm run code-map:build` after feature/module change
 - src/components/MindMapPage.vue
   - Type: vue-component
   - Feature points: desktop store integration; mount lifecycle; reactive watcher
+- src/components/MobileDesktopPage.vue
+  - Type: vue-component
+  - Feature points: computed state; desktop store integration; mount lifecycle; reactive watcher
+- src/components/MobileQuickAddFab.vue
+  - Type: vue-component
+  - Feature points: computed state; desktop store integration
 - src/components/NavigationPage.vue
   - Type: vue-component
   - Feature points: computed state; desktop store integration
@@ -240,6 +249,9 @@ This file is generated. Run `npm run code-map:build` after feature/module change
 - src/App.vue
   - Type: vue-component
   - Feature points: desktop store integration; mount lifecycle
+- src/composables/useResponsiveMode.ts
+  - Type: code-file
+  - Feature points: export: useResponsiveMode
 - src/env.d.ts
   - Type: code-file
   - Feature points: export: Drag; export: Export; export: KeyboardNavigation; export: Select; export: component

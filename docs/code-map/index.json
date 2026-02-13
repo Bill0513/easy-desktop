@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-13T01:54:46.740Z",
+  "generatedAt": "2026-02-13T06:50:24.684Z",
   "gitCommit": null,
   "stats": {
     "totalModules": 16,
-    "totalFiles": 90
+    "totalFiles": 94
   },
   "modules": [
     {
@@ -441,6 +441,14 @@
           ]
         },
         {
+          "file": "src/components/BottomTabBar.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
+          ]
+        },
+        {
           "file": "src/components/CustomSelect.vue",
           "type": "vue-component",
           "featurePoints": [
@@ -499,6 +507,24 @@
             "desktop store integration",
             "mount lifecycle",
             "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/MobileDesktopPage.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration",
+            "mount lifecycle",
+            "reactive watcher"
+          ]
+        },
+        {
+          "file": "src/components/MobileQuickAddFab.vue",
+          "type": "vue-component",
+          "featurePoints": [
+            "computed state",
+            "desktop store integration"
           ]
         },
         {
@@ -607,6 +633,13 @@
           "featurePoints": [
             "desktop store integration",
             "mount lifecycle"
+          ]
+        },
+        {
+          "file": "src/composables/useResponsiveMode.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: useResponsiveMode"
           ]
         },
         {

@@ -6,6 +6,7 @@ import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
 const NEWS_CACHE_KEY = 'cloud-desktop-news-cache'
+const MOBILE_LAYOUT_STORAGE_KEY = 'cloud-desktop-mobile-layout'
 const DESKTOP_DATA_KEY = 'desktop-data' // IndexedDB 中的主数据键
 const TEXT_CODE_EXTENSIONS = new Set([
   'txt', 'md', 'markdown', 'js', 'jsx', 'ts', 'tsx', 'json', 'vue',
@@ -29,6 +30,9 @@ export const useDesktopStore = defineStore('desktop', () => {
   const maximizeState = ref<Record<string, { x: number; y: number; width: number; height: number }>>({})
   const isSearchOpen = ref(false)
   const searchQuery = ref('')
+  const mobileWidgetOrder = ref<string[]>([])
+  const mobileCollapsedWidgets = ref<Record<string, boolean>>({})
+  const mobileFocusTarget = ref<{ id: string; token: number } | null>(null)
 
   // Tab state
   const activeTab = ref<TabType>('desktop')
@@ -303,6 +307,99 @@ export const useDesktopStore = defineStore('desktop', () => {
   }
 
   // Actions
+  function saveMobileLayout() {
+    if (typeof window === 'undefined') return
+
+    localStorage.setItem(MOBILE_LAYOUT_STORAGE_KEY, JSON.stringify({
+      order: mobileWidgetOrder.value,
+      collapsed: mobileCollapsedWidgets.value
+    }))
+  }
+
+  function loadMobileLayout() {
+    if (typeof window === 'undefined') return
+
+    try {
+      const raw = localStorage.getItem(MOBILE_LAYOUT_STORAGE_KEY)
+      if (!raw) return
+
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed.order)) {
+        mobileWidgetOrder.value = parsed.order.filter((id: unknown) => typeof id === 'string')
+      }
+      if (parsed.collapsed && typeof parsed.collapsed === 'object') {
+        mobileCollapsedWidgets.value = parsed.collapsed
+      }
+    } catch (error) {
+      console.warn('Failed to load mobile layout:', error)
+    }
+  }
+
+  function syncMobileLayoutWithWidgets() {
+    const existingIds = widgets.value.map(widget => widget.id)
+    const existingSet = new Set(existingIds)
+
+    const orderedIds = mobileWidgetOrder.value.filter(id => existingSet.has(id))
+    const missingIds = existingIds.filter(id => !orderedIds.includes(id))
+    mobileWidgetOrder.value = [...orderedIds, ...missingIds]
+
+    const nextCollapsed: Record<string, boolean> = {}
+    Object.entries(mobileCollapsedWidgets.value).forEach(([id, collapsed]) => {
+      if (collapsed && existingSet.has(id)) {
+        nextCollapsed[id] = true
+      }
+    })
+    mobileCollapsedWidgets.value = nextCollapsed
+
+    saveMobileLayout()
+  }
+
+  function setMobileWidgetOrder(order: string[]) {
+    mobileWidgetOrder.value = [...order]
+    syncMobileLayoutWithWidgets()
+  }
+
+  function setMobileWidgetExpandedExclusive(id: string) {
+    const nextCollapsed: Record<string, boolean> = {}
+    widgets.value.forEach(widget => {
+      if (widget.id !== id) {
+        nextCollapsed[widget.id] = true
+      }
+    })
+    mobileCollapsedWidgets.value = nextCollapsed
+    saveMobileLayout()
+  }
+
+  function setMobileWidgetCollapsed(id: string, collapsed: boolean) {
+    if (collapsed) {
+      mobileCollapsedWidgets.value[id] = true
+      saveMobileLayout()
+      return
+    }
+
+    setMobileWidgetExpandedExclusive(id)
+  }
+
+  function toggleMobileWidgetCollapsed(id: string) {
+    if (mobileCollapsedWidgets.value[id]) {
+      setMobileWidgetExpandedExclusive(id)
+    } else {
+      mobileCollapsedWidgets.value[id] = true
+      saveMobileLayout()
+    }
+  }
+
+  function isMobileWidgetCollapsed(id: string): boolean {
+    return !!mobileCollapsedWidgets.value[id]
+  }
+
+  function notifyMobileWidgetRestored(id: string) {
+    mobileFocusTarget.value = {
+      id,
+      token: Date.now()
+    }
+  }
+
   async function init() {
     isLoading.value = true
     try {
@@ -404,6 +501,8 @@ export const useDesktopStore = defineStore('desktop', () => {
 
       // 初始化主题系统
       initTheme()
+      loadMobileLayout()
+      syncMobileLayoutWithWidgets()
     } catch (error) {
       console.error('Failed to init:', error)
       // 初始化失败，不标记为已初始化
@@ -656,6 +755,13 @@ export const useDesktopStore = defineStore('desktop', () => {
       updatedAt: now,
     }
 
+    const registerWidget = <T extends Widget>(widget: T): T => {
+      widgets.value.push(widget)
+      mobileWidgetOrder.value = [widget.id, ...mobileWidgetOrder.value.filter(id => id !== widget.id)]
+      saveMobileLayout()
+      return widget
+    }
+
     switch (params.type) {
       case 'note': {
         const note: NoteWidget = {
@@ -665,8 +771,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           content: params.content ?? '',
           color: params.color ?? DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)],
         }
-        widgets.value.push(note)
-        return note
+        return registerWidget(note)
       }
 
       case 'todo': {
@@ -678,8 +783,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 560,
           height: params.height ?? 400,
         }
-        widgets.value.push(todo)
-        return todo
+        return registerWidget(todo)
       }
 
       case 'text': {
@@ -691,8 +795,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 560,
           height: params.height ?? 400,
         }
-        widgets.value.push(text)
-        return text
+        return registerWidget(text)
       }
 
       case 'image': {
@@ -708,8 +811,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 400,
           height: params.height ?? 300,
         }
-        widgets.value.push(image)
-        return image
+        return registerWidget(image)
       }
 
       case 'markdown': {
@@ -721,8 +823,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 840,
           height: params.height ?? 600,
         }
-        widgets.value.push(markdown)
-        return markdown
+        return registerWidget(markdown)
       }
 
       case 'countdown': {
@@ -735,8 +836,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 280,
           height: params.height ?? 320,
         }
-        widgets.value.push(countdown)
-        return countdown
+        return registerWidget(countdown)
       }
 
       case 'random-picker': {
@@ -748,8 +848,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 300,
           height: params.height ?? 380,
         }
-        widgets.value.push(randomPicker)
-        return randomPicker
+        return registerWidget(randomPicker)
       }
 
       case 'check-in': {
@@ -763,8 +862,7 @@ export const useDesktopStore = defineStore('desktop', () => {
           width: params.width ?? 360,
           height: params.height ?? 480,
         }
-        widgets.value.push(checkIn)
-        return checkIn
+        return registerWidget(checkIn)
       }
 
       default:
@@ -776,6 +874,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     const index = widgets.value.findIndex(w => w.id === id)
     if (index !== -1) {
       widgets.value.splice(index, 1)
+      mobileWidgetOrder.value = mobileWidgetOrder.value.filter(widgetId => widgetId !== id)
+      delete mobileCollapsedWidgets.value[id]
+      saveMobileLayout()
       save()
     }
   }
@@ -2573,6 +2674,9 @@ export const useDesktopStore = defineStore('desktop', () => {
     maximizeState,
     isSearchOpen,
     searchQuery,
+    mobileWidgetOrder,
+    mobileCollapsedWidgets,
+    mobileFocusTarget,
     activeTab,
     newsSources,
     isLoadingNews,
@@ -2660,6 +2764,12 @@ export const useDesktopStore = defineStore('desktop', () => {
     openSearch,
     closeSearch,
     setSearchQuery,
+    setMobileWidgetOrder,
+    setMobileWidgetExpandedExclusive,
+    setMobileWidgetCollapsed,
+    toggleMobileWidgetCollapsed,
+    isMobileWidgetCollapsed,
+    notifyMobileWidgetRestored,
     focusWidget,
     setActiveTab,
     loadActiveTab,
