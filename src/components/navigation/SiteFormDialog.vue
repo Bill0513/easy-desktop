@@ -170,14 +170,14 @@ const handleClose = () => {
           class="card-hand-drawn p-6 max-w-md w-full mx-4"
           @click.stop
         >
-          <h3 class="font-handwritten text-xl font-medium mb-4">
+          <h3 class="font-handwritten text-xl font-medium mb-4 text-text-primary">
             {{ site ? '编辑网站' : '添加网站' }}
           </h3>
 
           <div class="space-y-4">
             <!-- 网站名称 -->
             <div>
-              <label class="block font-handwritten text-sm mb-1">网站名称 *</label>
+              <label class="block font-handwritten text-sm mb-1 text-text-primary">网站名称 *</label>
               <input
                 v-model="formData.name"
                 type="text"
@@ -189,7 +189,7 @@ const handleClose = () => {
 
             <!-- 网站URL -->
             <div>
-              <label class="block font-handwritten text-sm mb-1">网站地址 *</label>
+              <label class="block font-handwritten text-sm mb-1 text-text-primary">网站地址 *</label>
               <input
                 v-model="formData.url"
                 type="url"
@@ -200,12 +200,12 @@ const handleClose = () => {
 
             <!-- 网站图标 -->
             <div>
-              <label class="block font-handwritten text-sm mb-2">网站图标</label>
+              <label class="block font-handwritten text-sm mb-2 text-text-primary">网站图标</label>
               <div class="flex items-center gap-3">
                 <!-- 图标预览 -->
                 <div
                   class="w-16 h-16 border-2 border-border-primary rounded-lg flex items-center justify-center overflow-hidden"
-                  style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px #2d2d2d;"
+                  style="border-radius: 125px 15px 125px 15px / 15px 125px 15px 125px; box-shadow: 2px 2px 0px var(--color-border-primary);"
                 >
                   <img
                     v-if="formData.icon"
@@ -252,7 +252,7 @@ const handleClose = () => {
 
             <!-- 网站描述 -->
             <div>
-              <label class="block font-handwritten text-sm mb-1">网站描述</label>
+              <label class="block font-handwritten text-sm mb-1 text-text-primary">网站描述</label>
               <textarea
                 v-model="formData.description"
                 class="input-hand-drawn w-full resize-none"
@@ -264,7 +264,7 @@ const handleClose = () => {
 
             <!-- 预制颜色 -->
             <div>
-              <label class="block font-handwritten text-sm mb-2">预制颜色（图标获取失败时使用）</label>
+              <label class="block font-handwritten text-sm mb-2 text-text-primary">预制颜色（图标获取失败时使用）</label>
               <div class="flex flex-wrap gap-2">
                 <button
                   v-for="color in PRESET_COLORS"
@@ -279,7 +279,7 @@ const handleClose = () => {
 
             <!-- 分类 -->
             <div>
-              <label class="block font-handwritten text-sm mb-1">分类</label>
+              <label class="block font-handwritten text-sm mb-1 text-text-primary">分类</label>
               <CustomSelect
                 v-model="formData.category"
                 :options="store.navigationCategories.map(cat => ({ label: cat, value: cat }))"
@@ -291,7 +291,7 @@ const handleClose = () => {
           <!-- 按钮 -->
           <div class="flex justify-end gap-3 mt-6">
             <button
-              class="px-4 py-2 font-handwritten text-sm border-2 border-border-primary rounded-lg hover:bg-muted/50 transition-colors"
+              class="px-4 py-2 font-handwritten text-sm text-text-primary border-2 border-border-primary rounded-lg hover:bg-muted/50 transition-colors"
               @click="handleClose"
             >
               取消

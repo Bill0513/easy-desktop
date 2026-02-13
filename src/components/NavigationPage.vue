@@ -6,13 +6,27 @@ import SiteCard from './navigation/SiteCard.vue'
 import SiteFormDialog from './navigation/SiteFormDialog.vue'
 import CategoryManagerDialog from './navigation/CategoryManagerDialog.vue'
 import type { NavigationSite } from '@/types'
-import { Settings } from 'lucide-vue-next'
+import { Settings, Plus, Pencil, Trash2 } from 'lucide-vue-next'
 
 const store = useDesktopStore()
 
 // 检测是否为暗色模式
 const isDarkMode = computed(() => {
   return store.effectiveTheme === 'dark'
+})
+
+const contextMenuItemClass = computed(() => {
+  return [
+    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
+  ]
+})
+
+const contextMenuDangerItemClass = computed(() => {
+  return [
+    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
+  ]
 })
 
 // 右键菜单状态
@@ -225,50 +239,51 @@ const onDragEnd = (evt: any) => {
     <Teleport to="body">
       <Transition
         enter-active-class="transition duration-100 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
+        enter-from-class="transform scale-95 opacity-0"
+        enter-to-class="transform scale-100 opacity-100"
         leave-active-class="transition duration-75 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
+        leave-from-class="transform scale-100 opacity-100"
+        leave-to-class="transform scale-95 opacity-0"
       >
         <div
           v-if="contextMenu.show"
-          class="fixed z-[9999] card-hand-drawn py-2 min-w-[120px]"
+          class="fixed z-[10000] card-hand-drawn py-2 min-w-[160px] bg-bg-primary"
           :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+          style="box-shadow: 4px 4px 0px var(--color-border-primary);"
           @click.stop
         >
           <!-- 空白处菜单 -->
           <template v-if="contextMenu.type === 'blank'">
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+              :class="contextMenuItemClass"
               @click="openAddForm"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              新增网站
+              <span class="inline-flex items-center gap-2">
+                <Plus :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>新增网站</span>
+              </span>
             </button>
           </template>
 
           <!-- 卡片菜单 -->
           <template v-else>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+              :class="contextMenuItemClass"
               @click="openEditForm"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              编辑
+              <span class="inline-flex items-center gap-2">
+                <Pencil :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>编辑</span>
+              </span>
             </button>
             <button
-              class="w-full px-4 py-2 text-left font-handwritten text-sm hover:bg-accent/20 text-accent transition-colors flex items-center gap-2"
+              :class="contextMenuDangerItemClass"
               @click="deleteSite"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              删除
+              <span class="inline-flex items-center gap-2">
+                <Trash2 :size="16" :stroke-width="2.5" class="text-pencil" />
+                <span>删除</span>
+              </span>
             </button>
           </template>
         </div>

@@ -35,10 +35,8 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const previewData = ref<any>(null)
 const transformedData = ref<any>(null)
 
-// 背景设置展开状态
-const backgroundExpanded = ref(false)
-// 主题设置展开状态
-const themeExpanded = ref(false)
+// 外观设置展开状态（主题 + 背景）
+const appearanceExpanded = ref(false)
 // 数据导入展开状态
 const importExpanded = ref(false)
 // 新闻源设置展开状态
@@ -281,7 +279,7 @@ const handleClose = () => {
     >
       <div
         class="card-hand-drawn w-full max-w-3xl max-h-[80vh] flex flex-col m-4"
-        style="box-shadow: 8px 8px 0px #2d2d2d;"
+        style="box-shadow: 8px 8px 0px var(--color-border-primary);"
       >
         <!-- 固定标题栏 -->
         <div class="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b-2 border-border-primary/20">
@@ -299,21 +297,21 @@ const handleClose = () => {
 
         <!-- 可滚动内容区域 -->
         <div class="flex-1 overflow-y-auto p-6 pt-4">
-          <!-- 主题设置 -->
+          <!-- 外观设置（主题 + 背景） -->
           <div class="mb-4">
             <button
               class="w-full border-2 border-border-primary/20 rounded-lg p-4 wobbly hover:bg-muted/30 transition-colors flex items-center justify-between"
-              @click="themeExpanded = !themeExpanded"
+              @click="appearanceExpanded = !appearanceExpanded"
             >
               <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                <Moon :size="20" :stroke-width="2.5" class="text-text-primary" />
-                主题设置
+                <Palette :size="20" :stroke-width="2.5" class="text-text-primary" />
+                外观设置
               </h3>
-              <ChevronDown v-if="!themeExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
+              <ChevronDown v-if="!appearanceExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
               <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
             </button>
 
-            <div v-if="themeExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-4">
+            <div v-if="appearanceExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-4">
               <!-- 主题模式选择 -->
               <div>
                 <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
@@ -323,9 +321,9 @@ const handleClose = () => {
                   <button
                     class="card-hand-drawn px-4 py-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
                     :style="{
-                      background: store.themeMode === 'light' ? '#4d7cff' : '#e8e8e8',
-                      color: store.themeMode === 'light' ? '#fdfbf7' : '#2d2d2d',
-                      boxShadow: '2px 2px 0px #2d2d2d'
+                      background: store.themeMode === 'light' ? '#4d7cff' : 'var(--color-bg-secondary)',
+                      color: store.themeMode === 'light' ? '#fdfbf7' : 'var(--color-text-primary)',
+                      boxShadow: '2px 2px 0px var(--color-border-primary)'
                     }"
                     @click="store.setThemeMode('light')"
                   >
@@ -335,9 +333,9 @@ const handleClose = () => {
                   <button
                     class="card-hand-drawn px-4 py-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
                     :style="{
-                      background: store.themeMode === 'dark' ? '#4d7cff' : '#e8e8e8',
-                      color: store.themeMode === 'dark' ? '#fdfbf7' : '#2d2d2d',
-                      boxShadow: '2px 2px 0px #2d2d2d'
+                      background: store.themeMode === 'dark' ? '#4d7cff' : 'var(--color-bg-secondary)',
+                      color: store.themeMode === 'dark' ? '#fdfbf7' : 'var(--color-text-primary)',
+                      boxShadow: '2px 2px 0px var(--color-border-primary)'
                     }"
                     @click="store.setThemeMode('dark')"
                   >
@@ -347,9 +345,9 @@ const handleClose = () => {
                   <button
                     class="card-hand-drawn px-4 py-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
                     :style="{
-                      background: store.themeMode === 'system' ? '#4d7cff' : '#e8e8e8',
-                      color: store.themeMode === 'system' ? '#fdfbf7' : '#2d2d2d',
-                      boxShadow: '2px 2px 0px #2d2d2d'
+                      background: store.themeMode === 'system' ? '#4d7cff' : 'var(--color-bg-secondary)',
+                      color: store.themeMode === 'system' ? '#fdfbf7' : 'var(--color-text-primary)',
+                      boxShadow: '2px 2px 0px var(--color-border-primary)'
                     }"
                     @click="store.setThemeMode('system')"
                   >
@@ -360,14 +358,60 @@ const handleClose = () => {
               </div>
 
               <!-- 当前生效主题提示 -->
-              <div v-if="store.themeMode === 'system'" class="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 wobbly-sm">
+              <div
+                v-if="store.themeMode === 'system'"
+                class="bg-muted/30 border-2 border-border-primary/30 rounded-lg p-3 wobbly-sm"
+              >
                 <p class="font-handwritten text-sm text-text-primary">
                   当前系统主题：<strong>{{ store.effectiveTheme === 'dark' ? '暗色' : '亮色' }}</strong>
                 </p>
               </div>
 
+              <!-- 亮色主题背景色设置 -->
+              <div>
+                <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
+                  亮色主题背景色
+                </label>
+                <div class="grid grid-cols-4 gap-2 mb-3">
+                  <button
+                    v-for="color in presetColors"
+                    :key="color.value"
+                    class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all hover:scale-105"
+                    :class="store.backgroundColor === color.value ? 'border-bluePen bg-bluePen/10' : 'border-border-primary/20 hover:border-border-primary/40'"
+                    @click="setPresetColor(color.value)"
+                  >
+                    <div
+                      class="w-12 h-12 rounded-lg border-2 border-border-primary"
+                      :style="{ backgroundColor: color.value }"
+                    />
+                    <span class="text-xs font-handwritten text-text-primary">{{ color.name }}</span>
+                  </button>
+                </div>
+
+                <div class="flex gap-2 items-center">
+                  <input
+                    v-model="customColor"
+                    type="color"
+                    class="w-16 h-16 rounded-lg border-2 border-border-primary cursor-pointer"
+                    @change="setCustomColor"
+                  />
+                  <div class="flex-1">
+                    <input
+                      v-model="customColor"
+                      type="text"
+                      class="input-hand-drawn w-full px-3 py-2 text-sm font-mono"
+                      placeholder="#fdfbf7"
+                      @blur="setCustomColor"
+                    />
+                    <p class="text-xs text-text-secondary font-handwritten mt-1">
+                      输入十六进制颜色代码或使用颜色选择器
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <!-- 暗色主题背景色设置 -->
-              <div v-if="store.themeMode === 'dark' || (store.themeMode === 'system' && store.effectiveTheme === 'dark')">
+              <div>
                 <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
                   暗色主题背景色
                 </label>
@@ -405,73 +449,7 @@ const handleClose = () => {
                       placeholder="#1a1a1a"
                       @blur="setCustomDarkColor"
                     />
-                    <p class="text-xs text-text-primary/60 font-handwritten mt-1">
-                      输入十六进制颜色代码或使用颜色选择器
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 背景设置 -->
-          <div class="mb-4">
-            <button
-              class="w-full border-2 border-border-primary/20 rounded-lg p-4 wobbly hover:bg-muted/30 transition-colors flex items-center justify-between"
-              @click="backgroundExpanded = !backgroundExpanded"
-            >
-              <h3 class="font-handwritten text-xl font-semibold text-text-primary flex items-center gap-2">
-                <Palette :size="20" :stroke-width="2.5" class="text-text-primary" />
-                背景设置
-              </h3>
-              <ChevronDown v-if="!backgroundExpanded" :size="20" :stroke-width="2.5" class="text-text-primary" />
-              <ChevronUp v-else :size="20" :stroke-width="2.5" class="text-text-primary" />
-            </button>
-
-            <div v-if="backgroundExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-4">
-              <!-- 预设颜色 -->
-              <div>
-                <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
-                  预设颜色
-                </label>
-                <div class="grid grid-cols-4 gap-2">
-                  <button
-                    v-for="color in presetColors"
-                    :key="color.value"
-                    class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all hover:scale-105"
-                    :class="store.backgroundColor === color.value ? 'border-bluePen bg-bluePen/10' : 'border-border-primary/20 hover:border-border-primary/40'"
-                    @click="setPresetColor(color.value)"
-                  >
-                    <div
-                      class="w-12 h-12 rounded-lg border-2 border-border-primary"
-                      :style="{ backgroundColor: color.value }"
-                    />
-                    <span class="text-xs font-handwritten text-text-primary">{{ color.name }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- 自定义颜色 -->
-              <div>
-                <label class="font-handwritten text-sm font-medium text-text-primary mb-2 block">
-                  自定义颜色
-                </label>
-                <div class="flex gap-2 items-center">
-                  <input
-                    v-model="customColor"
-                    type="color"
-                    class="w-16 h-16 rounded-lg border-2 border-border-primary cursor-pointer"
-                    @change="setCustomColor"
-                  />
-                  <div class="flex-1">
-                    <input
-                      v-model="customColor"
-                      type="text"
-                      class="input-hand-drawn w-full px-3 py-2 text-sm font-mono"
-                      placeholder="#fdfbf7"
-                      @blur="setCustomColor"
-                    />
-                    <p class="text-xs text-text-primary/60 font-handwritten mt-1">
+                    <p class="text-xs text-text-secondary font-handwritten mt-1">
                       输入十六进制颜色代码或使用颜色选择器
                     </p>
                   </div>
@@ -495,7 +473,7 @@ const handleClose = () => {
             </button>
 
             <div v-if="newsSourceExpanded" class="mt-3 border-2 border-border-primary/20 rounded-lg p-4 wobbly space-y-3">
-              <p class="font-handwritten text-sm text-text-primary/70">
+              <p class="font-handwritten text-sm text-text-secondary">
                 选择要显示的新闻源，点击按钮启用或禁用
               </p>
 
@@ -505,9 +483,9 @@ const handleClose = () => {
                   :key="source.id"
                   class="card-hand-drawn px-3 py-2 flex items-center gap-2 transition-all hover:scale-105"
                   :style="{
-                    background: store.enabledSources.has(source.id) ? '#ff4d4d' : '#e8e8e8',
-                    color: store.enabledSources.has(source.id) ? '#fdfbf7' : '#2d2d2d',
-                    boxShadow: '2px 2px 0px #2d2d2d'
+                    background: store.enabledSources.has(source.id) ? '#ff4d4d' : 'var(--color-bg-secondary)',
+                    color: store.enabledSources.has(source.id) ? '#fdfbf7' : 'var(--color-text-primary)',
+                    boxShadow: '2px 2px 0px var(--color-border-primary)'
                   }"
                   @click="store.toggleNewsSource(source.id)"
                 >
@@ -517,8 +495,8 @@ const handleClose = () => {
                 </button>
               </div>
 
-              <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 wobbly-sm">
-                <p class="font-handwritten text-xs text-text-primary/70">
+              <div class="bg-muted/30 border-2 border-border-primary/30 rounded-lg p-3 wobbly-sm">
+                <p class="font-handwritten text-xs text-text-secondary">
                   已启用 {{ store.enabledSources.size }} / {{ allSources.length }} 个新闻源
                 </p>
               </div>
@@ -541,7 +519,7 @@ const handleClose = () => {
 
             <div v-if="importExpanded" class="border-2 border-border-primary/20 rounded-lg p-4 wobbly">
 
-          <p class="font-handwritten text-sm text-text-primary/70 mb-4">
+          <p class="font-handwritten text-sm text-text-secondary mb-4">
             上传包含导航数据的文件，AI 将自动识别并转换为合适的格式。支持 JSON、HTML 等多种格式。
           </p>
 
@@ -575,7 +553,7 @@ const handleClose = () => {
                 <CheckCircle :size="20" :stroke-width="2.5" class="text-green-600" />
                 AI 转换完成
               </h4>
-              <p class="font-handwritten text-sm text-text-primary/80">
+              <p class="font-handwritten text-sm text-text-secondary">
                 {{ importMessage }}
               </p>
             </div>
@@ -600,13 +578,13 @@ const handleClose = () => {
                       <div
                         v-for="(site, siteIdx) in category.children?.slice(0, 3)"
                         :key="siteIdx"
-                        class="text-sm font-handwritten text-text-primary/70"
+                        class="text-sm font-handwritten text-text-secondary"
                       >
                         • {{ site.name }} - {{ site.url }}
                       </div>
                       <div
                         v-if="category.children && category.children.length > 3"
-                        class="text-xs font-handwritten text-text-primary/50"
+                        class="text-xs font-handwritten text-text-secondary"
                       >
                         ... 还有 {{ category.children.length - 3 }} 个
                       </div>
@@ -624,13 +602,13 @@ const handleClose = () => {
                     <div class="font-handwritten text-sm text-text-primary">
                       {{ site.name }} - {{ site.url }}
                     </div>
-                    <div v-if="site.category" class="text-xs font-handwritten text-text-primary/60">
+                    <div v-if="site.category" class="text-xs font-handwritten text-text-secondary">
                       分类: {{ site.category }}
                     </div>
                   </div>
                   <div
                     v-if="previewData.length > 5"
-                    class="text-xs font-handwritten text-text-primary/50 text-center"
+                    class="text-xs font-handwritten text-text-secondary text-center"
                   >
                     ... 还有 {{ previewData.length - 5 }} 个网站
                   </div>
@@ -690,7 +668,7 @@ const handleClose = () => {
                   复制
                 </button>
               </div>
-              <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample1 }}</pre>
+              <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs text-text-primary overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample1 }}</pre>
             </div>
             <div>
               <div class="flex items-center justify-between mb-2">
@@ -705,7 +683,7 @@ const handleClose = () => {
                   复制
                 </button>
               </div>
-              <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample2 }}</pre>
+              <pre class="bg-muted/30 border-2 border-border-primary/20 rounded p-2 text-xs text-text-primary overflow-x-auto wobbly-sm font-mono h-32">{{ formatExample2 }}</pre>
             </div>
           </div>
 
@@ -714,7 +692,7 @@ const handleClose = () => {
             <p class="font-handwritten text-sm text-text-primary mb-2">
               <strong>字段说明：</strong>
             </p>
-            <ul class="font-handwritten text-xs text-text-primary/80 space-y-1 list-disc list-inside">
+            <ul class="font-handwritten text-xs text-text-secondary space-y-1 list-disc list-inside">
               <li><code class="bg-pencil/10 px-1 rounded">name</code>（必填）：网站名称</li>
               <li><code class="bg-pencil/10 px-1 rounded">url</code>（必填）：网站地址</li>
               <li><code class="bg-pencil/10 px-1 rounded">src</code>（选填）：图标URL</li>
