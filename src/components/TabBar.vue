@@ -63,7 +63,7 @@ const activeIndicatorClass = computed(() => {
     <!-- 收起状态的触发条 -->
     <div
       v-show="!isExpanded"
-      class="w-1 h-32 bg-border-primary/20 rounded-r-full hover:bg-border-primary/40 transition-colors cursor-pointer"
+      class="tab-bar-trigger h-32 bg-border-primary/20 rounded-r-full hover:bg-border-primary/40 transition-colors cursor-pointer"
     />
 
     <!-- 展开状态的 Tab 栏 -->
@@ -77,12 +77,12 @@ const activeIndicatorClass = computed(() => {
     >
       <div
         v-if="isExpanded"
-        class="card-hand-drawn py-3 px-2 flex flex-col gap-2 ml-2"
+        class="card-hand-drawn tab-bar-panel py-3 px-2 flex flex-col gap-2 ml-2"
       >
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          class="group relative flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200"
+          class="group relative w-full flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200"
           :class="[
             store.activeTab === tab.id
               ? selectedTabClass
@@ -126,7 +126,7 @@ const activeIndicatorClass = computed(() => {
 
         <!-- 设置按钮 -->
         <button
-          class="group relative flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200 hover:bg-muted/50 hover:scale-105"
+          class="group relative w-full flex flex-col items-center gap-1 px-3 py-3 rounded-lg transition-all duration-200 hover:bg-muted/50 hover:scale-105"
           @click="handleSettingsClick"
         >
           <!-- 图标 -->
@@ -156,6 +156,14 @@ const activeIndicatorClass = computed(() => {
 </template>
 
 <style scoped>
+.tab-bar-trigger {
+  width: 8px; /* 由 4px 增加到 8px（约 2 倍） */
+}
+
+.tab-bar-panel {
+  width: 100px; /* 悬浮 Tab 栏整体加宽到约原来的 2 倍 */
+}
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);

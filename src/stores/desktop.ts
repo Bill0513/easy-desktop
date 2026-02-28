@@ -1311,6 +1311,9 @@ export const useDesktopStore = defineStore('desktop', () => {
   // Background actions
   function setBackgroundColor(color: string) {
     backgroundColor.value = color
+    if (effectiveTheme.value === 'light') {
+      applyTheme()
+    }
     save()
   }
 
