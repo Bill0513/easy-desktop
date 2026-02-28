@@ -20,8 +20,6 @@ export default defineConfig({
           'editor-vendor': ['codemirror', '@codemirror/state', '@codemirror/view'],
           // Office预览库（最大的依赖）
           'office-vendor': ['@vue-office/docx', '@vue-office/excel', '@vue-office/pdf'],
-          // 思维导图库
-          'mindmap-vendor': ['simple-mind-map'],
           // 工具库
           'utils-vendor': ['uuid', 'marked', 'lucide-vue-next']
         }

@@ -43,22 +43,16 @@ A hand-drawn style online desktop application built with Vue 3 + TypeScript. Use
     - `FilePreviewDialog.vue` - Preview dialog for images, PDFs, Office documents (Word, Excel)
     - Supports file upload (single/batch), folder upload, download, delete, copy/cut/paste
     - File metadata stored in KV, actual files stored in R2 (20MB size limit per file)
-  - Mind Map Tab:
-    - `MindMapPage.vue` - Mind mapping editor using `simple-mind-map` library
-    - `MindMapHistory.vue` - History panel showing recent mind maps
-    - Features: create/open/save/export, undo/redo, zoom, node operations (add/delete/copy/paste)
-    - Mind map data stored as files in R2, metadata tracked in KV
   - Backup Management:
     - `BackupManager.vue` - Backup/restore interface with list view, manual backup, restore with confirmation
 
 ### Tab System
-- Six tabs:
+- Five tabs:
   - `desktop` - Main workspace with draggable widgets
   - `navigation` - Website bookmark manager with categories
   - `news` - News aggregator with multiple sources
   - `resource-search` - Resource search (placeholder, not yet implemented)
   - `file` - File management system with upload/download/preview
-  - `mindmap` - Mind mapping tool using `simple-mind-map` library
 - Tab state persisted to localStorage via `TAB_STORAGE_KEY`
 - Global search (Ctrl/Cmd+F) active in desktop and navigation tabs
 - Tab switching via `TabBar.vue` (left-side hover menu)
@@ -96,11 +90,10 @@ Single Pinia store managing:
 - All widgets array with position (x, y), size, z-index, minimize/maximize state
 - Selection and drag state
 - Global search state (`isSearchOpen`, `searchQuery`, `searchResults`)
-- Tab state (`activeTab`: 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file' | 'mindmap')
+- Tab state (`activeTab`: 'desktop' | 'navigation' | 'news' | 'resource-search' | 'file')
 - Navigation state (`navigationSites`, `navigationCategories`, `selectedCategory`)
 - News state (`newsSources`, `isLoadingNews`, `enabledSources`)
 - File state (`files`, `folders`, `currentFolderId`, `fileViewMode`, `clipboard`, `selectedFileIds`)
-- Mind map state (`mindMapHistory`, `currentMindMapId`, `isLoadingMindMap`)
 - Sync state (`syncStatus`, `lastSyncTime`, `syncErrorMessage`, `isCloudInitialized`)
 - File sync state (`fileSyncStatus`, `lastFileSyncTime`, `isFileCloudInitialized`)
 - Persistence to localStorage + Cloudflare KV + R2
@@ -113,7 +106,7 @@ Key methods:
 - `syncBeforeUnload()` - Uses sendBeacon API to ensure data is sent before page closes
 - `deleteImageWidget()` - Special deletion that also removes from R2
 - `updateTodoItem()` - Update todo item text (supports inline editing)
-- `setActiveTab()` - Switch between desktop/navigation/news/resource-search/file/mindmap tabs
+- `setActiveTab()` - Switch between desktop/navigation/news/resource-search/file tabs
 - `fetchNews()` / `fetchNewsBySource()` - Load news data with caching
 - `addNavigationSite()` / `updateNavigationSite()` / `deleteNavigationSite()` - Manage navigation bookmarks
 - `reorderNavigationSites()` - Update order after drag-and-drop
@@ -124,10 +117,6 @@ Key methods:
   - `createFolder()` / `renameFile()` / `renameFolder()` - Folder and file operations
   - `copyItems()` / `cutItems()` / `pasteItems()` - Clipboard operations
   - `syncFilesToCloud()` / `syncFilesBeforeUnload()` - File metadata sync to KV
-- Mind map operations:
-  - `createMindMap()` / `openMindMap()` / `saveMindMap()` - Mind map file management
-  - `deleteMindMap()` / `updateMindMapHistory()` - History management
-
 ### Drag & Drop System
 **Desktop Widgets:**
 - Custom mouse event-based drag (not HTML5 drag API) in `DesktopCanvas.vue`
@@ -229,27 +218,6 @@ Data structures:
 - `FolderItem`: id, name, type='folder', parentId, order, timestamps, isExpanded
 - Stored in KV under `file-metadata` key as `FileData` object
 
-### Mind Map System
-The mind map tab provides a visual mind mapping tool:
-- **Library**: Uses `simple-mind-map` library with plugins (Drag, Select, Export, KeyboardNavigation)
-- **Storage**: Mind map data stored as JSON files in R2, metadata tracked in KV
-- **Features**:
-  - Create new mind maps with custom names
-  - Open recent mind maps from history panel
-  - Auto-save on changes (debounced)
-  - Export to PNG/SVG/JSON/PDF formats
-  - Undo/redo support
-  - Zoom in/out/fit controls
-  - Node operations: add child/sibling, delete, copy/cut/paste
-- **History**: Recent mind maps tracked with `lastOpened` timestamp
-- **File integration**: Mind maps stored as files in file system, referenced by `fileId`
-
-Data structures:
-- `MindMapFile`: id, name, fileId (reference to FileItem), thumbnail (optional), lastOpened, timestamps
-- `SimpleMindMapNode`: data (text, uid, expand, image, icon, tag, hyperlink, note), children
-- `MindMapData`: root (SimpleMindMapNode), theme, layout
-- Stored in KV under `mindMapHistory` field in main desktop data
-
 ### News Aggregation System
 The news tab provides real-time news from multiple sources:
 - **Sources**: 18+ news sources including GitHub, Baidu, Zhihu, Douyin, Hupu, IT Home, Juejin, etc.
@@ -310,13 +278,11 @@ Automated backup system to protect against data loss:
 | `src/components/ResourceSearchPage.vue` | Resource search page (placeholder, not yet implemented) |
 | `src/components/FilePage.vue` | File manager with upload/download/preview, grid/list view |
 | `src/components/FilePreviewDialog.vue` | File preview dialog for images, PDFs, Office documents |
-| `src/components/MindMapPage.vue` | Mind mapping editor using simple-mind-map library |
-| `src/components/mindmap/MindMapHistory.vue` | Mind map history panel with recent files |
 | `src/components/BackupManager.vue` | Backup/restore UI with list, manual backup, restore confirmation |
 | `src/components/TabBar.vue` | Left-side tab switcher with hover expansion |
 | `src/components/PasswordInput.vue` | 6-digit password entry with auto-focus navigation |
 | `src/components/SyncStatus.vue` | Visual sync status indicator (idle/syncing/success/error) |
-| `src/types/index.ts` | TypeScript interfaces for all widget types, tabs, navigation, news, files, mind maps |
+| `src/types/index.ts` | TypeScript interfaces for all widget types, tabs, navigation, news, files |
 | `src/utils/fileIcons.ts` | File icon mapping utilities for different file types |
 | `functions/api/desktop.ts` | Cloudflare KV persistence API with empty data protection |
 | `functions/api/image.ts` | Cloudflare R2 image storage API |
@@ -371,14 +337,13 @@ When adding new news sources, create scraper in `functions/news/sources/`, regis
 - Remember to add resize handle only for text-based widgets (note, text, markdown, todo)
 - Navigation site order is managed by `order` field, not array index
 - File uploads have 20MB size limit per file - validate before upload
-- Mind map instance uses `shallowRef` to preserve the instance - don't use regular `ref`
 - Separate sync for desktop data (`syncToCloud`) and file metadata (`syncFilesToCloud`)
 
 ## Deployment
 
 Deploy to Cloudflare Pages with required bindings:
 - **KV namespace**: `DESKTOP_DATA` (for widget persistence and file metadata)
-- **R2 bucket**: `IMAGE_BUCKET` (for image storage, file storage, mind map data, backups)
+- **R2 bucket**: `IMAGE_BUCKET` (for image storage, file storage, backups)
 - **D1 database**: `NEWS_CACHE_DB` (for news data caching)
 - **Environment variable**: `VITE_DESKTOP_PASSWORD` (optional, defaults to "000000")
 

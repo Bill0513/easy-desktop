@@ -2,7 +2,7 @@
 import { computed, type Component } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { TabType } from '@/types'
-import { StickyNote, Globe, Flame, FolderOpen, Brain, Settings } from 'lucide-vue-next'
+import { StickyNote, Globe, Flame, FolderOpen, Settings } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   openSettings: []
@@ -14,8 +14,7 @@ const tabs: { id: TabType; name: string; icon: Component }[] = [
   { id: 'desktop', name: '记录', icon: StickyNote },
   { id: 'navigation', name: '导航', icon: Globe },
   { id: 'news', name: '热点', icon: Flame },
-  { id: 'file', name: '文件', icon: FolderOpen },
-  { id: 'mindmap', name: '导图', icon: Brain }
+  { id: 'file', name: '文件', icon: FolderOpen }
 ]
 
 const isDarkMode = computed(() => store.effectiveTheme === 'dark')
@@ -52,7 +51,7 @@ const isDarkMode = computed(() => store.effectiveTheme === 'dark')
   bottom: 0;
   z-index: 10000;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
   background: color-mix(in srgb, var(--color-bg-secondary) 92%, transparent);

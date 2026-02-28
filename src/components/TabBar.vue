@@ -8,7 +8,6 @@ import {
   Globe,
   Flame,
   FolderOpen,
-  Brain,
   Settings
 } from 'lucide-vue-next'
 
@@ -21,8 +20,7 @@ const tabs: { id: TabType; name: string; icon: Component; description: string }[
   { id: 'desktop', name: '记录', icon: StickyNote, description: '便签、待办、文本' },
   { id: 'navigation', name: '导航', icon: Globe, description: '网页导航站' },
   { id: 'news', name: '热点', icon: Flame, description: '新闻热搜' },
-  { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' },
-  { id: 'mindmap', name: '思维导图', icon: Brain, description: '思维导图编辑' }
+  { id: 'file', name: '文件', icon: FolderOpen, description: '文件管理' }
 ]
 
 const handleTabClick = (tabId: TabType) => {

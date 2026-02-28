@@ -18,7 +18,6 @@ import { useResponsiveMode } from '@/composables/useResponsiveMode'
 // 异步加载其他tab组件
 const NewsPage = defineAsyncComponent(() => import('@/components/NewsPage.vue'))
 const FilePage = defineAsyncComponent(() => import('@/components/FilePage.vue'))
-const MindMapPage = defineAsyncComponent(() => import('@/components/MindMapPage.vue'))
 
 const store = useDesktopStore()
 const isUnlocked = ref(false)
@@ -137,11 +136,6 @@ const handleUnlock = async () => {
       <!-- 文件 Tab -->
       <div v-show="store.activeTab === 'file'" class="w-full h-full mobile-main-content">
         <FilePage />
-      </div>
-
-      <!-- 思维导图 Tab -->
-      <div v-show="store.activeTab === 'mindmap'" class="w-full h-full mobile-main-content">
-        <MindMapPage />
       </div>
 
       <SettingsDialog v-if="showSettings" @close="showSettings = false" />

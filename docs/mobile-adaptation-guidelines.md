@@ -18,7 +18,7 @@
 - 组件展开互斥：同一时间仅允许一个组件展开。
 
 ### 1.3 后续适配范围
-- `navigation`、`news`、`file`、`mindmap` 四个 Tab 的移动交互与布局。
+- `navigation`、`news`、`file` 三个 Tab 的移动交互与布局。
 
 ## 2. 统一适配原则
 

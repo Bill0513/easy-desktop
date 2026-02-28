@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-13T07:26:21.787Z",
+  "generatedAt": "2026-02-28T07:15:24.863Z",
   "gitCommit": null,
   "stats": {
-    "totalModules": 16,
-    "totalFiles": 94
+    "totalModules": 15,
+    "totalFiles": 92
   },
   "modules": [
     {
@@ -501,15 +501,6 @@
           ]
         },
         {
-          "file": "src/components/MindMapPage.vue",
-          "type": "vue-component",
-          "featurePoints": [
-            "desktop store integration",
-            "mount lifecycle",
-            "reactive watcher"
-          ]
-        },
-        {
           "file": "src/components/MobileDesktopPage.vue",
           "type": "vue-component",
           "featurePoints": [
@@ -646,10 +637,6 @@
           "file": "src/env.d.ts",
           "type": "code-file",
           "featurePoints": [
-            "export: Drag",
-            "export: Export",
-            "export: KeyboardNavigation",
-            "export: Select",
             "export: component"
           ]
         },
@@ -658,18 +645,6 @@
           "type": "code-file",
           "featurePoints": [
             "feature: main"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "frontend/mindmap",
-      "files": [
-        {
-          "file": "src/components/mindmap/MindMapHistory.vue",
-          "type": "vue-component",
-          "featurePoints": [
-            "feature: MindMapHistory"
           ]
         }
       ]

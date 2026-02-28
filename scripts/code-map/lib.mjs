@@ -61,7 +61,6 @@ function getGitCommit() {
 function moduleFromPath(filePath) {
   if (filePath.startsWith('src/components/widgets/')) return 'frontend/widgets'
   if (filePath.startsWith('src/components/navigation/')) return 'frontend/navigation'
-  if (filePath.startsWith('src/components/mindmap/')) return 'frontend/mindmap'
   if (filePath.startsWith('src/components/')) return 'frontend/components'
   if (filePath.startsWith('src/stores/')) return 'frontend/state'
   if (filePath.startsWith('src/utils/')) return 'frontend/utils'

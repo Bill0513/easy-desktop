@@ -1,9 +1,9 @@
 # Code Map
 
-- Generated at: 2026-02-13T07:26:21.787Z
+- Generated at: 2026-02-28T07:15:24.863Z
 - Git commit: unknown
-- Modules: 16
-- Files: 94
+- Modules: 15
+- Files: 92
 
 This file is generated. Run `npm run code-map:build` after feature/module changes.
 
@@ -198,9 +198,6 @@ This file is generated. Run `npm run code-map:build` after feature/module change
 - src/components/HandDrawnDialog.vue
   - Type: vue-component
   - Feature points: reactive watcher
-- src/components/MindMapPage.vue
-  - Type: vue-component
-  - Feature points: desktop store integration; mount lifecycle; reactive watcher
 - src/components/MobileDesktopPage.vue
   - Type: vue-component
   - Feature points: computed state; desktop store integration; mount lifecycle; reactive watcher
@@ -254,16 +251,10 @@ This file is generated. Run `npm run code-map:build` after feature/module change
   - Feature points: export: useResponsiveMode
 - src/env.d.ts
   - Type: code-file
-  - Feature points: export: Drag; export: Export; export: KeyboardNavigation; export: Select; export: component
+  - Feature points: export: component
 - src/main.ts
   - Type: code-file
   - Feature points: feature: main
-
-## frontend/mindmap
-
-- src/components/mindmap/MindMapHistory.vue
-  - Type: vue-component
-  - Feature points: feature: MindMapHistory
 
 ## frontend/navigation
 

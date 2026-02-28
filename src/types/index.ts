@@ -139,14 +139,13 @@ export interface DesktopData {
   backgroundColor?: string  // 背景颜色
   themeMode?: ThemeMode  // 主题模式
   darkBackgroundColor?: string  // 暗色主题背景颜色
-  mindMaps?: MindMapFile[]  // 思维导图数据（存储在 KV 中）
   codeSnippets?: CodeSnippet[]  // 代码片段数据
   version: number
   updatedAt: number
 }
 
 // Tab 类型
-export type TabType = 'desktop' | 'navigation' | 'news' | 'file' | 'mindmap'
+export type TabType = 'desktop' | 'navigation' | 'news' | 'file'
 
 // 新闻项
 export interface NewsItem {
@@ -242,43 +241,6 @@ export interface FileData {
   folders: FolderItem[]
   version: number
   updatedAt: number
-}
-
-// 思维导图文件元数据
-export interface MindMapFile {
-  id: string
-  name: string
-  data: SimpleMindMapNode  // 思维导图数据直接存储在 KV 中
-  thumbnail?: string  // 缩略图 (可选)
-  lastOpened: number
-  createdAt: number
-  updatedAt: number
-}
-
-// simple-mind-map 节点数据
-export interface SimpleMindMapNodeData {
-  text: string
-  uid?: string
-  expand?: boolean
-  image?: string
-  icon?: string[]
-  tag?: string[]
-  hyperlink?: string
-  note?: string
-  [key: string]: any
-}
-
-// simple-mind-map 节点
-export interface SimpleMindMapNode {
-  data: SimpleMindMapNodeData
-  children?: SimpleMindMapNode[]
-}
-
-// 思维导图数据结构 (simple-mind-map format)
-export interface MindMapData {
-  root: SimpleMindMapNode
-  theme?: string
-  layout?: string
 }
 
 // 代码片段

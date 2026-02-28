@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
-import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, MindMapFile, SimpleMindMapNode, ThemeMode } from '@/types'
+import type { Widget, NoteWidget, TodoWidget, TextWidget, ImageWidget, MarkdownWidget, CountdownWidget, RandomPickerWidget, CheckInWidget, CreateWidgetParams, TodoItem, DesktopData, TabType, NewsSource, NewsCache, NavigationSite, FileItem, FolderItem, FileViewMode, ThemeMode } from '@/types'
 import { indexedDB as idb } from '@/utils/indexedDB'
 
 const TAB_STORAGE_KEY = 'cloud-desktop-active-tab'
@@ -92,11 +92,6 @@ export const useDesktopStore = defineStore('desktop', () => {
   const isFileCloudInitialized = ref(false) // 标记文件是否已从云端成功加载过数据
   const hasFileDirtyData = ref(false) // 标记文件是否有未同步到云端的数据
 
-  // Mind map state
-  const mindMaps = ref<MindMapFile[]>([])
-  const currentMindMapId = ref<string | null>(null)
-  const isLoadingMindMap = ref(false)
-
   // Canvas scale state (30% - 150%)
   const canvasScale = ref<number>(100)
   const lastArrangedScale = ref<number | null>(null) // 记录一键整理后的最佳缩放比例
@@ -138,7 +133,7 @@ export const useDesktopStore = defineStore('desktop', () => {
     if (!searchQuery.value.trim()) return []
     const query = searchQuery.value.toLowerCase()
 
-    // 全局搜索：同时搜索桌面组件、导航网站、文件、思维导图和代码片段
+    // 全局搜索：同时搜索桌面组件、导航网站、文件和文件夹
     const widgetResults = widgets.value.filter(widget => {
       if (widget.title.toLowerCase().includes(query)) return true
 
@@ -171,12 +166,8 @@ export const useDesktopStore = defineStore('desktop', () => {
       folder.name.toLowerCase().includes(query)
     )
 
-    const mindMapResults = mindMaps.value.filter(mindMap =>
-      mindMap.name.toLowerCase().includes(query)
-    )
-
-    // 合并结果：桌面组件在前，导航网站在后，文件和文件夹、思维导图最后
-    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults, ...mindMapResults]
+    // 合并结果：桌面组件在前，导航网站在后，文件夹和文件最后
+    return [...widgetResults, ...siteResults, ...folderResults, ...fileResults]
   })
 
   // 当前文件夹下的项目（文件+文件夹）
@@ -443,10 +434,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         if (cloudData.darkBackgroundColor !== undefined) {
           darkBackgroundColor.value = cloudData.darkBackgroundColor
         }
-        // 加载思维导图历史记录
-        if (cloudData.mindMaps !== undefined) {
-          mindMaps.value = cloudData.mindMaps
-        }
         // 标记已从云端成功加载
         isCloudInitialized.value = true
 
@@ -466,7 +453,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           backgroundColor.value = localData.backgroundColor || '#fdfbf7'
           themeMode.value = localData.themeMode || 'system'
           darkBackgroundColor.value = localData.darkBackgroundColor || '#1a1a1a'
-          mindMaps.value = localData.mindMaps || []
 
           // 如果本地有数据，标记为已初始化（允许后续同步到云端）
           isCloudInitialized.value = true
@@ -484,7 +470,6 @@ export const useDesktopStore = defineStore('desktop', () => {
           ])
           searchHistory.value = []
           searchEngine.value = 'google'
-          mindMaps.value = []
 
           // 标记为已初始化
           isCloudInitialized.value = true
@@ -513,7 +498,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
     // 加载当前激活的标签页（从 localStorage，这是临时 UI 状态）
     const savedTab = localStorage.getItem(TAB_STORAGE_KEY)
-    if (savedTab === 'desktop' || savedTab === 'navigation' || savedTab === 'news' || savedTab === 'file' || savedTab === 'mindmap') {
+    if (savedTab === 'desktop' || savedTab === 'navigation' || savedTab === 'news' || savedTab === 'file') {
       activeTab.value = savedTab as TabType
     }
   }
@@ -543,7 +528,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         backgroundColor: backgroundColor.value,
         themeMode: themeMode.value,
         darkBackgroundColor: darkBackgroundColor.value,
-        mindMaps: mindMaps.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -616,7 +600,6 @@ export const useDesktopStore = defineStore('desktop', () => {
         backgroundColor: backgroundColor.value,
         themeMode: themeMode.value,
         darkBackgroundColor: darkBackgroundColor.value,
-        mindMaps: mindMaps.value,
         version: 1,
         updatedAt: Date.now()
       }
@@ -725,7 +708,6 @@ export const useDesktopStore = defineStore('desktop', () => {
       enabledNewsSources: Array.from(enabledSources.value),
       searchHistory: searchHistory.value,
       searchEngine: searchEngine.value,
-      mindMaps: mindMaps.value,
       version: 1,
       updatedAt: Date.now()
     }
@@ -1321,7 +1303,7 @@ export const useDesktopStore = defineStore('desktop', () => {
 
   function loadActiveTab() {
     const saved = localStorage.getItem(TAB_STORAGE_KEY)
-    if (saved === 'desktop' || saved === 'navigation' || saved === 'news' || saved === 'file' || saved === 'mindmap') {
+    if (saved === 'desktop' || saved === 'navigation' || saved === 'news' || saved === 'file') {
       activeTab.value = saved
     }
   }
@@ -2567,92 +2549,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     saveFilesLocal()
   }
 
-  // Mind Map Actions
-
-  function loadMindMaps() {
-    // 思维导图数据现在从 init() 中统一加载，无需单独初始化
-    // 保留此方法以保持向后兼容，但不执行任何操作
-  }
-
-  function saveMindMaps() {
-    // 使用统一的 save() 方法保存到 localStorage 和 KV
-    save()
-  }
-
-  // 创建新的思维导图
-  function createMindMap(name: string): MindMapFile {
-    const now = Date.now()
-    const id = uuidv4()
-
-    const defaultData: SimpleMindMapNode = {
-      data: {
-        text: name,
-        expand: true,
-        uid: id
-      },
-      children: []
-    }
-
-    const mindMapFile: MindMapFile = {
-      id,
-      name,
-      data: defaultData,
-      lastOpened: now,
-      createdAt: now,
-      updatedAt: now
-    }
-
-    mindMaps.value.unshift(mindMapFile)
-    saveMindMaps()
-
-    return mindMapFile
-  }
-
-  // 加载思维导图数据
-  function loadMindMap(id: string): SimpleMindMapNode | null {
-    const mindMap = mindMaps.value.find(m => m.id === id)
-    if (!mindMap) return null
-
-    // 更新最后打开时间
-    mindMap.lastOpened = Date.now()
-    saveMindMaps()
-
-    return mindMap.data
-  }
-
-  // 保存思维导图数据
-  function saveMindMap(id: string, data: SimpleMindMapNode): boolean {
-    const mindMap = mindMaps.value.find(m => m.id === id)
-    if (!mindMap) return false
-
-    mindMap.data = data
-    mindMap.updatedAt = Date.now()
-    saveMindMaps()
-
-    return true
-  }
-
-  // 更新思维导图名称
-  function renameMindMap(id: string, newName: string): boolean {
-    const mindMap = mindMaps.value.find(m => m.id === id)
-    if (!mindMap) return false
-
-    mindMap.name = newName
-    mindMap.updatedAt = Date.now()
-    saveMindMaps()
-
-    return true
-  }
-
-  // 删除思维导图
-  function deleteMindMap(id: string) {
-    const index = mindMaps.value.findIndex(m => m.id === id)
-    if (index !== -1) {
-      mindMaps.value.splice(index, 1)
-      saveMindMaps()
-    }
-  }
-
   // Toast 相关方法
   function setToastContainer(container: any) {
     toastContainerRef = container
@@ -2713,10 +2609,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     fileSortOrder,
     clipboard,
     selectedFileIds,
-    // Mind map state
-    mindMaps,
-    currentMindMapId,
-    isLoadingMindMap,
     // Canvas scale state
     canvasScale,
     lastArrangedScale,
@@ -2819,13 +2711,6 @@ export const useDesktopStore = defineStore('desktop', () => {
     pasteFiles,
     usedFileLanguages,
     usedFileTags,
-    // Mind map actions
-    loadMindMaps,
-    createMindMap,
-    loadMindMap,
-    saveMindMap,
-    renameMindMap,
-    deleteMindMap,
     // Toast actions
     setToastContainer,
     showToast,
