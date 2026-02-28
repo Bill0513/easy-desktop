@@ -1,9 +1,9 @@
 # Code Map
 
-- Generated at: 2026-02-28T07:41:36.365Z
+- Generated at: 2026-02-28T07:53:37.152Z
 - Git commit: unknown
 - Modules: 15
-- Files: 92
+- Files: 94
 
 This file is generated. Run `npm run code-map:build` after feature/module changes.
 
@@ -285,6 +285,12 @@ This file is generated. Run `npm run code-map:build` after feature/module change
 
 ## frontend/utils
 
+- src/utils/contextMenuPosition.d.ts
+  - Type: code-file
+  - Feature points: export: computeContextMenuPosition
+- src/utils/contextMenuPosition.js
+  - Type: code-file
+  - Feature points: export: computeContextMenuPosition
 - src/utils/fileIcons.ts
   - Type: code-file
   - Feature points: export: getFileExtension; export: getFileIcon

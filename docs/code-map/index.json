@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-28T07:41:36.365Z",
+  "generatedAt": "2026-02-28T07:53:37.152Z",
   "gitCommit": null,
   "stats": {
     "totalModules": 15,
-    "totalFiles": 92
+    "totalFiles": 94
   },
   "modules": [
     {
@@ -710,6 +710,20 @@
     {
       "name": "frontend/utils",
       "files": [
+        {
+          "file": "src/utils/contextMenuPosition.d.ts",
+          "type": "code-file",
+          "featurePoints": [
+            "export: computeContextMenuPosition"
+          ]
+        },
+        {
+          "file": "src/utils/contextMenuPosition.js",
+          "type": "code-file",
+          "featurePoints": [
+            "export: computeContextMenuPosition"
+          ]
+        },
         {
           "file": "src/utils/fileIcons.ts",
           "type": "code-file",

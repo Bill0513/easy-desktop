@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineAsyncComponent, nextTick } from 'vue'
 import { useDesktopStore } from '@/stores/desktop'
 import type { FileItem, FolderItem } from '@/types'
 import { useResponsiveMode } from '@/composables/useResponsiveMode'
+import { computeContextMenuPosition } from '@/utils/contextMenuPosition.js'
 // 异步加载文件预览对话框，减少主bundle大小
 const FilePreviewDialog = defineAsyncComponent(() => import('./FilePreviewDialog.vue'))
 import HandDrawnDialog from './HandDrawnDialog.vue'
@@ -268,6 +269,7 @@ const contextMenu = ref({
   itemId: null as string | null,
   item: null as FileItem | FolderItem | null
 })
+const contextMenuRef = ref<HTMLElement | null>(null)
 
 const availableFileLanguages = computed(() => {
   return store.usedFileLanguages.map(language => ({ label: language, value: language }))
@@ -277,14 +279,14 @@ const isDarkMode = computed(() => store.effectiveTheme === 'dark')
 
 const contextMenuItemClass = computed(() => {
   return [
-    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    'w-full px-4 py-2 text-left font-handwritten text-sm whitespace-nowrap transition-colors text-text-primary',
     isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
   ]
 })
 
 const contextMenuDangerItemClass = computed(() => {
   return [
-    'w-full px-4 py-2 text-left font-handwritten text-sm transition-colors text-text-primary',
+    'w-full px-4 py-2 text-left font-handwritten text-sm whitespace-nowrap transition-colors text-text-primary',
     isDarkMode.value ? 'hover:bg-bluePen/25 active:bg-bluePen/35' : 'hover:bg-accent/20 active:bg-accent/30'
   ]
 })
@@ -317,11 +319,13 @@ onMounted(() => {
   store.initFiles()
   // 添加快捷键监听
   window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('resize', handleWindowResize)
 })
 
 // 清理
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('resize', handleWindowResize)
 })
 
 // 快捷键处理
@@ -423,31 +427,48 @@ const handleBatchDelete = async () => {
 }
 
 // 右键菜单处理
+const updateContextMenuPosition = async () => {
+  if (isMobile.value || !contextMenu.value.show) return
+
+  await nextTick()
+  const menuElement = contextMenuRef.value
+  if (!menuElement) return
+
+  const rect = menuElement.getBoundingClientRect()
+  const adjustedPosition = computeContextMenuPosition(
+    { x: contextMenu.value.x, y: contextMenu.value.y },
+    { width: rect.width, height: rect.height },
+    { width: window.innerWidth, height: window.innerHeight }
+  )
+
+  contextMenu.value.x = adjustedPosition.x
+  contextMenu.value.y = adjustedPosition.y
+}
+
+const openContextMenu = (x: number, y: number, item: FileItem | FolderItem | null, type: 'blank' | 'file' | 'folder') => {
+  contextMenu.value = {
+    show: true,
+    x,
+    y,
+    type,
+    itemId: item?.id ?? null,
+    item
+  }
+
+  void updateContextMenuPosition()
+}
+
 const handleBlankContextMenu = (e: MouseEvent) => {
   if (isMobile.value) return
   e.preventDefault()
-  contextMenu.value = {
-    show: true,
-    x: e.clientX,
-    y: e.clientY,
-    type: 'blank',
-    itemId: null,
-    item: null
-  }
+  openContextMenu(e.clientX, e.clientY, null, 'blank')
 }
 
 const handleItemContextMenu = (e: MouseEvent, item: FileItem | FolderItem) => {
   if (isMobile.value) return
   e.preventDefault()
   e.stopPropagation()
-  contextMenu.value = {
-    show: true,
-    x: e.clientX,
-    y: e.clientY,
-    type: item.type,
-    itemId: item.id,
-    item
-  }
+  openContextMenu(e.clientX, e.clientY, item, item.type)
 }
 
 const closeContextMenu = () => {
@@ -470,6 +491,11 @@ const handleClick = () => {
   if (contextMenu.value.show) {
     closeContextMenu()
   }
+}
+
+const handleWindowResize = () => {
+  if (!contextMenu.value.show || isMobile.value) return
+  void updateContextMenuPosition()
 }
 
 // 新建文件夹
@@ -1011,7 +1037,8 @@ const getItemIcon = (item: FileItem | FolderItem) => {
       >
         <div
           v-if="contextMenu.show && !isMobile"
-          class="fixed z-[10000] card-hand-drawn py-2 min-w-[160px] bg-bg-primary"
+          ref="contextMenuRef"
+          class="fixed z-[10000] card-hand-drawn py-2 w-max max-w-[calc(100vw-16px)] bg-bg-primary"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
           style="box-shadow: 4px 4px 0px var(--color-border-primary);"
         >
